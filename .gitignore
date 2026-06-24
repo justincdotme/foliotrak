@@ -1,7 +1,5 @@
 /vendor/
 node_modules/
-npm-debug.log
-yarn-error.log
 
 # Laravel 4 specific
 bootstrap/compiled.php
@@ -28,3 +26,20 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+
+# Local tooling and project docs (not for the shared repo)
+/.claude
+/.superpowers
+/docs/project
+/CLAUDE.md
+
+# Laravel default .gitignore (latest), duplicates of the above omitted
+*.log
+.DS_Store
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+Thumbs.db
