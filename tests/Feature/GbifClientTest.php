@@ -1,0 +1,201 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature;
+
+use App\Support\Gbif\GbifClient;
+use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\TestCase;
+
+class GbifClientTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // No test may reach the live GBIF API (ADR-0012).
+        Http::preventStrayRequests();
+    }
+
+    /**
+     * @param  array<string, mixed>  $body
+     */
+    private function fakeMatch(array $body): void
+    {
+        Http::fake(['api.gbif.org/*' => Http::response($body)]);
+    }
+
+    private function client(): GbifClient
+    {
+        return new GbifClient();
+    }
+
+    public function test_normalizes_a_fuzzy_match(): void
+    {
+        $this->fakeMatch([
+            'usageKey' => 2868241,
+            'scientificName' => 'Monstera deliciosa Liebm.',
+            'canonicalName' => 'Monstera deliciosa',
+            'rank' => 'SPECIES',
+            'status' => 'ACCEPTED',
+            'confidence' => 95,
+            'matchType' => 'FUZZY',
+            'family' => 'Araceae',
+        ]);
+
+        $records = $this->client()->lookup('monstera delicosa');
+
+        $this->assertCount(1, $records);
+        $this->assertSame('2868241', $records[0]['gbif_key']);
+        $this->assertSame('Monstera deliciosa Liebm.', $records[0]['scientific_name']);
+        $this->assertSame('Araceae', $records[0]['family']);
+        $this->assertNull($records[0]['common_name']);
+    }
+
+    #[DataProvider('confidenceCases')]
+    public function test_applies_the_confidence_threshold(int $confidence, int $expectedCount): void
+    {
+        $this->fakeMatch([
+            'usageKey' => 1,
+            'scientificName' => 'Some species',
+            'rank' => 'SPECIES',
+            'confidence' => $confidence,
+            'matchType' => 'FUZZY',
+        ]);
+
+        $this->assertCount($expectedCount, (array) $this->client()->lookup('whatever'));
+    }
+
+    /**
+     * @return array<string, array{int, int}>
+     */
+    public static function confidenceCases(): array
+    {
+        return [
+            'below threshold' => [79, 0],
+            'at threshold' => [80, 1],
+            'above threshold' => [95, 1],
+        ];
+    }
+
+    #[DataProvider('unusableMatchTypes')]
+    public function test_rejects_unusable_match_types(string $matchType): void
+    {
+        $this->fakeMatch([
+            'usageKey' => 1,
+            'scientificName' => 'Some taxon',
+            'rank' => 'GENUS',
+            'confidence' => 99,
+            'matchType' => $matchType,
+        ]);
+
+        $this->assertSame([], $this->client()->lookup('whatever'));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function unusableMatchTypes(): array
+    {
+        return [
+            'no match' => ['NONE'],
+            'higher rank only' => ['HIGHERRANK'],
+        ];
+    }
+
+    public function test_resolves_a_synonym_to_its_accepted_name(): void
+    {
+        $this->fakeMatch([
+            'usageKey' => 111,
+            'scientificName' => 'Sansevieria trifasciata Prain',
+            'canonicalName' => 'Sansevieria trifasciata',
+            'rank' => 'SPECIES',
+            'status' => 'SYNONYM',
+            'confidence' => 97,
+            'matchType' => 'FUZZY',
+            'acceptedUsageKey' => 222,
+            'accepted' => 'Dracaena trifasciata (Prain) Mabb.',
+            'family' => 'Asparagaceae',
+        ]);
+
+        $records = $this->client()->lookup('sanseveria trifasciata');
+
+        $this->assertSame('222', $records[0]['gbif_key']);
+        $this->assertSame('Dracaena trifasciata (Prain) Mabb.', $records[0]['scientific_name']);
+    }
+
+    public function test_includes_confident_alternatives_and_drops_weak_ones(): void
+    {
+        $this->fakeMatch([
+            'usageKey' => 1,
+            'scientificName' => 'Primary species',
+            'rank' => 'SPECIES',
+            'confidence' => 95,
+            'matchType' => 'FUZZY',
+            'alternatives' => [
+                ['usageKey' => 2, 'scientificName' => 'Confident alt', 'rank' => 'SPECIES', 'confidence' => 90, 'matchType' => 'FUZZY'],
+                ['usageKey' => 3, 'scientificName' => 'Weak alt', 'rank' => 'SPECIES', 'confidence' => 40, 'matchType' => 'FUZZY'],
+            ],
+        ]);
+
+        $records = $this->client()->lookup('whatever');
+
+        $this->assertSame(['1', '2'], array_column($records, 'gbif_key'));
+    }
+
+    public function test_throttle_saturation_returns_null_without_forwarding(): void
+    {
+        config()->set('services.gbif.throttle.max_attempts', 1);
+        $this->fakeMatch([
+            'usageKey' => 1, 'scientificName' => 'X', 'rank' => 'SPECIES', 'confidence' => 95, 'matchType' => 'EXACT',
+        ]);
+
+        $this->assertNotNull($this->client()->lookup('alpha'));
+        $this->assertNull($this->client()->lookup('beta'));
+        Http::assertSentCount(1);
+    }
+
+    public function test_breaker_opens_after_a_failure_and_skips_during_cooldown(): void
+    {
+        Http::fake(['api.gbif.org/*' => Http::response('error', 500)]);
+
+        $this->assertNull($this->client()->lookup('alpha'));
+        $this->assertNull($this->client()->lookup('beta'));
+        Http::assertSentCount(1);
+    }
+
+    public function test_breaker_cooldown_grows_on_successive_failures(): void
+    {
+        Http::fake(['api.gbif.org/*' => Http::response('error', 500)]);
+
+        $this->client()->lookup('a');
+        $this->travel(31)->seconds();
+        $this->client()->lookup('b');
+        Http::assertSentCount(2);
+
+        // 31s into the second (doubled, 60s) window the breaker is still open.
+        $this->travel(31)->seconds();
+        $this->client()->lookup('c');
+        Http::assertSentCount(2);
+    }
+
+    public function test_breaker_resets_after_a_success(): void
+    {
+        Http::fake(['api.gbif.org/*' => Http::sequence()
+            ->push('error', 500)
+            ->push(['usageKey' => 1, 'scientificName' => 'X', 'rank' => 'SPECIES', 'confidence' => 95, 'matchType' => 'EXACT'])
+            ->push('error', 500)
+            ->push(['usageKey' => 2, 'scientificName' => 'Y', 'rank' => 'SPECIES', 'confidence' => 95, 'matchType' => 'EXACT'])]);
+
+        $this->assertNull($this->client()->lookup('a'));
+        $this->travel(31)->seconds();
+        $this->assertNotNull($this->client()->lookup('b'));
+        $this->assertNull($this->client()->lookup('c'));
+        // A reset means c's window is the base 30s again, expired by t+31, so d forwards.
+        $this->travel(31)->seconds();
+        $this->assertNotNull($this->client()->lookup('d'));
+        Http::assertSentCount(4);
+    }
+}
