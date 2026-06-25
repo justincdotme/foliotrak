@@ -19,7 +19,7 @@ class SpeciesSuggestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'q' => ['required', 'string', 'min:1', 'max:255'],
+            'q' => ['required', 'string', 'min:3', 'max:100'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:20'],
         ];
     }

@@ -37,6 +37,33 @@ return [
 
     'gbif' => [
         'base_url' => env('GBIF_BASE_URL', 'https://api.gbif.org/v1'),
+
+        // Bulk backbone export the species seed is built from (species:refresh-seed).
+        'backbone_url' => env('GBIF_BACKBONE_URL', 'https://hosted-datasets.gbif.org/datasets/backbone/current/backbone.zip'),
+
+        // GBIF can reach the operator here rather than silently blocking the IP.
+        'user_agent' => env('GBIF_USER_AGENT', 'Foliotrak/1.0 (+https://github.com/justincdotme/foliotrak)'),
+        'timeout' => (int) env('GBIF_TIMEOUT', 5),
+
+        // Minimum /species/match confidence to accept a fuzzy result (0-100).
+        'match_min_confidence' => (int) env('GBIF_MATCH_MIN_CONFIDENCE', 80),
+
+        // A cached species older than this is refreshed from GBIF on its next hit.
+        'cache_ttl_days' => (int) env('GBIF_CACHE_TTL_DAYS', 90),
+
+        // Outbound calls per window, host-keyed, sized far under any plausible GBIF
+        // threshold. The cache and the SPA debounce mean real volume is tiny.
+        'throttle' => [
+            'max_attempts' => (int) env('GBIF_THROTTLE_MAX_ATTEMPTS', 30),
+            'decay_seconds' => (int) env('GBIF_THROTTLE_DECAY_SECONDS', 60),
+        ],
+
+        // After a failure the breaker opens for base seconds, doubling per
+        // consecutive failure up to the cap, so an outage stops the calls.
+        'breaker' => [
+            'base_cooldown_seconds' => (int) env('GBIF_BREAKER_BASE_COOLDOWN_SECONDS', 30),
+            'max_cooldown_seconds' => (int) env('GBIF_BREAKER_MAX_COOLDOWN_SECONDS', 600),
+        ],
     ],
 
 ];

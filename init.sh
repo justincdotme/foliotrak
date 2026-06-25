@@ -76,6 +76,35 @@ $COMPOSE up -d
 # already running before the certificate existed.
 $COMPOSE restart nginx
 
+echo "==> Species seed data"
+# `docker compose exec` ignores depends_on, so wait for the app container and a
+# reachable Meilisearch before seeding; the import builds the search index.
+seed_ready=false
+attempts=0
+while [ "$attempts" -lt 60 ]; do
+  if $COMPOSE exec -T app php -r 'exit(@file_get_contents("http://meilisearch:7700/health") !== false ? 0 : 1);' >/dev/null 2>&1; then
+    seed_ready=true
+    break
+  fi
+  attempts=$((attempts + 1))
+  sleep 2
+done
+if [ "$seed_ready" = true ]; then
+  # The download is a few GB on first run; refresh-seed reuses a recent file and
+  # import-seed upserts, so re-running init.sh is cheap. A failure here is not
+  # fatal: search falls back to live GBIF until the seed lands.
+  if $COMPOSE exec -T app php artisan species:refresh-seed \
+    && $COMPOSE exec -T app php artisan species:import-seed; then
+    :
+  else
+    echo "    species seed did not finish; the app runs and falls back to live GBIF." >&2
+    echo "    retry: $COMPOSE exec app php artisan species:refresh-seed && $COMPOSE exec app php artisan species:import-seed" >&2
+  fi
+else
+  echo "    app or Meilisearch not ready in time; skipped seeding." >&2
+  echo "    seed later: $COMPOSE exec app php artisan species:refresh-seed && $COMPOSE exec app php artisan species:import-seed" >&2
+fi
+
 echo
 echo "Foliotrak is starting at https://$DOMAIN"
 echo "The certificate is self-signed; accept the browser warning or trust"
