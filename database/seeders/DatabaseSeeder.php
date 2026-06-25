@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(TagSeeder::class);
+
         $email = (string) env('FOLIOTRAK_ADMIN_EMAIL', 'admin@foliotrak.test');
         $password = (string) env('FOLIOTRAK_ADMIN_PASSWORD', 'testing123');
 

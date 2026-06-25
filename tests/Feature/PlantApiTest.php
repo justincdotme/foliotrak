@@ -88,7 +88,7 @@ class PlantApiTest extends TestCase
         $conditions = collect($response->json('data'))
             ->mapWithKeys(fn (array $plant): array => [$plant['common_name'] => $plant['condition']['key']]);
 
-        // Status is the only signal in Phase 1a, so only Dead diverges from "no reading".
+        // Status is the only signal so far, so only Dead diverges from "no reading".
         $this->assertSame('unknown', $conditions['Living one']);
         $this->assertSame('unknown', $conditions['Resting one']);
         $this->assertSame('dead', $conditions['Lost one']);
@@ -232,5 +232,28 @@ class PlantApiTest extends TestCase
         $this->patchJson("/api/plants/{$plant->id}", ['cover_photo_id' => null])
             ->assertOk()
             ->assertJsonPath('data.cover_photo_id', null);
+    }
+
+    public function test_embeds_the_cover_photo_so_cards_can_render_a_thumbnail(): void
+    {
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+        $photo = Photo::factory()->for($plant)->create(['path' => 'cover-hash.jpg']);
+        $plant->update(['cover_photo_id' => $photo->id]);
+
+        $this->getJson("/api/plants/{$plant->id}")
+            ->assertOk()
+            ->assertJsonPath('data.cover_photo.id', $photo->id)
+            ->assertJsonPath('data.cover_photo.path', 'cover-hash.jpg');
+    }
+
+    public function test_cover_photo_is_null_when_the_plant_has_none(): void
+    {
+        $this->actAsHousehold();
+        Plant::factory()->create(['cover_photo_id' => null]);
+
+        $this->getJson('/api/plants')
+            ->assertOk()
+            ->assertJsonPath('data.0.cover_photo', null);
     }
 }

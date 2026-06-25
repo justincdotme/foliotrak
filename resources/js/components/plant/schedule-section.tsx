@@ -1,7 +1,6 @@
 import { Bell, Check, Clock, Info, Droplets, FlaskConical, Calendar } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CareEvent, Plant, Recommendation } from '@/api/types'
-import { mockApi } from '@/api/mock'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/app/field'
@@ -10,7 +9,7 @@ import { SectionTitle } from '@/components/app/section-title'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { WaterDrop } from '@/components/app/water-drop'
 import { ageDays, fmtDateY } from '@/lib/format'
-import { commit } from '@/hooks/useAsync'
+import { useUpdatePlant } from '@/hooks/usePlantMutations'
 
 type NextDue = {
   due_date: string
@@ -111,23 +110,22 @@ export function ScheduleSection({ plant, recs, due, events }: ScheduleSectionPro
     plant.watering_interval_days_override != null ||
     plant.fertilizing_interval_days_override != null
 
+  const update = useUpdatePlant(plant.id)
+
   const save = async () => {
-    await mockApi.updatePlant(plant.id, {
+    await update.mutateAsync({
       watering_interval_days_override: wInt !== '' ? Number(wInt) : null,
       fertilizing_interval_days_override: fInt !== '' ? Number(fInt) : null,
     })
-    commit()
     setEditing(false)
   }
 
   const applyRec = async (which: 'watering' | 'fertilizing', days: number) => {
-    await mockApi.updatePlant(
-      plant.id,
+    await update.mutateAsync(
       which === 'watering'
         ? { watering_interval_days_override: days }
         : { fertilizing_interval_days_override: days }
     )
-    commit()
     setTab('mine')
   }
 
@@ -213,7 +211,7 @@ export function ScheduleSection({ plant, recs, due, events }: ScheduleSectionPro
                 <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
                   Cancel
                 </Button>
-                <Button size="sm" onClick={save}>
+                <Button size="sm" onClick={save} disabled={update.isPending}>
                   <Check size={14} />
                   Save schedule
                 </Button>

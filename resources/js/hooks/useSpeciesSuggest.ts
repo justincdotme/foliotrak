@@ -1,42 +1,53 @@
-import { useEffect, useRef, useState } from 'react'
-import { mockApi } from '@/api/mock'
+import { useEffect, useState } from 'react'
 import type { SpeciesSuggestion } from '@/api/types'
+import { suggestSpecies } from '@/api/client'
 
 export interface UseSuggestResult {
   results: SpeciesSuggestion[]
   loading: boolean
 }
 
+// Keeps GBIF traffic low: a typing burst collapses to one request, and nothing
+// fires below the minimum query length. The cache and outbound throttle that
+// further protect GBIF live server-side.
+const MIN_QUERY_LENGTH = 2
+const DEBOUNCE_MS = 300
+
 export function useSpeciesSuggest(query: string): UseSuggestResult {
   const [results, setResults] = useState<SpeciesSuggestion[]>([])
   const [loading, setLoading] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (!query || query.trim().length < 2) {
+    const q = query.trim()
+    if (q.length < MIN_QUERY_LENGTH) {
       setResults([])
+      setLoading(false)
       return
     }
 
+    let ignore = false
     setLoading(true)
-
-    timeoutRef.current = setTimeout(() => {
-      mockApi
-        .suggestSpecies(query)
-        .then(r => {
-          setResults(r)
-          setLoading(false)
+    const timer = setTimeout(() => {
+      suggestSpecies(q)
+        .then(found => {
+          if (!ignore) {
+            setResults(found)
+            setLoading(false)
+          }
         })
         .catch(() => {
-          setResults([])
-          setLoading(false)
+          if (!ignore) {
+            setResults([])
+            setLoading(false)
+          }
         })
-    }, 300)
+    }, DEBOUNCE_MS)
 
+    // Dropping a superseded response keeps an out-of-order resolve from clobbering
+    // newer results.
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
+      ignore = true
+      clearTimeout(timer)
     }
   }, [query])
 
