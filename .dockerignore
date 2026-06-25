@@ -1,0 +1,12 @@
+vendor
+node_modules
+.git
+docs
+.superpowers
+.idea
+storage/logs
+storage/framework
+public/build
+docker/data
+.env
+.env.*.local

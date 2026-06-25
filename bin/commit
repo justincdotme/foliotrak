@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Commit from inside the app container so the pre-commit checks (Pint, PHPStan)
+# run against the container's PHP and vendor rather than the host. Author
+# identity comes from the repo-local git config, which the container reads
+# through the bind-mounted .git. Push from the host; the GitHub key never
+# enters the container.
+set -euo pipefail
+exec docker compose run --rm --no-deps \
+  app git -c core.hooksPath=.githooks commit "$@"

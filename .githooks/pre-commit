@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Runs in the app container via ./bin/commit, where PHP and vendor are present.
+set -e
+
+vendor/bin/pint --test
+vendor/bin/phpstan analyse --no-progress

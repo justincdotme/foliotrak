@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run the PHP test suite against an isolated in-memory SQLite database so it
+# never touches the dev MySQL data. The app container sets DB_CONNECTION=mysql
+# as a real env var, which overrides phpunit.xml, so the connection is forced
+# here via -e. CI runs `php artisan test` directly on a clean runner where no
+# conflicting env is present.
+set -euo pipefail
+exec docker compose run --rm --no-deps \
+  -e APP_ENV=testing \
+  -e DB_CONNECTION=sqlite \
+  -e DB_DATABASE=:memory: \
+  app php artisan test "$@"
