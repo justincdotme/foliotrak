@@ -32,6 +32,7 @@ auth.json
 /.superpowers
 /docs/project
 /CLAUDE.md
+/temp
 
 # Laravel default .gitignore (latest), duplicates of the above omitted
 *.log
@@ -43,3 +44,9 @@ auth.json
 /.vscode
 /.zed
 Thumbs.db
+
+# Docker bind-mounted MySQL data and generated TLS certs. Keep the certs
+# directory in the repo so Docker does not root-create it on first boot.
+/docker/data
+/docker/nginx/certs/*
+!/docker/nginx/certs/.gitkeep
