@@ -151,10 +151,12 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
               <MapPin size={12} />
               {plant.location || 'No location'}
             </span>
-            <span className="flex items-center gap-1">
-              <Calendar size={12} />
-              Since {fmtDateY(plant.acquired_on || '')}
-            </span>
+            {plant.acquired_on && (
+              <span className="flex items-center gap-1">
+                <Calendar size={12} />
+                Since {fmtDateY(plant.acquired_on)}
+              </span>
+            )}
             {plant.gbif_key && (
               <a
                 href={`https://www.gbif.org/species/${plant.gbif_key}`}
