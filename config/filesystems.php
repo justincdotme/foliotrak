@@ -47,6 +47,15 @@ return [
             'report' => false,
         ],
 
+        // Plant photos. nginx serves this directory directly under /uploads; the
+        // disk indirection keeps a later swap to S3/MinIO a config change (D15).
+        'photos' => [
+            'driver' => 'local',
+            'root' => env('PHOTOS_DISK_ROOT', storage_path('app/uploads')),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
