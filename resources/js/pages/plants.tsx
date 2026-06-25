@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Leaf, MapPin, Plus, Search, Sprout } from 'lucide-react'
+import { Check, Leaf, MapPin, Plus, Search, Sprout } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -9,17 +9,21 @@ import { EmptyState } from '@/components/app/empty-state'
 import { Spinner } from '@/components/app/spinner'
 import { StatusPill } from '@/components/app/status-pill'
 import { WaterDrop } from '@/components/app/water-drop'
-import { TAGS } from '@/api/mock'
-import { nextDue, plantCondition } from '@/api/mock'
-import type { PlantWithTags } from '@/api/types'
+import type { CareStatus, PlantWithTags } from '@/api/types'
+import { photoUrl } from '@/lib/photos'
 import { usePlants } from '@/hooks/usePlants'
+import { useTags } from '@/hooks/useTags'
 
 interface PlantsPageProps {
   go: (to: string) => void
   onAdd: () => void
 }
 
-function waterLabel(due: ReturnType<typeof nextDue>) {
+// Water need is derived from logged waterings; until care logging exists the card
+// shows the no-reading droplet.
+type WaterNeed = { status: CareStatus; daysLeft: number; interval: number } | null
+
+function waterLabel(due: WaterNeed) {
   if (!due) return { text: 'No watering logged', color: 'var(--text-subtle)' }
   if (due.status === 'overdue')
     return { text: `Water ${Math.abs(due.daysLeft)}d overdue`, color: 'var(--overdue)' }
@@ -37,8 +41,8 @@ interface PlantCardProps {
 }
 
 function PlantCard({ p, onClick }: PlantCardProps) {
-  const due = nextDue(p)
-  const cond = plantCondition(p)
+  const due: WaterNeed = null
+  const cond = p.condition
   const wl = waterLabel(due)
 
   return (
@@ -47,13 +51,26 @@ function PlantCard({ p, onClick }: PlantCardProps) {
       className="group flex flex-col text-left bg-surface border border-border rounded-[10px] overflow-hidden hover:border-border-strong transition-colors"
     >
       <div
-        className="aspect-[4/3] relative grid place-items-center text-text-subtle"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(135deg, color-mix(in srgb, var(--primary) 9%, transparent) 0 12px, transparent 12px 24px)',
-        }}
+        className="aspect-[4/3] relative grid place-items-center text-text-subtle overflow-hidden"
+        style={
+          p.cover_photo
+            ? undefined
+            : {
+                backgroundImage:
+                  'repeating-linear-gradient(135deg, color-mix(in srgb, var(--primary) 9%, transparent) 0 12px, transparent 12px 24px)',
+              }
+        }
       >
-        <Leaf size={28} />
+        {p.cover_photo ? (
+          <img
+            src={photoUrl(p.cover_photo.path)}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <Leaf size={28} />
+        )}
         <div className="absolute top-2 left-2">
           <ConditionChip cond={cond} />
         </div>
@@ -86,7 +103,6 @@ function PlantCard({ p, onClick }: PlantCardProps) {
             className="mt-2.5 pt-2.5 border-t border-border flex items-center gap-1.5 text-[12px] font-medium"
             style={{ color: wl.color }}
           >
-            {due && due.status === 'overdue' && <AlertTriangle size={13} />}
             {wl.text}
           </div>
         )}
@@ -97,6 +113,7 @@ function PlantCard({ p, onClick }: PlantCardProps) {
 
 export function PlantsPage({ go, onAdd }: PlantsPageProps) {
   const { data: plants, loading } = usePlants()
+  const { data: tags } = useTags()
   const [q, setQ] = useState('')
   const [tagF, setTagF] = useState<number | null>(null)
   const [statusF, setStatusF] = useState<string[]>(['active'])
@@ -142,7 +159,7 @@ export function PlantsPage({ go, onAdd }: PlantsPageProps) {
           className="w-auto min-w-[140px] h-11 px-3 rounded-md bg-surface-raised border border-border-strong text-text placeholder:text-text-subtle focus:border-primary outline-none transition-colors"
         >
           <option value="">All tags</option>
-          {TAGS.map(t => (
+          {(tags || []).map(t => (
             <option key={t.id} value={t.id}>
               {t.name}
             </option>

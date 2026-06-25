@@ -1,7 +1,6 @@
-import { Check, Info, MapPin, Move } from 'lucide-react'
+import { Check, Info, MapPin } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { PlantWithTags, Tag } from '@/api/types'
-import { mockApi } from '@/api/mock'
 import { Button } from '@/components/ui/button'
 import { Chip } from '@/components/app/chip'
 import { Field } from '@/components/app/field'
@@ -9,9 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/app/modal'
 import { Segmented } from '@/components/app/segmented'
 import { Textarea } from '@/components/ui/textarea'
-import { Toggle } from '@/components/app/toggle'
-import { commit } from '@/hooks/useAsync'
-import { TAGS } from '@/api/mock'
+import { useTags } from '@/hooks/useTags'
+import { useUpdatePlant } from '@/hooks/usePlantMutations'
 
 interface EditPlantModalProps {
   plant: PlantWithTags
@@ -26,12 +24,12 @@ const STATUS_HELP: Record<string, string> = {
 }
 
 export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
+  const { data: allTags } = useTags()
+  const update = useUpdatePlant(plant.id)
   const [location, setLocation] = useState(plant.location || '')
   const [notes, setNotes] = useState(plant.notes || '')
   const [status, setStatus] = useState(plant.status)
   const [tags, setTags] = useState<Tag[]>(plant.tags)
-  const [logMove, setLogMove] = useState(true)
-  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -39,7 +37,6 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       setNotes(plant.notes || '')
       setStatus(plant.status)
       setTags(plant.tags)
-      setLogMove(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, plant.id])
@@ -47,24 +44,15 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const toggleTag = (t: Tag) =>
     setTags(ts => (ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]))
 
-  const moved = location.trim() !== (plant.location || '')
-
+  // A location change updates the plant; recording the move as a logged relocation
+  // event waits until care logging exists.
   const save = async () => {
-    setBusy(true)
-    await mockApi.updatePlant(plant.id, {
+    await update.mutateAsync({
       location: location.trim() || null,
       notes: notes.trim() || null,
       status,
-      tags,
+      tag_ids: tags.map(t => t.id),
     })
-    if (moved && logMove && location.trim()) {
-      await mockApi.createRelocation(plant.id, {
-        from_location: plant.location,
-        to_location: location.trim(),
-      })
-    }
-    commit()
-    setBusy(false)
     onClose()
   }
 
@@ -79,7 +67,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={save} disabled={busy}>
+          <Button onClick={save} disabled={update.isPending}>
             <Check size={16} />
             Save changes
           </Button>
@@ -101,16 +89,6 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
             />
           </div>
         </Field>
-        {moved && (
-          // eslint-disable-next-line jsx-a11y/label-has-associated-control
-          <label className="flex items-center gap-2.5 -mt-1 rounded-[8px] bg-surface-raised border border-border p-2.5">
-            <Toggle checked={logMove} onChange={setLogMove} />
-            <span className="text-[12px] text-text-muted">
-              <Move size={12} className="inline mr-1" />
-              Add this move to the placement history
-            </span>
-          </label>
-        )}
         <Field label="Notes">
           <Textarea
             value={notes}
@@ -120,7 +98,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
         </Field>
         <Field label="Tags">
           <div className="flex flex-wrap gap-1.5">
-            {TAGS.map(t => {
+            {(allTags || []).map(t => {
               const sel = !!tags.find(x => x.id === t.id)
               return (
                 <Chip

@@ -24,7 +24,7 @@ class PlantController extends Controller
         $this->authorize('viewAny', Plant::class);
 
         $plants = Plant::query()
-            ->with('tags')
+            ->with(['tags', 'coverPhoto'])
             ->when($request->filled('tag'), fn ($query) => $query->whereHas(
                 'tags',
                 fn ($tags) => $tags->whereKey($request->integer('tag')),
@@ -46,7 +46,7 @@ class PlantController extends Controller
             return $plant;
         });
 
-        return PlantResource::make($plant->load('tags'))
+        return PlantResource::make($plant->load(['tags', 'coverPhoto']))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }
@@ -55,7 +55,7 @@ class PlantController extends Controller
     {
         $this->authorize('view', $plant);
 
-        return PlantResource::make($plant->load('tags'));
+        return PlantResource::make($plant->load(['tags', 'coverPhoto']));
     }
 
     public function update(UpdatePlantRequest $request, Plant $plant): PlantResource
@@ -67,7 +67,7 @@ class PlantController extends Controller
             $this->syncTags($request, $plant);
         });
 
-        return PlantResource::make($plant->load('tags'));
+        return PlantResource::make($plant->load(['tags', 'coverPhoto']));
     }
 
     public function destroy(Plant $plant): Response

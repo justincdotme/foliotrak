@@ -1,40 +1,37 @@
-import { useState, type KeyboardEvent, type SyntheticEvent } from 'react'
+import { useState, type ChangeEvent, type KeyboardEvent, type SyntheticEvent } from 'react'
 import { Check, ImageIcon, MapPin, Plus, Search } from 'lucide-react'
-import { mockApi, TAGS } from '@/api/mock'
-import { commit } from '@/hooks/useAsync'
+import type { SpeciesSuggestion, Tag } from '@/api/types'
 import { cn } from '@/lib/utils'
 import { useSpeciesSuggest } from '@/hooks/useSpeciesSuggest'
+import { useTags } from '@/hooks/useTags'
+import { useCreatePlant } from '@/hooks/usePlantMutations'
 import { inputClass } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { Chip } from '@/components/app/chip'
 
-const dateOnly = (isoStr: string): string => isoStr.slice(0, 10)
-const iso = (daysAgo: number = 0): string => {
-  const DAY = 86400000
-  const d = new Date(new Date().getTime() - daysAgo * DAY)
-  d.setHours(9, 0, 0, 0)
-  return d.toISOString()
-}
+const today = (): string => new Date().toISOString().slice(0, 10)
 
 interface AddPlantFormProps {
   onDone: () => void
 }
 
 export function AddPlantForm({ onDone }: AddPlantFormProps) {
+  const { data: allTags } = useTags()
+  const create = useCreatePlant()
   const [common, setCommon] = useState('')
   const [sci, setSci] = useState('')
   const [gbifKey, setGbifKey] = useState<string | null>(null)
   const [location, setLocation] = useState('')
-  const [acquired, setAcquired] = useState(dateOnly(iso(0)))
-  const [selectedTags, setSelectedTags] = useState<typeof TAGS>([])
+  const [acquired, setAcquired] = useState(today())
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const { results, loading } = useSpeciesSuggest(common)
-  const [busy, setBusy] = useState(false)
 
-  const pick = (g: (typeof results)[0]) => {
+  const pick = (g: SpeciesSuggestion) => {
     setCommon(g.common_name || g.canonical_name || '')
     setSci(g.canonical_name || '')
     setGbifKey(g.gbif_key)
@@ -47,7 +44,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
     setOpen(false)
   }
 
-  const toggleTag = (t: (typeof TAGS)[0]) => {
+  const toggleTag = (t: Tag) => {
     setSelectedTags(ts =>
       ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]
     )
@@ -74,17 +71,22 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault()
     if (!common.trim()) return
-    setBusy(true)
-    await mockApi.createPlant({
-      common_name: common.trim(),
-      scientific_name: sci || null,
-      gbif_key: gbifKey,
-      location: location || null,
-      acquired_on: acquired,
-      tags: selectedTags,
-    })
-    commit()
-    onDone()
+    try {
+      await create.mutateAsync({
+        payload: {
+          common_name: common.trim(),
+          scientific_name: sci || null,
+          gbif_key: gbifKey,
+          location: location || null,
+          acquired_on: acquired,
+          tag_ids: selectedTags.map(t => t.id),
+        },
+        coverFile: photoFile,
+      })
+      onDone()
+    } catch {
+      // The failure line below covers the error; the form stays for a retry.
+    }
   }
 
   return (
@@ -188,7 +190,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
       </Field>
       <Field label="Tags">
         <div className="flex flex-wrap gap-1.5">
-          {TAGS.map(t => {
+          {(allTags || []).map(t => {
             const sel = !!selectedTags.find(x => x.id === t.id)
             return (
               <Chip
@@ -205,15 +207,25 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
           })}
         </div>
       </Field>
-      <Field label="Photo" hint="optional">
+      <Field label="Photo" hint="optional, becomes the cover">
         <label className="flex h-11 cursor-pointer items-center gap-2 rounded-[8px] border border-dashed border-border-strong bg-surface-raised px-3 text-text-muted hover:text-text">
           <ImageIcon size={16} />
-          <span className="text-[13px]">Add a photo</span>
-          <input type="file" accept="image/*" className="hidden" />
+          <span className="text-[13px] truncate">{photoFile ? photoFile.name : 'Add a photo'}</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setPhotoFile(e.target.files?.[0] ?? null)
+            }
+          />
         </label>
       </Field>
+      {create.isError && (
+        <div className="text-[12px] text-overdue">Could not add the plant. Try again.</div>
+      )}
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="submit" disabled={busy || !common.trim()}>
+        <Button type="submit" disabled={create.isPending || !common.trim()}>
           <Plus size={16} />
           Add plant
         </Button>

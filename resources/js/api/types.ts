@@ -26,6 +26,8 @@ export interface Plant {
   watering_interval_days_override: number | null
   fertilizing_interval_days_override: number | null
   cover_photo_id: number | null
+  cover_photo: Photo | null
+  condition: Condition
   created_at: string
   updated_at: string
 }

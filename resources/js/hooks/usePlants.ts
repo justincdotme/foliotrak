@@ -1,13 +1,7 @@
-import { mockApi } from '@/api/mock'
-import type { PlantWithTags } from '@/api/types'
-import { useAsync } from './useAsync'
+import { useQuery } from '@tanstack/react-query'
+import { listPlants } from '@/api/client'
 
-interface AsyncState<T> {
-  data: T | null
-  loading: boolean
-  error: Error | null
-}
-
-export function usePlants(): AsyncState<PlantWithTags[]> {
-  return useAsync(() => mockApi.listPlants(), [])
+export function usePlants() {
+  const query = useQuery({ queryKey: ['plants'], queryFn: listPlants })
+  return { data: query.data ?? null, loading: query.isPending, error: query.error }
 }

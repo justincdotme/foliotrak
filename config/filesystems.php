@@ -48,10 +48,13 @@ return [
         ],
 
         // Plant photos. nginx serves this directory directly under /uploads; the
-        // disk indirection keeps a later swap to S3/MinIO a config change (D15).
+        // disk indirection keeps a later swap to S3/MinIO a config change.
         'photos' => [
             'driver' => 'local',
             'root' => env('PHOTOS_DISK_ROOT', storage_path('app/uploads')),
+            // nginx serves this directory, so files and directories must be
+            // world-readable rather than the local driver's private default.
+            'visibility' => 'public',
             'throw' => false,
             'report' => false,
         ],

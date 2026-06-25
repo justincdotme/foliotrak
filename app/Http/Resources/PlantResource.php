@@ -30,6 +30,7 @@ class PlantResource extends JsonResource
             'watering_interval_days_override' => $this->watering_interval_days_override,
             'fertilizing_interval_days_override' => $this->fertilizing_interval_days_override,
             'cover_photo_id' => $this->cover_photo_id,
+            'cover_photo' => $this->coverPhoto ? new PhotoResource($this->coverPhoto) : null,
             'condition' => $this->resource->condition(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
