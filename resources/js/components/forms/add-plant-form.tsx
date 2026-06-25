@@ -1,0 +1,223 @@
+import { useState, type KeyboardEvent, type SyntheticEvent } from 'react'
+import { Check, ImageIcon, MapPin, Plus, Search } from 'lucide-react'
+import { mockApi, TAGS } from '@/api/mock'
+import { commit } from '@/hooks/useAsync'
+import { cn } from '@/lib/utils'
+import { useSpeciesSuggest } from '@/hooks/useSpeciesSuggest'
+import { inputClass } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Field } from '@/components/app/field'
+import { Input } from '@/components/ui/input'
+import { Chip } from '@/components/app/chip'
+
+const dateOnly = (isoStr: string): string => isoStr.slice(0, 10)
+const iso = (daysAgo: number = 0): string => {
+  const DAY = 86400000
+  const d = new Date(new Date().getTime() - daysAgo * DAY)
+  d.setHours(9, 0, 0, 0)
+  return d.toISOString()
+}
+
+interface AddPlantFormProps {
+  onDone: () => void
+}
+
+export function AddPlantForm({ onDone }: AddPlantFormProps) {
+  const [common, setCommon] = useState('')
+  const [sci, setSci] = useState('')
+  const [gbifKey, setGbifKey] = useState<string | null>(null)
+  const [location, setLocation] = useState('')
+  const [acquired, setAcquired] = useState(dateOnly(iso(0)))
+  const [selectedTags, setSelectedTags] = useState<typeof TAGS>([])
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(-1)
+  const { results, loading } = useSpeciesSuggest(common)
+  const [busy, setBusy] = useState(false)
+
+  const pick = (g: (typeof results)[0]) => {
+    setCommon(g.common_name || g.canonical_name || '')
+    setSci(g.canonical_name || '')
+    setGbifKey(g.gbif_key)
+    setOpen(false)
+    setActive(-1)
+  }
+
+  const keep = () => {
+    setGbifKey(null)
+    setOpen(false)
+  }
+
+  const toggleTag = (t: (typeof TAGS)[0]) => {
+    setSelectedTags(ts =>
+      ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]
+    )
+  }
+
+  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (!open) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActive(a => Math.min(a + 1, results.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActive(a => Math.max(a - 1, 0))
+    } else if (e.key === 'Enter') {
+      if (active >= 0 && results[active]) {
+        e.preventDefault()
+        pick(results[active])
+      }
+    } else if (e.key === 'Escape') {
+      setOpen(false)
+    }
+  }
+
+  const submit = async (e: SyntheticEvent) => {
+    e.preventDefault()
+    if (!common.trim()) return
+    setBusy(true)
+    await mockApi.createPlant({
+      common_name: common.trim(),
+      scientific_name: sci || null,
+      gbif_key: gbifKey,
+      location: location || null,
+      acquired_on: acquired,
+      tags: selectedTags,
+    })
+    commit()
+    onDone()
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <Field label="Name" required hint="search a species or type your own">
+        <div className="relative">
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle"
+            />
+            <input
+              value={common}
+              onChange={e => {
+                setCommon(e.target.value)
+                setOpen(true)
+                setGbifKey(null)
+              }}
+              onFocus={() => setOpen(true)}
+              onKeyDown={onKey}
+              placeholder="Pothos, Monstera, snake plant…"
+              className={cn(inputClass, 'pl-9')}
+              role="combobox"
+              aria-expanded={open}
+              aria-autocomplete="list"
+              aria-controls="species-list"
+            />
+          </div>
+          {open && common.trim().length >= 2 && (
+            <div
+              id="species-list"
+              className="absolute left-0 right-0 z-10 mt-1 overflow-hidden rounded-[10px] border border-border bg-surface-raised shadow-xl"
+            >
+              <div
+                className="border-b border-border px-3 py-1.5 text-[11px] text-text-subtle"
+                aria-live="polite"
+              >
+                {loading
+                  ? 'Searching…'
+                  : results.length + ' result' + (results.length === 1 ? '' : 's')}
+              </div>
+              {results.map((g, i) => (
+                <button
+                  key={g.gbif_key}
+                  type="button"
+                  onMouseEnter={() => setActive(i)}
+                  onClick={() => pick(g)}
+                  className={cn(
+                    'w-full flex flex-col gap-0.5 px-3 py-2 text-left',
+                    active === i ? 'bg-surface' : ''
+                  )}
+                >
+                  <span className="text-[13px]">
+                    <span className="italic">{g.canonical_name}</span>
+                    {g.common_name && <span className="text-text-muted"> · {g.common_name}</span>}
+                  </span>
+                  <span className="text-[11px] text-text-subtle">
+                    {g.rank?.toLowerCase()} · {g.family}
+                  </span>
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={keep}
+                className="w-full border-t border-border px-3 py-2 text-left text-[13px] text-text-muted hover:bg-surface flex items-center gap-2"
+              >
+                <Plus size={14} />
+                Keep &quot;{common.trim()}&quot; as a custom name
+              </button>
+            </div>
+          )}
+        </div>
+      </Field>
+      <Field label="Scientific name" hint="italic, optional">
+        <Input
+          value={sci}
+          onChange={e => setSci(e.target.value)}
+          className="italic"
+          placeholder="Epipremnum aureum"
+        />
+        {gbifKey && (
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-text-subtle">
+            <Check size={12} className="text-primary" />
+            Matched GBIF {gbifKey}
+          </div>
+        )}
+      </Field>
+      <Field label="Location" hint="optional">
+        <div className="relative">
+          <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
+          <Input
+            value={location}
+            onChange={e => setLocation(e.target.value)}
+            className="pl-9"
+            placeholder="Living room shelf"
+          />
+        </div>
+      </Field>
+      <Field label="Acquired on" hint="optional">
+        <Input type="date" value={acquired} onChange={e => setAcquired(e.target.value)} />
+      </Field>
+      <Field label="Tags">
+        <div className="flex flex-wrap gap-1.5">
+          {TAGS.map(t => {
+            const sel = !!selectedTags.find(x => x.id === t.id)
+            return (
+              <Chip
+                key={t.id}
+                color={t.color || 'var(--series-1)'}
+                active={sel}
+                outline={!sel}
+                onClick={() => toggleTag(t)}
+              >
+                {sel && <Check size={12} />}
+                {t.name}
+              </Chip>
+            )
+          })}
+        </div>
+      </Field>
+      <Field label="Photo" hint="optional">
+        <label className="flex h-11 cursor-pointer items-center gap-2 rounded-[8px] border border-dashed border-border-strong bg-surface-raised px-3 text-text-muted hover:text-text">
+          <ImageIcon size={16} />
+          <span className="text-[13px]">Add a photo</span>
+          <input type="file" accept="image/*" className="hidden" />
+        </label>
+      </Field>
+      <div className="flex justify-end gap-2 pt-1">
+        <Button type="submit" disabled={busy || !common.trim()}>
+          <Plus size={16} />
+          Add plant
+        </Button>
+      </div>
+    </form>
+  )
+}

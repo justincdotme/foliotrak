@@ -6,6 +6,8 @@ services:
       MYSQL_USER: ${DB_USERNAME:-foliotrak}
       MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secret}
+    ports:
+      - "${DB_FORWARD_HOST:-127.0.0.1}:${DB_FORWARD_PORT:-3306}:3306"
     volumes:
       - ./docker/data/mysql:/var/lib/mysql
     healthcheck:

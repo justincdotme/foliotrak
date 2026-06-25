@@ -1,0 +1,33 @@
+// The app's reference "now". The mock seeds history relative to this, so
+// relative labels stay consistent with the seeded data.
+export const NOW = new Date()
+const DAY = 86400000
+
+export function fmtDate(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+export function fmtDateY(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+export function fmtTime(value: string): string {
+  return new Date(value).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
+export function relDay(value: string): string {
+  const days = Math.floor((NOW.getTime() - new Date(value).getTime()) / DAY)
+  if (days <= 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
+  if (days < 14) return '1 week ago'
+  return `${Math.floor(days / 7)} weeks ago`
+}
+
+export function ageDays(isoStr: string): number {
+  return Math.floor((NOW.getTime() - new Date(isoStr).getTime()) / DAY)
+}
