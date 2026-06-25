@@ -50,3 +50,6 @@ Thumbs.db
 /docker/data
 /docker/nginx/certs/*
 !/docker/nginx/certs/.gitkeep
+
+# Linked git worktrees
+.worktrees/
