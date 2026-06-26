@@ -10,9 +10,11 @@ import type {
   PlantStatus,
   PlantTimeline,
   PlantWithTags,
+  Settings,
   SpeciesSuggestion,
   Symptom,
   Tag,
+  User,
   WeightInput,
 } from './types'
 
@@ -190,3 +192,17 @@ export const listNutrients = async (): Promise<NutrientOption[]> =>
 
 export const listFertilizerForms = async (): Promise<FertilizerFormOption[]> =>
   unwrap(await api.get<{ data: FertilizerFormOption[] }>('/api/fertilizer-forms'))
+
+// The /api/user route returns the model directly, not the `data` envelope the
+// API Resources use, so this one is read without unwrap.
+export const getUser = async (): Promise<User> => (await api.get<User>('/api/user')).data
+
+export interface SettingsPayload {
+  pushover_user_key?: string | null
+}
+
+export const getSettings = async (): Promise<Settings> =>
+  unwrap(await api.get<{ data: Settings }>('/api/settings'))
+
+export const updateSettings = async (payload: SettingsPayload): Promise<Settings> =>
+  unwrap(await api.patch<{ data: Settings }>('/api/settings', payload))

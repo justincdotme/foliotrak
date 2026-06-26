@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useTheme } from '@/hooks/useTheme'
-import { USER } from '@/api/mock'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { cn } from '@/lib/utils'
 import { initials, NAV } from './nav'
 
@@ -22,6 +22,7 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { isDark, toggle } = useTheme()
+  const { user } = useCurrentUser()
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface/90 backdrop-blur">
@@ -67,13 +68,13 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="grid h-9 w-9 place-items-center rounded-full bg-primary/15 text-[13px] font-semibold text-primary">
-                {initials(USER.name)}
+                {initials(user?.name ?? '')}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-44 p-1">
               <div className="border-b border-border px-3 py-2">
-                <div className="text-[13px] font-medium">{USER.name}</div>
-                <div className="tnum text-[11px] text-text-subtle">{USER.email}</div>
+                <div className="text-[13px] font-medium">{user?.name}</div>
+                <div className="tnum text-[11px] text-text-subtle">{user?.email}</div>
               </div>
               <DropdownMenuItem onSelect={() => navigate('/settings')}>
                 <Settings size={15} />

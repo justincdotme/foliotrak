@@ -14,6 +14,10 @@ export interface User {
   pushover_user_key: string | null
 }
 
+export interface Settings {
+  pushover_user_key: string | null
+}
+
 export interface Plant {
   id: number
   common_name: string | null
@@ -157,8 +161,8 @@ export type ConditionKey =
   | 'unknown'
   | 'dead'
 
-// Derived, presentation-only at-a-glance condition from the latest observation
-// plus watering status. No storage; the rules live in the mock derivation.
+// Derived at-a-glance condition (no stored column): the latest observation plus
+// watering status, resolved to a label for display.
 export interface Condition {
   key: ConditionKey
   label: string
