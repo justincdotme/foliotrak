@@ -36,26 +36,15 @@ services:
     networks:
       - app-network
 
+  # The PHP services (migrate, app, worker, scheduler) read all Laravel
+  # configuration from the bind-mounted .env. Do not add config as `environment:`
+  # here: OS-level env vars override .env and .env.testing, which silently breaks
+  # `php artisan test` (it can no longer switch into the testing environment).
   migrate:
     build:
       context: .
       dockerfile: docker/Dockerfile
     working_dir: /var/www/html
-    environment:
-      APP_ENV: ${APP_ENV:-local}
-      APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: ${APP_URL:-http://localhost}
-      APP_KEY: ${APP_KEY}
-      DB_CONNECTION: ${DB_CONNECTION:-mysql}
-      DB_HOST: mysql
-      DB_PORT: ${DB_PORT:-3306}
-      DB_DATABASE: ${DB_DATABASE:-foliotrak}
-      DB_USERNAME: ${DB_USERNAME:-foliotrak}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
-      SESSION_DOMAIN: ${SESSION_DOMAIN:-localhost}
-      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
-      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1}
-      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
     volumes:
       - .:/var/www/html
     command: php artisan migrate --force --seed
@@ -72,24 +61,6 @@ services:
       dockerfile: docker/Dockerfile
     working_dir: /var/www/html
     user: "1000:1000"
-    environment:
-      APP_ENV: ${APP_ENV:-local}
-      APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: ${APP_URL:-http://localhost}
-      APP_KEY: ${APP_KEY}
-      DB_CONNECTION: ${DB_CONNECTION:-mysql}
-      DB_HOST: mysql
-      DB_PORT: ${DB_PORT:-3306}
-      DB_DATABASE: ${DB_DATABASE:-foliotrak}
-      DB_USERNAME: ${DB_USERNAME:-foliotrak}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
-      SESSION_DOMAIN: ${SESSION_DOMAIN:-localhost}
-      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
-      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1}
-      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
-      SCOUT_DRIVER: ${SCOUT_DRIVER:-meilisearch}
-      MEILISEARCH_HOST: ${MEILISEARCH_HOST:-http://meilisearch:7700}
-      MEILISEARCH_KEY: ${MEILISEARCH_KEY:-foliotrak_local_meili_master_key}
     volumes:
       - .:/var/www/html
     depends_on:
@@ -108,24 +79,6 @@ services:
       dockerfile: docker/Dockerfile
     working_dir: /var/www/html
     user: "1000:1000"
-    environment:
-      APP_ENV: ${APP_ENV:-local}
-      APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: ${APP_URL:-http://localhost}
-      APP_KEY: ${APP_KEY}
-      DB_CONNECTION: ${DB_CONNECTION:-mysql}
-      DB_HOST: mysql
-      DB_PORT: ${DB_PORT:-3306}
-      DB_DATABASE: ${DB_DATABASE:-foliotrak}
-      DB_USERNAME: ${DB_USERNAME:-foliotrak}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
-      SESSION_DOMAIN: ${SESSION_DOMAIN:-localhost}
-      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
-      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1}
-      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
-      SCOUT_DRIVER: ${SCOUT_DRIVER:-meilisearch}
-      MEILISEARCH_HOST: ${MEILISEARCH_HOST:-http://meilisearch:7700}
-      MEILISEARCH_KEY: ${MEILISEARCH_KEY:-foliotrak_local_meili_master_key}
     volumes:
       - .:/var/www/html
     command: php artisan queue:work
@@ -145,24 +98,6 @@ services:
       dockerfile: docker/Dockerfile
     working_dir: /var/www/html
     user: "1000:1000"
-    environment:
-      APP_ENV: ${APP_ENV:-local}
-      APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: ${APP_URL:-http://localhost}
-      APP_KEY: ${APP_KEY}
-      DB_CONNECTION: ${DB_CONNECTION:-mysql}
-      DB_HOST: mysql
-      DB_PORT: ${DB_PORT:-3306}
-      DB_DATABASE: ${DB_DATABASE:-foliotrak}
-      DB_USERNAME: ${DB_USERNAME:-foliotrak}
-      DB_PASSWORD: ${DB_PASSWORD:-secret}
-      SESSION_DOMAIN: ${SESSION_DOMAIN:-localhost}
-      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
-      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1}
-      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
-      SCOUT_DRIVER: ${SCOUT_DRIVER:-meilisearch}
-      MEILISEARCH_HOST: ${MEILISEARCH_HOST:-http://meilisearch:7700}
-      MEILISEARCH_KEY: ${MEILISEARCH_KEY:-foliotrak_local_meili_master_key}
     volumes:
       - .:/var/www/html
     command: php artisan schedule:work
