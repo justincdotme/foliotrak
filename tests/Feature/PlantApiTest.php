@@ -9,6 +9,7 @@ use App\Models\Photo;
 use App\Models\Plant;
 use App\Models\Tag;
 use App\Models\User;
+use Database\Seeders\CareLookupSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -16,6 +17,14 @@ use Tests\TestCase;
 class PlantApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // A location change logs a relocation, which needs the care-event types.
+        $this->seed(CareLookupSeeder::class);
+    }
 
     private function actAsHousehold(): User
     {

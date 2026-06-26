@@ -1,9 +1,19 @@
 <?php
 
+use App\Http\Controllers\CareEventController;
+use App\Http\Controllers\CareEventTypeController;
+use App\Http\Controllers\FertilizerFormController;
+use App\Http\Controllers\FertilizingController;
+use App\Http\Controllers\NutrientController;
+use App\Http\Controllers\ObservationController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\PlantController;
+use App\Http\Controllers\RelocationController;
+use App\Http\Controllers\RepottingController;
 use App\Http\Controllers\SpeciesController;
+use App\Http\Controllers\SymptomController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\WateringController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +28,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('plants/{plant}/photos', [PhotoController::class, 'index']);
     Route::post('plants/{plant}/photos', [PhotoController::class, 'store']);
     Route::delete('photos/{photo}', [PhotoController::class, 'destroy']);
+
+    Route::post('plants/{plant}/waterings', [WateringController::class, 'store']);
+    Route::post('plants/{plant}/fertilizings', [FertilizingController::class, 'store']);
+    Route::post('plants/{plant}/repottings', [RepottingController::class, 'store']);
+    Route::post('plants/{plant}/observations', [ObservationController::class, 'store']);
+    Route::post('plants/{plant}/relocations', [RelocationController::class, 'store']);
+    Route::patch('care-events/{event}', [CareEventController::class, 'update']);
+    Route::delete('care-events/{event}', [CareEventController::class, 'destroy']);
+
+    Route::get('care-event-types', [CareEventTypeController::class, 'index']);
+    Route::get('fertilizer-forms', [FertilizerFormController::class, 'index']);
+    Route::get('nutrients', [NutrientController::class, 'index']);
+    Route::get('symptoms', [SymptomController::class, 'index']);
 
     Route::get('species/suggest', [SpeciesController::class, 'suggest']);
 });

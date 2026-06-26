@@ -1,4 +1,5 @@
 import { NOW } from '@/lib/format'
+import { gramsToWeight } from '@/api/types'
 import type {
   User,
   Plant,
@@ -360,6 +361,7 @@ const observation = (plantId: number, daysAgo: number, opts: ObservationOptions)
       growth_note: o.growth_note,
       leaf_size_mm: o.leaf_size_mm,
       weight_grams: o.weight_grams,
+      weight: o.weight_grams != null ? gramsToWeight(o.weight_grams) : null,
       symptoms: [
         ...(o.symptom_ids || []).map(symptomById).filter(s => s !== undefined),
         ...customs,
