@@ -35,6 +35,12 @@ return [
         ],
     ],
 
+    // Application token for Pushover reminders; each user supplies their own
+    // recipient key in settings. Reminders fan out to every user with a key.
+    'pushover' => [
+        'token' => env('PUSHOVER_TOKEN'),
+    ],
+
     'gbif' => [
         'base_url' => env('GBIF_BASE_URL', 'https://api.gbif.org/v1'),
 

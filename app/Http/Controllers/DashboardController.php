@@ -19,8 +19,8 @@ class DashboardController extends Controller
     use AuthorizesRequests;
 
     private const PLANT_RELATIONS = [
-        'latestWateringEvent',
-        'latestFertilizingEvent',
+        'wateringEvents',
+        'fertilizingEvents',
         'latestObservationEvent.observation.symptoms',
     ];
 

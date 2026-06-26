@@ -13,6 +13,7 @@ use App\Http\Controllers\PlantController;
 use App\Http\Controllers\PlantTimelineController;
 use App\Http\Controllers\RelocationController;
 use App\Http\Controllers\RepottingController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\SymptomController;
 use App\Http\Controllers\TagController;
@@ -51,4 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('insights/group', [GroupInsightsController::class, 'index']);
+
+    Route::get('settings', [SettingsController::class, 'show']);
+    Route::patch('settings', [SettingsController::class, 'update']);
 });
