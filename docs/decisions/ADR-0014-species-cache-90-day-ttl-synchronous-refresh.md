@@ -1,13 +1,13 @@
 # ADR-0014: Species cache invalidation with a 90-day TTL and synchronous refresh
 
 ## Status
-Proposed (awaiting owner sign-off to become Accepted). Softens the "durable, never expire" stance of ADR-0011.
+Accepted. Softens the "durable, never expire" stance of ADR-0011.
 
 ## Date
 2026-06-25
 
 ## Deciders
-- Justin Christenson (developer and owner), who chose synchronous refresh over async. Approval pending.
+- Justin Christenson (developer and owner), who chose synchronous refresh over async.
 
 ---
 

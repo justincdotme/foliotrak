@@ -1,13 +1,13 @@
 # ADR-0013: Tiered plant search with Meilisearch primary and a GBIF fuzzy fallback
 
 ## Status
-Proposed (awaiting owner sign-off to become Accepted). When accepted, supersedes the cache-first mechanism of ADR-0011 (the `species_cache` prefix read and decision D31's `species_query_cache`) while preserving ADR-0011's outbound safety envelope.
+Accepted. Supersedes the cache-first mechanism of ADR-0011 (the `species_cache` prefix read and decision D31's `species_query_cache`) while preserving ADR-0011's outbound safety envelope.
 
 ## Date
 2026-06-25
 
 ## Deciders
-- Justin Christenson (developer and owner), who directed the Meilisearch refactor and selected the search architecture. Approval pending.
+- Justin Christenson (developer and owner), who directed the Meilisearch refactor and selected the search architecture.
 
 ---
 

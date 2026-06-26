@@ -20,6 +20,9 @@ interface TimelineOverlayProps {
 }
 
 export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
+  // An empty health series would make the X domain [Infinity, -Infinity].
+  if (health.length === 0) return null
+
   const d = health.map(p => ({
     x: new Date(p.date).getTime(),
     label: fmtDate(p.date),

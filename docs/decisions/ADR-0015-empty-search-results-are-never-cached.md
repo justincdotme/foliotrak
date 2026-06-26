@@ -1,13 +1,13 @@
 # ADR-0015: Empty search results are never cached
 
 ## Status
-Proposed (awaiting owner sign-off to become Accepted). Reverses the empty-result caching introduced in decision D31.
+Accepted. Reverses the empty-result caching introduced in decision D31.
 
 ## Date
 2026-06-25
 
 ## Deciders
-- Justin Christenson (developer and owner), who directed that empty results are never cached. Approval pending.
+- Justin Christenson (developer and owner), who directed that empty results are never cached.
 
 ---
 

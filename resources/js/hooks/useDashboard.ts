@@ -1,13 +1,7 @@
-import { mockApi } from '@/api/mock'
-import type { DashboardData } from '@/api/types'
-import { useAsync } from './useAsync'
+import { useQuery } from '@tanstack/react-query'
+import { getDashboard } from '@/api/client'
 
-interface AsyncState<T> {
-  data: T | null
-  loading: boolean
-  error: Error | null
-}
-
-export function useDashboard(): AsyncState<DashboardData> {
-  return useAsync(() => mockApi.getDashboard(), [])
+export function useDashboard() {
+  const query = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard })
+  return { data: query.data ?? null, loading: query.isPending, error: query.error }
 }

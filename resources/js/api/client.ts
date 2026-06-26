@@ -2,7 +2,9 @@ import type { AxiosResponse } from 'axios'
 import api from '@/lib/api'
 import type {
   CareEvent,
+  DashboardData,
   FertilizerFormOption,
+  GroupInsights,
   NutrientOption,
   Photo,
   PlantStatus,
@@ -173,6 +175,12 @@ export const deleteCareEvent = async (eventId: number): Promise<void> => {
 
 export const getTimeline = async (plantId: number): Promise<PlantTimeline> =>
   unwrap(await api.get<{ data: PlantTimeline }>(`/api/plants/${plantId}/timeline`))
+
+export const getDashboard = async (): Promise<DashboardData> =>
+  unwrap(await api.get<{ data: DashboardData }>('/api/dashboard'))
+
+export const getGroupInsights = async (tagId: number): Promise<GroupInsights> =>
+  unwrap(await api.get<{ data: GroupInsights }>('/api/insights/group', { params: { tag: tagId } }))
 
 export const listSymptoms = async (): Promise<Symptom[]> =>
   unwrap(await api.get<{ data: Symptom[] }>('/api/symptoms'))

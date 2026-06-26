@@ -16,13 +16,20 @@ interface DashboardPageProps {
 
 function DueRow({ item, onClick }: { item: DueForCare; onClick: () => void }) {
   const wl = waterLabel(item)
+  const FertIcon = CARE_META.fertilizing.icon
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center gap-3 p-3 rounded-[8px] hover:bg-surface-raised text-left transition-colors"
     >
       <div className="bg-surface-raised rounded-full p-0.5 shrink-0">
-        <WaterDrop due={item} size={28} />
+        {item.type === 'watering' ? (
+          <WaterDrop due={item} size={28} />
+        ) : (
+          <span className="grid place-items-center w-7 h-7" style={{ color: wl.color }}>
+            <FertIcon size={16} />
+          </span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="font-medium truncate">{item.common_name}</div>
@@ -64,7 +71,9 @@ export function DashboardPage({ go }: DashboardPageProps) {
   }
 
   const d = data
-  const attentionCount = d.due_for_care.filter(x => x.status !== 'ok').length
+  // Count plants, not care entries; a plant can be due for both watering and fertilizing.
+  const attentionCount = new Set(d.due_for_care.filter(x => x.status !== 'ok').map(x => x.plant_id))
+    .size
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BarChart3, Tag as TagIcon } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { SectionTitle } from '@/components/app/section-title'
@@ -6,15 +6,25 @@ import { Chip } from '@/components/app/chip'
 import { EmptyState } from '@/components/app/empty-state'
 import { Spinner } from '@/components/app/spinner'
 import { GroupComparison } from '@/components/charts/group-comparison'
-import { CorrelationScatter } from '@/components/charts/correlation-scatter'
-import { CorrelationHeatmap } from '@/components/charts/correlation-heatmap'
+import { CorrelationPending } from '@/components/charts/correlation-pending'
 import { useTags } from '@/hooks/useTags'
 import { useGroupInsights } from '@/hooks/useGroupInsights'
 
 export function InsightsPage() {
   const { data: tags } = useTags()
-  const [tagId, setTagId] = useState(1)
-  const { data, loading } = useGroupInsights(tagId)
+  const [tagId, setTagId] = useState<number | null>(null)
+  const { data, loading, error } = useGroupInsights(tagId)
+
+  // Default to the first available tag once tags load; DB tag ids are not
+  // guaranteed to start at 1.
+  useEffect(() => {
+    const first = tags?.[0]
+    if (tagId == null && first) setTagId(first.id)
+  }, [tags, tagId])
+
+  // No tag can ever be selected, so the query stays disabled; surface that
+  // instead of an endless spinner.
+  const noTags = tags != null && tags.length === 0
 
   return (
     <div className="space-y-5">
@@ -40,7 +50,19 @@ export function InsightsPage() {
           ))}
         </div>
       </Card>
-      {loading || !data ? (
+      {noTags ? (
+        <Card>
+          <EmptyState icon={TagIcon} title="No tags yet">
+            Tag a couple of plants to compare them as a group.
+          </EmptyState>
+        </Card>
+      ) : error ? (
+        <Card>
+          <EmptyState icon={BarChart3} title="Unable to load insights">
+            Something went wrong fetching this group. Try again.
+          </EmptyState>
+        </Card>
+      ) : loading || !data ? (
         <Spinner />
       ) : data.plants.length < 2 ? (
         <Card>
@@ -51,15 +73,7 @@ export function InsightsPage() {
       ) : (
         <>
           <GroupComparison comparison={data.comparison} />
-          <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))' }}
-          >
-            {data.correlation_pairs.slice(0, 2).map((p, i) => (
-              <CorrelationScatter key={i} pair={p} />
-            ))}
-          </div>
-          <CorrelationHeatmap pairs={data.correlation_pairs} />
+          <CorrelationPending />
         </>
       )}
     </div>
