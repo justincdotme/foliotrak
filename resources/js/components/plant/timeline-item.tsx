@@ -1,8 +1,9 @@
 import { ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import type { CareEvent } from '@/api/types'
+import type { CareEvent, Photo } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { ConfirmDelete } from '@/components/app/confirm-delete'
+import { PhotoTile } from '@/components/app/photo-tile'
 import { CARE_META } from '@/lib/domain'
 import { fmtDate, fmtDateY, fmtTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -10,10 +11,13 @@ import { EventDetail } from './event-detail'
 
 interface TimelineItemProps {
   e: CareEvent
+  photos: Photo[]
+  onEdit: () => void
+  onViewPhoto: (photo: Photo) => void
   onDelete: (id: number) => Promise<void>
 }
 
-export function TimelineItem({ e, onDelete }: TimelineItemProps) {
+export function TimelineItem({ e, photos, onEdit, onViewPhoto, onDelete }: TimelineItemProps) {
   const [open, setOpen] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const m = CARE_META[e.type]
@@ -47,13 +51,25 @@ export function TimelineItem({ e, onDelete }: TimelineItemProps) {
         {open && (
           <div className="mt-2 rounded-[8px] border border-border bg-surface-raised p-3">
             <EventDetail e={e} />
+            {photos.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {photos.map(p => (
+                  <PhotoTile
+                    key={p.id}
+                    photo={p}
+                    className="h-16 w-16 rounded-[6px]"
+                    onClick={() => onViewPhoto(p)}
+                  />
+                ))}
+              </div>
+            )}
             {e.note && (
               <div className="text-[12px] text-text-muted mt-2 pt-2 border-t border-border">
                 {e.note}
               </div>
             )}
             <div className="flex gap-1 mt-2.5 pt-2.5 border-t border-border">
-              <Button size="sm" variant="ghost">
+              <Button size="sm" variant="ghost" onClick={onEdit}>
                 <Pencil size={14} />
                 Edit
               </Button>

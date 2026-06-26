@@ -164,6 +164,22 @@ export interface Condition {
   label: string
 }
 
+// Lookup rows served by the seeded-vocabulary read endpoints. The forms render
+// chips and options from these live ids rather than hardcoding them.
+export interface FertilizerFormOption {
+  id: number
+  key: FertilizerForm
+  label: string
+  sort_order: number
+}
+
+export interface NutrientOption {
+  nutrient_id: number
+  nutrient_key: string
+  nutrient_label: string
+  nutrient_symbol: string | null
+}
+
 export interface SpeciesSuggestion {
   gbif_key: string
   scientific_name: string

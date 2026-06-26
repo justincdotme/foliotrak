@@ -1,13 +1,10 @@
-import { mockApi } from '@/api/mock'
-import type { PlantTimeline } from '@/api/types'
-import { useAsync } from './useAsync'
+import { useQuery } from '@tanstack/react-query'
+import { getTimeline } from '@/api/client'
 
-interface AsyncState<T> {
-  data: T | null
-  loading: boolean
-  error: Error | null
-}
-
-export function useTimeline(id: number): AsyncState<PlantTimeline | null> {
-  return useAsync(() => mockApi.getTimeline(id), [id])
+export function useTimeline(plantId: number) {
+  const query = useQuery({
+    queryKey: ['timeline', plantId],
+    queryFn: () => getTimeline(plantId),
+  })
+  return { data: query.data ?? null, loading: query.isPending, error: query.error }
 }

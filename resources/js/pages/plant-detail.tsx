@@ -16,7 +16,7 @@ import {
   Shovel,
   Sprout,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type {
   CareEvent,
   CareType,
@@ -27,6 +27,8 @@ import type {
 } from '@/api/types'
 import { usePlant } from '@/hooks/usePlant'
 import { usePlantPhotos } from '@/hooks/usePlantPhotos'
+import { useTimeline } from '@/hooks/useTimeline'
+import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ConditionChip } from '@/components/app/condition-chip'
@@ -43,7 +45,7 @@ import { HealthTrend } from '@/components/charts/health-trend'
 import { TimelineOverlay } from '@/components/charts/timeline-overlay'
 import { WeightTrend } from '@/components/charts/weight-trend'
 import { fmtDate, fmtDateY } from '@/lib/format'
-import { photoUrl } from '@/lib/photos'
+import { groupPhotosByCareEvent, photoUrl } from '@/lib/photos'
 import { EditPlantModal } from '@/components/plant/edit-plant-modal'
 import { PrimaryPhotoModal } from '@/components/plant/primary-photo-modal'
 import { ScheduleSection } from '@/components/plant/schedule-section'
@@ -52,15 +54,20 @@ import { TimelineItem } from '@/components/plant/timeline-item'
 interface PlantDetailPageProps {
   id: number
   go: (to: string) => void
-  openLog: (type: CareType) => void
+  openLog: (type: CareType, event?: CareEvent) => void
   viewPhoto: (photo: Photo) => void
 }
 
 export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageProps) {
   const { data: plant, loading } = usePlant(id)
   const { data: photos } = usePlantPhotos(id)
+  const { data: timeline } = useTimeline(id)
+  const { deleteEvent } = useCareEventMutations(id)
   const [editOpen, setEditOpen] = useState(false)
   const [photoOpen, setPhotoOpen] = useState(false)
+
+  const events = timeline?.events ?? []
+  const photosByEvent = useMemo(() => groupPhotosByCareEvent(photos ?? []), [photos])
 
   if (loading) return <Spinner />
 
@@ -73,10 +80,9 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
       </Card>
     )
 
-  // Care events, trends, and recommendations come from the care spine and
-  // visualization endpoints in later phases; a plant logged here has none yet, so
-  // these surfaces render their designed empty states.
-  const events: CareEvent[] = []
+  // Trends and recommendations come from the visualization and recommendation
+  // endpoints built in later phases; until then those surfaces keep their empty
+  // states. The care timeline and schedule gate read the live care events.
   const healthTrend: TrendPoint[] = []
   const weightTrend: TrendPoint[] = []
   const growthTrend: GrowthTrendPoint[] = []
@@ -278,7 +284,14 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
         ) : (
           <div className="mt-1">
             {events.map(e => (
-              <TimelineItem key={e.id} e={e} onDelete={() => Promise.resolve()} />
+              <TimelineItem
+                key={e.id}
+                e={e}
+                photos={photosByEvent[e.id] ?? []}
+                onEdit={() => openLog(e.type, e)}
+                onViewPhoto={viewPhoto}
+                onDelete={() => deleteEvent.mutateAsync(e.id)}
+              />
             ))}
           </div>
         )}

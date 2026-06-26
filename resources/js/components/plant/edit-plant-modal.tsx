@@ -44,8 +44,8 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const toggleTag = (t: Tag) =>
     setTags(ts => (ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]))
 
-  // A location change updates the plant; recording the move as a logged relocation
-  // event waits until care logging exists.
+  // A location change is recorded server-side as a relocation care event, so the
+  // mutation also refreshes the timeline where the move appears.
   const save = async () => {
     await update.mutateAsync({
       location: location.trim() || null,
