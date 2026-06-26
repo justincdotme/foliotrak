@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\CareEvent;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,11 +29,24 @@ class CareEventResource extends JsonResource
             'note' => $this->note,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-            'watering' => $this->whenLoaded('watering', fn () => new WateringDetailResource($this->watering)),
-            'fertilizing' => $this->whenLoaded('fertilizing', fn () => new FertilizingDetailResource($this->fertilizing)),
-            'repotting' => $this->whenLoaded('repotting', fn () => new RepottingDetailResource($this->repotting)),
-            'observation' => $this->whenLoaded('observation', fn () => new ObservationDetailResource($this->observation)),
-            'relocation' => $this->whenLoaded('relocation', fn () => new RelocationDetailResource($this->relocation)),
+            'watering' => $this->detail('watering', fn () => new WateringDetailResource($this->watering)),
+            'fertilizing' => $this->detail('fertilizing', fn () => new FertilizingDetailResource($this->fertilizing)),
+            'repotting' => $this->detail('repotting', fn () => new RepottingDetailResource($this->repotting)),
+            'observation' => $this->detail('observation', fn () => new ObservationDetailResource($this->observation)),
+            'relocation' => $this->detail('relocation', fn () => new RelocationDetailResource($this->relocation)),
         ];
+    }
+
+    /**
+     * Emit a typed detail only when its relation is loaded and present. The timeline
+     * eager-loads all five detail relations on every event, so without the null guard
+     * a watering event would render the four non-matching keys as null.
+     */
+    private function detail(string $relation, Closure $resource): mixed
+    {
+        return $this->when(
+            $this->relationLoaded($relation) && $this->getRelation($relation) !== null,
+            $resource,
+        );
     }
 }
