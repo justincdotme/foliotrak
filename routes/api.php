@@ -2,12 +2,15 @@
 
 use App\Http\Controllers\CareEventController;
 use App\Http\Controllers\CareEventTypeController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FertilizerFormController;
 use App\Http\Controllers\FertilizingController;
+use App\Http\Controllers\GroupInsightsController;
 use App\Http\Controllers\NutrientController;
 use App\Http\Controllers\ObservationController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\PlantController;
+use App\Http\Controllers\PlantTimelineController;
 use App\Http\Controllers\RelocationController;
 use App\Http\Controllers\RepottingController;
 use App\Http\Controllers\SpeciesController;
@@ -24,6 +27,8 @@ Route::get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('plants', PlantController::class);
     Route::apiResource('tags', TagController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::get('plants/{plant}/timeline', [PlantTimelineController::class, 'show']);
 
     Route::get('plants/{plant}/photos', [PhotoController::class, 'index']);
     Route::post('plants/{plant}/photos', [PhotoController::class, 'store']);
@@ -43,4 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('symptoms', [SymptomController::class, 'index']);
 
     Route::get('species/suggest', [SpeciesController::class, 'suggest']);
+
+    Route::get('dashboard', [DashboardController::class, 'index']);
+    Route::get('insights/group', [GroupInsightsController::class, 'index']);
 });

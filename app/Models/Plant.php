@@ -112,6 +112,17 @@ class Plant extends Model
     }
 
     /**
+     * @return HasOne<CareEvent, $this>
+     */
+    public function latestFertilizingEvent(): HasOne
+    {
+        return $this->hasOne(CareEvent::class)->ofMany(
+            ['occurred_at' => 'max', 'id' => 'max'],
+            fn (Builder $query) => $query->whereHas('careEventType', fn (Builder $type) => $type->where('key', 'fertilizing')),
+        );
+    }
+
+    /**
      * At-a-glance condition, resolved from the latest observation and the
      * watering-due signal. The derived (median) watering interval lands in a later
      * phase, so "likely dry" only fires here when a manual override is set.
