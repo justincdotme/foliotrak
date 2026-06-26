@@ -22,9 +22,10 @@ jobs:
           path: vendor
           key: composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: composer-
+      - run: cp .env.example .env
       - run: composer install --no-progress --prefer-dist
       - name: Generate test app key
-        run: php artisan key:generate --env=testing
+        run: php artisan key:generate
       - run: vendor/bin/pint --test
       - run: vendor/bin/phpstan analyse --memory-limit=1G
       - run: php artisan test
