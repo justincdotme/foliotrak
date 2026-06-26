@@ -17,14 +17,7 @@ import {
   Sprout,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import type {
-  CareEvent,
-  CareType,
-  GrowthTrendPoint,
-  Photo,
-  Recommendation,
-  TrendPoint,
-} from '@/api/types'
+import type { CareEvent, CareType, Photo } from '@/api/types'
 import { usePlant } from '@/hooks/usePlant'
 import { usePlantPhotos } from '@/hooks/usePlantPhotos'
 import { useTimeline } from '@/hooks/useTimeline'
@@ -80,16 +73,20 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
       </Card>
     )
 
-  // Trends and recommendations come from the visualization and recommendation
-  // endpoints built in later phases; until then those surfaces keep their empty
-  // states. The care timeline and schedule gate read the live care events.
-  const healthTrend: TrendPoint[] = []
-  const weightTrend: TrendPoint[] = []
-  const growthTrend: GrowthTrendPoint[] = []
-  const recommendations: Recommendation[] = []
+  // The timeline bundle carries the trend series; recommendations and the
+  // watering-due signal arrive with later features, so they stay empty here.
+  const healthTrend = timeline?.health_trend ?? []
+  const weightTrend = timeline?.weight_trend ?? []
+  const growthTrend = timeline?.growth_trend ?? []
+  const recommendations = timeline?.recommendations ?? []
   const photoList = photos ?? []
 
-  const hasObs = healthTrend.length > 0 || weightTrend.length > 0
+  // Each observation-derived series is charted only when it holds a real value;
+  // overall_health is optional, so a length check alone would draw an empty line.
+  const hasHealth = healthTrend.some(p => p.value != null)
+  const hasWeight = weightTrend.some(p => p.value != null)
+  const hasGrowth = growthTrend.some(p => p.value != null)
+
   const due = null
   const cond = plant.condition
 
@@ -220,25 +217,25 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
       />
 
       {/* Charts */}
-      {hasObs ? (
+      {events.length === 0 ? (
+        <Card>
+          <EmptyState icon={BarChart3} title="Nothing to chart yet">
+            Log a watering or observation to start charting activity, health, weight, and growth.
+          </EmptyState>
+        </Card>
+      ) : (
         <div className="space-y-4">
-          <TimelineOverlay health={healthTrend} events={events} />
+          {hasHealth && <TimelineOverlay health={healthTrend} events={events} />}
           <div
             className="grid gap-4"
             style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}
           >
-            {healthTrend.length > 0 && <HealthTrend data={healthTrend} />}
-            {weightTrend.length > 0 && <WeightTrend data={weightTrend} />}
-            {growthTrend.length > 0 && <GrowthTrend data={growthTrend} />}
+            {hasHealth && <HealthTrend data={healthTrend} />}
+            {hasWeight && <WeightTrend data={weightTrend} />}
+            {hasGrowth && <GrowthTrend data={growthTrend} />}
             <ActivityHeatmap events={events} />
           </div>
         </div>
-      ) : (
-        <Card>
-          <EmptyState icon={BarChart3} title="No observations yet">
-            Log an observation to start charting health, weight, and growth.
-          </EmptyState>
-        </Card>
       )}
 
       {/* Photos */}

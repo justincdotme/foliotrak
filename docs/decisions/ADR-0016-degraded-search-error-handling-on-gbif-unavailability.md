@@ -1,13 +1,13 @@
 # ADR-0016: Degraded-search error handling on GBIF unavailability
 
 ## Status
-Proposed (awaiting owner sign-off to become Accepted).
+Accepted.
 
 ## Date
 2026-06-25
 
 ## Deciders
-- Justin Christenson (developer and owner), who chose a 503 over a 200-with-flag. Approval pending.
+- Justin Christenson (developer and owner), who chose a 503 over a 200-with-flag.
 
 ---
 

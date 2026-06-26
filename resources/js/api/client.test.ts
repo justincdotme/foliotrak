@@ -6,7 +6,7 @@ vi.mock('@/lib/api', () => ({
 }))
 
 import api from '@/lib/api'
-import { listPlants, suggestSpecies, uploadPhoto } from './client'
+import { getDashboard, getGroupInsights, listPlants, suggestSpecies, uploadPhoto } from './client'
 
 const envelope = <T>(data: T) => ({ data: { data } }) as unknown as AxiosResponse<{ data: T }>
 
@@ -54,5 +54,27 @@ describe('api client', () => {
     const form = vi.mocked(api.post).mock.calls[0]?.[1] as FormData
     expect(form.get('caption')).toBeNull()
     expect(form.get('set_as_cover')).toBeNull()
+  })
+
+  it('unwraps the dashboard envelope', async () => {
+    const payload = { user: { id: 1 }, due_for_care: [], recent_activity: [], flagged_problems: [] }
+    vi.mocked(api.get).mockResolvedValue(envelope(payload))
+
+    await expect(getDashboard()).resolves.toEqual(payload)
+    expect(api.get).toHaveBeenCalledWith('/api/dashboard')
+  })
+
+  it('requests group insights with the tag query param', async () => {
+    const payload = {
+      tag_id: 3,
+      tag_name: 'Office',
+      plants: [],
+      comparison: [],
+      correlation_pairs: [],
+    }
+    vi.mocked(api.get).mockResolvedValue(envelope(payload))
+
+    await expect(getGroupInsights(3)).resolves.toEqual(payload)
+    expect(api.get).toHaveBeenCalledWith('/api/insights/group', { params: { tag: 3 } })
   })
 })

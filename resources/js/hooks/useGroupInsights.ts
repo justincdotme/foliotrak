@@ -1,13 +1,15 @@
-import { mockApi } from '@/api/mock'
-import type { GroupInsights } from '@/api/types'
-import { useAsync } from './useAsync'
+import { useQuery } from '@tanstack/react-query'
+import { getGroupInsights } from '@/api/client'
 
-interface AsyncState<T> {
-  data: T | null
-  loading: boolean
-  error: Error | null
-}
-
-export function useGroupInsights(tagId: number): AsyncState<GroupInsights> {
-  return useAsync(() => mockApi.getGroupInsights(tagId), [tagId])
+export function useGroupInsights(tagId: number | null) {
+  const query = useQuery({
+    queryKey: ['insights', 'group', tagId],
+    queryFn: () => getGroupInsights(tagId as number),
+    enabled: tagId != null,
+  })
+  return {
+    data: query.data ?? null,
+    loading: tagId == null || query.isPending,
+    error: query.error,
+  }
 }
