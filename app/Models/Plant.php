@@ -8,11 +8,13 @@ use App\Enums\PlantStatus;
 use App\Support\PlantConditionResolver;
 use Database\Factories\PlantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -80,13 +82,70 @@ class Plant extends Model
     }
 
     /**
-     * At-a-glance condition (D24). The observation and watering-due inputs join in
-     * Phase 2a once the care spine exists; until then status is the only signal.
+     * @return HasMany<CareEvent, $this>
+     */
+    public function careEvents(): HasMany
+    {
+        return $this->hasMany(CareEvent::class);
+    }
+
+    /**
+     * @return HasOne<CareEvent, $this>
+     */
+    public function latestObservationEvent(): HasOne
+    {
+        return $this->hasOne(CareEvent::class)->ofMany(
+            ['occurred_at' => 'max', 'id' => 'max'],
+            fn (Builder $query) => $query->whereHas('careEventType', fn (Builder $type) => $type->where('key', 'observation')),
+        );
+    }
+
+    /**
+     * @return HasOne<CareEvent, $this>
+     */
+    public function latestWateringEvent(): HasOne
+    {
+        return $this->hasOne(CareEvent::class)->ofMany(
+            ['occurred_at' => 'max', 'id' => 'max'],
+            fn (Builder $query) => $query->whereHas('careEventType', fn (Builder $type) => $type->where('key', 'watering')),
+        );
+    }
+
+    /**
+     * At-a-glance condition, resolved from the latest observation and the
+     * watering-due signal. The derived (median) watering interval lands in a later
+     * phase, so "likely dry" only fires here when a manual override is set.
      *
      * @return array{key: string, label: string}
      */
     public function condition(): array
     {
-        return PlantConditionResolver::resolve($this->status);
+        $observation = $this->latestObservationEvent?->observation;
+        $symptoms = $observation === null ? collect() : $observation->symptoms;
+
+        return PlantConditionResolver::resolve(
+            $this->status,
+            $observation?->overall_health,
+            $symptoms->pluck('category')->unique()->values()->all(),
+            $symptoms->pluck('key')->values()->all(),
+            $this->isLikelyDry(),
+        );
+    }
+
+    private function isLikelyDry(): bool
+    {
+        $interval = $this->watering_interval_days_override;
+        if ($interval === null) {
+            return false;
+        }
+
+        $lastWatered = $this->latestWateringEvent?->occurred_at;
+        if ($lastWatered === null) {
+            return false;
+        }
+
+        $overdueDays = $lastWatered->copy()->addDays($interval)->diffInDays(now(), false);
+
+        return $overdueDays > max(2, $interval * 0.4);
     }
 }

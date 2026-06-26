@@ -115,6 +115,7 @@ export interface ObservationDetail {
   growth_note: string | null
   leaf_size_mm: number | null
   weight_grams: number | null
+  weight: WeightInput | null
   symptoms: Symptom[]
 }
 
