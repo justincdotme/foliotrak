@@ -1,11 +1,14 @@
 services:
+  # Vite compiles assets into public/build so nginx serves them same-origin over
+  # HTTPS. The dev server is avoided on purpose: behind Caddy its hot file points
+  # the browser at 0.0.0.0:5173, which is unreachable and mixed content on the
+  # HTTPS page. --watch recompiles on change; refresh the page to pick up edits.
   vite:
     image: node:22-alpine
     working_dir: /var/www/html
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    user: "1000:1000"
+    command: sh -c "npm install && npm run build -- --watch"
     volumes:
       - .:/var/www/html
-    ports:
-      - "5173:5173"
     networks:
       - app-network
