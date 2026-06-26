@@ -20,7 +20,7 @@ class PlantTimelineController extends Controller
             'tags',
             'coverPhoto',
             'latestObservationEvent.observation.symptoms',
-            'latestWateringEvent',
+            'wateringEvents',
             'photos' => fn ($query) => $query->orderByDesc('taken_on'),
             'careEvents' => fn ($query) => $query->orderByDesc('occurred_at')->orderBy('id'),
             'careEvents.careEventType',

@@ -55,7 +55,7 @@ class DashboardApiTest extends TestCase
             ]);
     }
 
-    public function test_due_for_care_is_override_driven_and_sorted_by_urgency(): void
+    public function test_due_for_care_lists_plants_with_a_derivable_interval_sorted_by_urgency(): void
     {
         $this->actAsHousehold();
 
@@ -71,7 +71,7 @@ class DashboardApiTest extends TestCase
         $soon = Plant::factory()->create(['common_name' => 'Hungry', 'fertilizing_interval_days_override' => 30]);
         CareEvent::factory()->ofType('fertilizing')->for($soon)->create(['occurred_at' => now()->subDays(29)]);
 
-        // No override means no interval to derive a due date from, so this plant is excluded.
+        // One event forms no gap and there is no override, so no interval can be derived.
         $noOverride = Plant::factory()->create(['watering_interval_days_override' => null]);
         CareEvent::factory()->ofType('watering')->for($noOverride)->create(['occurred_at' => now()->subDays(20)]);
 
@@ -102,6 +102,28 @@ class DashboardApiTest extends TestCase
             ->assertJsonPath('data.due_for_care.2.plant_id', $ok->id)
             ->assertJsonPath('data.due_for_care.2.status', 'ok')
             ->assertJsonPath('data.due_for_care.2.daysLeft', 7);
+    }
+
+    public function test_due_for_care_derives_the_interval_from_logged_history_without_an_override(): void
+    {
+        $this->actAsHousehold();
+
+        // No override, but three waterings seven days apart derive a 7-day interval.
+        // Last watered 8 days ago, so it is one day overdue.
+        $plant = Plant::factory()->create(['common_name' => 'Rhythmic', 'watering_interval_days_override' => null]);
+        foreach ([22, 15, 8] as $daysAgo) {
+            CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
+        }
+
+        $response = $this->getJson('/api/dashboard')->assertOk();
+
+        $response->assertJsonCount(1, 'data.due_for_care');
+        $response
+            ->assertJsonPath('data.due_for_care.0.plant_id', $plant->id)
+            ->assertJsonPath('data.due_for_care.0.type', 'watering')
+            ->assertJsonPath('data.due_for_care.0.interval', 7)
+            ->assertJsonPath('data.due_for_care.0.status', 'overdue')
+            ->assertJsonPath('data.due_for_care.0.daysLeft', -1);
     }
 
     public function test_recent_activity_returns_the_eight_newest_events_across_plants(): void

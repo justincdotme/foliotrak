@@ -80,8 +80,22 @@ class PlantConditionApiTest extends TestCase
             ->assertJsonPath('data.condition.key', 'dry');
     }
 
-    public function test_without_an_override_a_stale_watering_does_not_read_as_dry_yet(): void
+    public function test_an_overdue_watering_reads_as_likely_dry_from_the_derived_interval(): void
     {
+        // No override, but a steady 7-day rhythm with the last watering long past it.
+        $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
+        foreach ([44, 37, 30] as $daysAgo) {
+            CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
+        }
+
+        $this->getJson("/api/plants/{$plant->id}")
+            ->assertOk()
+            ->assertJsonPath('data.condition.key', 'dry');
+    }
+
+    public function test_a_single_watering_cannot_derive_an_interval_so_it_does_not_read_as_dry(): void
+    {
+        // One event forms no gap, and there is no override, so no interval can be derived.
         $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
         CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(30)]);
 

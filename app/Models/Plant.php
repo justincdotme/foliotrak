@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\PlantStatus;
+use App\Support\CareScheduleResolver;
 use App\Support\PlantConditionResolver;
 use Database\Factories\PlantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -101,31 +102,38 @@ class Plant extends Model
     }
 
     /**
-     * @return HasOne<CareEvent, $this>
+     * @return HasMany<CareEvent, $this>
      */
-    public function latestWateringEvent(): HasOne
+    public function wateringEvents(): HasMany
     {
-        return $this->hasOne(CareEvent::class)->ofMany(
-            ['occurred_at' => 'max', 'id' => 'max'],
-            fn (Builder $query) => $query->whereHas('careEventType', fn (Builder $type) => $type->where('key', 'watering')),
-        );
+        return $this->careEventsOfType('watering');
     }
 
     /**
-     * @return HasOne<CareEvent, $this>
+     * @return HasMany<CareEvent, $this>
      */
-    public function latestFertilizingEvent(): HasOne
+    public function fertilizingEvents(): HasMany
     {
-        return $this->hasOne(CareEvent::class)->ofMany(
-            ['occurred_at' => 'max', 'id' => 'max'],
-            fn (Builder $query) => $query->whereHas('careEventType', fn (Builder $type) => $type->where('key', 'fertilizing')),
-        );
+        return $this->careEventsOfType('fertilizing');
+    }
+
+    /**
+     * Every logged event of one type, oldest first, so the median interval and the
+     * latest event both read from one eager-loaded collection.
+     *
+     * @return HasMany<CareEvent, $this>
+     */
+    private function careEventsOfType(string $key): HasMany
+    {
+        return $this->hasMany(CareEvent::class)
+            ->whereHas('careEventType', fn (Builder $query) => $query->where('key', $key))
+            ->orderBy('occurred_at')
+            ->orderBy('id');
     }
 
     /**
      * At-a-glance condition, resolved from the latest observation and the
-     * watering-due signal. The derived (median) watering interval lands in a later
-     * phase, so "likely dry" only fires here when a manual override is set.
+     * watering-due signal.
      *
      * @return array{key: string, label: string}
      */
@@ -145,12 +153,17 @@ class Plant extends Model
 
     private function isLikelyDry(): bool
     {
-        $interval = $this->watering_interval_days_override;
+        $waterings = $this->wateringEvents;
+
+        $interval = CareScheduleResolver::intervalForType(
+            $this->watering_interval_days_override,
+            $waterings->map(fn (CareEvent $event): Carbon => $event->occurred_at)->all(),
+        );
         if ($interval === null) {
             return false;
         }
 
-        $lastWatered = $this->latestWateringEvent?->occurred_at;
+        $lastWatered = $waterings->last()?->occurred_at;
         if ($lastWatered === null) {
             return false;
         }

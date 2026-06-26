@@ -30,7 +30,7 @@ class PlantController extends Controller
         'tags',
         'coverPhoto',
         'latestObservationEvent.observation.symptoms',
-        'latestWateringEvent',
+        'wateringEvents',
     ];
 
     public function index(Request $request): AnonymousResourceCollection
