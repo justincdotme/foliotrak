@@ -42,6 +42,8 @@ export function useUpdatePlant(plantId: number) {
       // The ['plant', id] prefix also covers the plant's photos query.
       queryClient.invalidateQueries({ queryKey: ['plant', plantId] })
       queryClient.invalidateQueries({ queryKey: ['plants'] })
+      // A location change is logged server-side as a relocation care event.
+      queryClient.invalidateQueries({ queryKey: ['timeline', plantId] })
     },
   })
 }

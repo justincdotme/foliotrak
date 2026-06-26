@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\CareEvent;
 use App\Models\Photo;
 use App\Models\Plant;
 use App\Models\User;
@@ -101,6 +102,41 @@ class PhotoApiTest extends TestCase
         ])->assertCreated();
 
         $this->assertSame($response->json('data.id'), $plant->fresh()->cover_photo_id);
+    }
+
+    public function test_uploading_a_photo_links_it_to_a_care_event(): void
+    {
+        Storage::fake('photos');
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+        $event = CareEvent::factory()->for($plant)->create();
+
+        $this->postJson("/api/plants/{$plant->id}/photos", [
+            'photo' => UploadedFile::fake()->image('observation.jpg'),
+            'care_event_id' => $event->id,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.care_event_id', $event->id);
+
+        $this->assertDatabaseHas('photos', [
+            'plant_id' => $plant->id,
+            'care_event_id' => $event->id,
+        ]);
+    }
+
+    public function test_rejects_a_care_event_belonging_to_another_plant(): void
+    {
+        Storage::fake('photos');
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+        $otherEvent = CareEvent::factory()->create();
+
+        $this->postJson("/api/plants/{$plant->id}/photos", [
+            'photo' => UploadedFile::fake()->image('mismatch.jpg'),
+            'care_event_id' => $otherEvent->id,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrorFor('care_event_id');
     }
 
     public function test_lists_a_plants_photos(): void

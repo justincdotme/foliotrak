@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import type { CareType, Photo } from '@/api/types'
+import type { CareEvent, CareType, Photo } from '@/api/types'
 import { AppContext } from '@/components/app/app-context'
 import { Modal } from '@/components/app/modal'
 import { PhotoTile } from '@/components/app/photo-tile'
@@ -9,6 +9,7 @@ import { LogFertilizingForm } from '@/components/forms/log-fertilizing-form'
 import { LogObservationForm } from '@/components/forms/log-observation-form'
 import { LogRepottingForm } from '@/components/forms/log-repotting-form'
 import { LogWateringForm } from '@/components/forms/log-watering-form'
+import { RelocationEditForm } from '@/components/forms/relocation-edit-form'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useTheme } from '@/hooks/useTheme'
 import api from '@/lib/api'
@@ -31,9 +32,19 @@ const LOG_TITLES: Record<CareType, string> = {
   relocation: 'Log relocation',
 }
 
+const EDIT_TITLES: Record<CareType, string> = {
+  watering: 'Edit watering',
+  fertilizing: 'Edit fertilizing',
+  repotting: 'Edit repotting',
+  observation: 'Edit observation',
+  relocation: 'Edit move',
+}
+
 interface LogTarget {
   plantId: number
   type: CareType
+  event?: CareEvent
+  seedOccurredAt?: string
 }
 
 export function Shell() {
@@ -52,7 +63,42 @@ export function Shell() {
       navigate('/login')
     }
   }
-  const openLog = (plantId: number) => (type: CareType) => setLogFor({ plantId, type })
+  const openLog = (plantId: number) => (type: CareType, event?: CareEvent) =>
+    setLogFor({ plantId, type, event })
+
+  const renderLogForm = (target: LogTarget) => {
+    const close = () => setLogFor(null)
+    switch (target.type) {
+      case 'watering':
+        return <LogWateringForm plantId={target.plantId} event={target.event} onDone={close} />
+      case 'fertilizing':
+        return (
+          <LogFertilizingForm
+            plantId={target.plantId}
+            event={target.event}
+            seedOccurredAt={target.seedOccurredAt}
+            onDone={close}
+          />
+        )
+      case 'repotting':
+        return (
+          <LogRepottingForm
+            plantId={target.plantId}
+            event={target.event}
+            onDone={close}
+            onLogFertilizer={iso =>
+              setLogFor({ plantId: target.plantId, type: 'fertilizing', seedOccurredAt: iso })
+            }
+          />
+        )
+      case 'observation':
+        return <LogObservationForm plantId={target.plantId} event={target.event} onDone={close} />
+      case 'relocation':
+        return target.event ? (
+          <RelocationEditForm plantId={target.plantId} event={target.event} onDone={close} />
+        ) : null
+    }
+  }
 
   return (
     <AppContext.Provider value={{ mobile }}>
@@ -103,21 +149,10 @@ export function Shell() {
         <Modal
           open={!!logFor}
           onClose={() => setLogFor(null)}
-          title={logFor ? LOG_TITLES[logFor.type] : ''}
+          title={logFor ? (logFor.event ? EDIT_TITLES[logFor.type] : LOG_TITLES[logFor.type]) : ''}
           wide={logFor?.type === 'observation' || logFor?.type === 'fertilizing'}
         >
-          {logFor?.type === 'watering' && (
-            <LogWateringForm plantId={logFor.plantId} onDone={() => setLogFor(null)} />
-          )}
-          {logFor?.type === 'fertilizing' && (
-            <LogFertilizingForm plantId={logFor.plantId} onDone={() => setLogFor(null)} />
-          )}
-          {logFor?.type === 'repotting' && (
-            <LogRepottingForm plantId={logFor.plantId} onDone={() => setLogFor(null)} />
-          )}
-          {logFor?.type === 'observation' && (
-            <LogObservationForm plantId={logFor.plantId} onDone={() => setLogFor(null)} />
-          )}
+          {logFor && renderLogForm(logFor)}
         </Modal>
 
         <Modal
@@ -138,7 +173,7 @@ export function Shell() {
 
 interface PlantDetailRouteProps {
   go: (to: string) => void
-  openLog: (plantId: number) => (type: CareType) => void
+  openLog: (plantId: number) => (type: CareType, event?: CareEvent) => void
   viewPhoto: (photo: Photo) => void
 }
 

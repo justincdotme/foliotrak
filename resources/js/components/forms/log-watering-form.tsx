@@ -2,21 +2,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Droplets } from 'lucide-react'
-import { mockApi } from '@/api/mock'
-import { commit } from '@/hooks/useAsync'
+import type { CareEvent } from '@/api/types'
+import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { DateTimeField } from './date-time-field'
-
-const nowLocal = (): string => {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(8)}:${pad(0)}`
-}
-
-const toIso = (local: string): string => new Date(local).toISOString()
 
 const schema = z.object({
   occurred_at: z.string().min(1, 'Pick a date and time'),
@@ -27,25 +20,32 @@ const schema = z.object({
 interface LogWateringFormProps {
   plantId: number
   onDone: () => void
+  event?: CareEvent
 }
 
-export function LogWateringForm({ plantId, onDone }: LogWateringFormProps) {
+export function LogWateringForm({ plantId, onDone, event }: LogWateringFormProps) {
+  const { createWatering, updateEvent } = useCareEventMutations(plantId)
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { occurred_at: nowLocal(), amount_ml: '', note: '' },
+    defaultValues: {
+      occurred_at: event ? isoToLocal(event.occurred_at) : nowLocal(),
+      amount_ml: event?.watering?.amount_ml != null ? String(event.watering.amount_ml) : '',
+      note: event?.note ?? '',
+    },
   })
 
   const onSubmit = async (v: { occurred_at: string; amount_ml: string; note: string }) => {
-    await mockApi.createWatering(plantId, {
+    const payload = {
       occurred_at: toIso(v.occurred_at),
       amount_ml: v.amount_ml ? Number(v.amount_ml) : null,
       note: v.note || null,
-    })
-    commit()
+    }
+    if (event) await updateEvent.mutateAsync({ eventId: event.id, payload })
+    else await createWatering.mutateAsync(payload)
     onDone()
   }
 
@@ -64,7 +64,7 @@ export function LogWateringForm({ plantId, onDone }: LogWateringFormProps) {
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting}>
           <Droplets size={16} />
-          Log watering
+          {event ? 'Save changes' : 'Log watering'}
         </Button>
       </div>
     </form>

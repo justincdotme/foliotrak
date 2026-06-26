@@ -13,10 +13,12 @@ import {
   Sun,
   X,
 } from 'lucide-react'
-import { mockApi, SYMPTOMS } from '@/api/mock'
-import { commit } from '@/hooks/useAsync'
-import { HEALTH_LABELS, HEALTH_VAR } from '@/lib/domain'
+import type { CareEvent, GrowthRate, Symptom } from '@/api/types'
 import { weightToGrams } from '@/api/types'
+import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+import { useSymptoms } from '@/hooks/useCareLookups'
+import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
+import { HEALTH_LABELS, HEALTH_VAR } from '@/lib/domain'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
@@ -25,14 +27,6 @@ import { Chip } from '@/components/app/chip'
 import { Segmented } from '@/components/app/segmented'
 import { DateTimeField } from './date-time-field'
 import { FormSection } from './form-section'
-
-const nowLocal = (): string => {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(8)}:${pad(0)}`
-}
-
-const toIso = (local: string): string => new Date(local).toISOString()
 
 const schema = z.object({
   occurred_at: z.string().min(1, 'Pick a date and time'),
@@ -48,12 +42,26 @@ const schema = z.object({
   note: z.string(),
 })
 
+const CAT_LABEL: Record<string, string> = {
+  leaf: 'Leaves',
+  stem: 'Stem',
+  root: 'Roots',
+  pest: 'Pests',
+  disease: 'Disease',
+  general: 'General',
+}
+
 interface LogObservationFormProps {
   plantId: number
   onDone: () => void
+  event?: CareEvent
 }
 
-export function LogObservationForm({ plantId, onDone }: LogObservationFormProps) {
+export function LogObservationForm({ plantId, onDone, event }: LogObservationFormProps) {
+  const { createObservation, updateEvent, uploadEventPhoto } = useCareEventMutations(plantId)
+  const { data: allSymptoms } = useSymptoms()
+
+  const detail = event?.observation
   const {
     register,
     handleSubmit,
@@ -63,46 +71,41 @@ export function LogObservationForm({ plantId, onDone }: LogObservationFormProps)
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      occurred_at: nowLocal(),
-      overall_health: '',
-      health_note: '',
-      light_level: '5',
-      growth_rate: '',
-      growth_note: '',
-      leaf_size_mm: '',
-      lb: '0',
-      oz: '0',
-      g: '0',
-      note: '',
+      occurred_at: event ? isoToLocal(event.occurred_at) : nowLocal(),
+      overall_health: detail?.overall_health != null ? String(detail.overall_health) : '',
+      health_note: detail?.health_note ?? '',
+      light_level: detail?.light_level != null ? String(detail.light_level) : '5',
+      growth_rate: detail?.growth_rate ?? '',
+      growth_note: detail?.growth_note ?? '',
+      leaf_size_mm: detail?.leaf_size_mm != null ? String(detail.leaf_size_mm) : '',
+      lb: detail?.weight?.lb != null ? String(detail.weight.lb) : '0',
+      oz: detail?.weight?.oz != null ? String(detail.weight.oz) : '0',
+      g: detail?.weight?.g != null ? String(detail.weight.g) : '0',
+      note: event?.note ?? '',
     },
   })
 
-  const [symptoms, setSymptoms] = useState<number[]>([])
-  const [customs, setCustoms] = useState<string[]>([])
+  const [symptoms, setSymptoms] = useState<number[]>(
+    (detail?.symptoms ?? []).filter(s => !s.is_custom).map(s => Number(s.id))
+  )
+  const [customs, setCustoms] = useState<string[]>(
+    (detail?.symptoms ?? []).filter(s => s.is_custom).map(s => s.label)
+  )
   const [customDraft, setCustomDraft] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
 
   const healthStr = watch('overall_health')
   const lightStr = watch('light_level')
   const light = Number(lightStr) || 5
   const growth = watch('growth_rate')
-  const lbStr = watch('lb')
-  const ozStr = watch('oz')
-  const gStr = watch('g')
-  const lb = Number(lbStr) || 0
-  const oz = Number(ozStr) || 0
-  const g = Number(gStr) || 0
+  const lb = Number(watch('lb')) || 0
+  const oz = Number(watch('oz')) || 0
+  const g = Number(watch('g')) || 0
   const health = healthStr ? Number(healthStr) : null
+  const grams = weightToGrams({ lb, oz, g })
 
-  const grams = weightToGrams({
-    lb,
-    oz,
-    g,
-  })
-
-  const toggleSym = (id: number | string) => {
-    const numId = Number(id)
-    setSymptoms(s => (s.includes(numId) ? s.filter(x => x !== numId) : [...s, numId]))
-  }
+  const toggleSym = (id: number) =>
+    setSymptoms(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
 
   const addCustom = () => {
     const v = customDraft.trim()
@@ -114,39 +117,40 @@ export function LogObservationForm({ plantId, onDone }: LogObservationFormProps)
 
   const problemCount = symptoms.length + customs.length
 
-  const byCat: Record<string, typeof SYMPTOMS> = {}
-  SYMPTOMS.forEach(s => {
-    if (!byCat[s.category]) {
-      byCat[s.category] = []
-    }
-    ;(byCat[s.category] as typeof SYMPTOMS).push(s)
-  })
-
-  const CAT_LABEL: Record<string, string> = {
-    leaf: 'Leaves',
-    stem: 'Stem',
-    root: 'Roots',
-    pest: 'Pests',
-    disease: 'Disease',
-    general: 'General',
-  }
+  // Custom entries are captured by the freetext field below, not the chips.
+  const byCat: Record<string, Symptom[]> = {}
+  allSymptoms
+    .filter(s => !s.is_custom && s.category !== 'custom')
+    .forEach(s => {
+      ;(byCat[s.category] ??= []).push(s)
+    })
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
-    const growthRate = v.growth_rate as 'none' | 'slow' | 'moderate' | 'fast' | null | undefined
-    await mockApi.createObservation(plantId, {
+    const payload = {
       occurred_at: toIso(v.occurred_at),
       overall_health: v.overall_health ? Number(v.overall_health) : null,
       health_note: v.health_note || null,
       light_level: Number(v.light_level),
-      growth_rate: growthRate || null,
+      growth_rate: (v.growth_rate || null) as GrowthRate | null,
       growth_note: v.growth_note || null,
       leaf_size_mm: v.leaf_size_mm ? Number(v.leaf_size_mm) : null,
-      weight_grams: grams > 0 ? grams : null,
+      weight: grams > 0 ? { lb, oz, g } : null,
       symptom_ids: symptoms,
       custom_symptoms: customs,
       note: v.note || null,
-    })
-    commit()
+    }
+
+    const saved = event
+      ? await updateEvent.mutateAsync({ eventId: event.id, payload })
+      : await createObservation.mutateAsync(payload)
+
+    if (photoFile) {
+      try {
+        await uploadEventPhoto.mutateAsync({ file: photoFile, careEventId: saved.id })
+      } catch {
+        // The observation is saved; a failed photo can be re-added from the gallery.
+      }
+    }
     onDone()
   }
 
@@ -191,6 +195,7 @@ export function LogObservationForm({ plantId, onDone }: LogObservationFormProps)
               value={light}
               onChange={e => setValue('light_level', String(e.target.value))}
               className="flex-1"
+              aria-label="Light level"
             />
             <Sun size={18} className="shrink-0" style={{ color: 'var(--due-soon)' }} />
           </div>
@@ -198,13 +203,7 @@ export function LogObservationForm({ plantId, onDone }: LogObservationFormProps)
         <Field label="Growth rate">
           <Segmented
             value={growth || ''}
-            onChange={v => {
-              if (growth === v) {
-                setValue('growth_rate', '')
-              } else {
-                setValue('growth_rate', v)
-              }
-            }}
+            onChange={v => setValue('growth_rate', growth === v ? '' : v)}
             options={[
               { value: 'none', label: 'None' },
               { value: 'slow', label: 'Slow' },
@@ -226,19 +225,19 @@ export function LogObservationForm({ plantId, onDone }: LogObservationFormProps)
         <Field label="Weight" hint="lb · oz · g">
           <div className="grid grid-cols-3 gap-2">
             <div className="relative">
-              <Input type="number" min="0" {...register('lb')} />
+              <Input type="number" min="0" aria-label="Pounds" {...register('lb')} />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
                 lb
               </span>
             </div>
             <div className="relative">
-              <Input type="number" min="0" {...register('oz')} />
+              <Input type="number" min="0" aria-label="Ounces" {...register('oz')} />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
                 oz
               </span>
             </div>
             <div className="relative">
-              <Input type="number" min="0" step="0.1" {...register('g')} />
+              <Input type="number" min="0" step="0.1" aria-label="Grams" {...register('g')} />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
                 g
               </span>
@@ -310,6 +309,7 @@ export function LogObservationForm({ plantId, onDone }: LogObservationFormProps)
                 }
               }}
               placeholder="Describe another symptom"
+              aria-label="Custom symptom"
             />
             <Button type="button" variant="outline" onClick={addCustom}>
               <Plus size={16} />
@@ -325,14 +325,19 @@ export function LogObservationForm({ plantId, onDone }: LogObservationFormProps)
       <Field label="Photo" hint="optional">
         <label className="flex h-11 cursor-pointer items-center gap-2 rounded-[8px] border border-dashed border-border-strong bg-surface-raised px-3 text-text-muted hover:text-text">
           <ImageIcon size={16} />
-          <span className="text-[13px]">Attach a photo</span>
-          <input type="file" accept="image/*" className="hidden" />
+          <span className="text-[13px]">{photoFile ? photoFile.name : 'Attach a photo'}</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => setPhotoFile(e.target.files?.[0] ?? null)}
+          />
         </label>
       </Field>
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting}>
           <ClipboardList size={16} />
-          Log observation
+          {event ? 'Save changes' : 'Log observation'}
         </Button>
       </div>
     </form>

@@ -2,8 +2,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Info, Shovel } from 'lucide-react'
-import { mockApi } from '@/api/mock'
-import { commit } from '@/hooks/useAsync'
+import type { CareEvent } from '@/api/types'
+import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
@@ -11,14 +12,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Toggle } from '@/components/app/toggle'
 import { Segmented } from '@/components/app/segmented'
 import { DateTimeField } from './date-time-field'
-
-const nowLocal = (): string => {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(8)}:${pad(0)}`
-}
-
-const toIso = (local: string): string => new Date(local).toISOString()
 
 const schema = z.object({
   occurred_at: z.string().min(1, 'Pick a date and time'),
@@ -32,9 +25,19 @@ const schema = z.object({
 interface LogRepottingFormProps {
   plantId: number
   onDone: () => void
+  event?: CareEvent
+  // Chains a linked fertilizing entry at the same timestamp when fertilizer was
+  // added during the repot, so fertilizer is always tracked the same way.
+  onLogFertilizer?: (occurredAtIso: string) => void
 }
 
-export function LogRepottingForm({ plantId, onDone }: LogRepottingFormProps) {
+export function LogRepottingForm({
+  plantId,
+  onDone,
+  event,
+  onLogFertilizer,
+}: LogRepottingFormProps) {
+  const { createRepotting, updateEvent } = useCareEventMutations(plantId)
   const {
     register,
     handleSubmit,
@@ -44,36 +47,42 @@ export function LogRepottingForm({ plantId, onDone }: LogRepottingFormProps) {
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      occurred_at: nowLocal(),
-      soil_recipe: '',
-      pot_size_value: '',
-      pot_size_unit: 'in',
-      fertilizer_added: false,
-      note: '',
+      occurred_at: event ? isoToLocal(event.occurred_at) : nowLocal(),
+      soil_recipe: event?.repotting?.soil_recipe ?? '',
+      pot_size_value:
+        event?.repotting?.pot_size_value != null ? String(event.repotting.pot_size_value) : '',
+      pot_size_unit: event?.repotting?.pot_size_unit ?? 'in',
+      fertilizer_added: event?.repotting?.fertilizer_added ?? false,
+      note: event?.note ?? '',
     },
   })
 
   const unit = watch('pot_size_unit')
   const fertAdded = watch('fertilizer_added')
 
-  const onSubmit = async (v: {
-    occurred_at: string
-    soil_recipe: string
-    pot_size_value: string
-    pot_size_unit: string
-    fertilizer_added: boolean
-    note: string
-  }) => {
-    await mockApi.createRepotting(plantId, {
-      occurred_at: toIso(v.occurred_at),
+  const onSubmit = async (v: z.infer<typeof schema>) => {
+    const occurredAt = toIso(v.occurred_at)
+    const payload = {
+      occurred_at: occurredAt,
       soil_recipe: v.soil_recipe || null,
       pot_size_value: v.pot_size_value ? Number(v.pot_size_value) : null,
-      pot_size_unit: v.pot_size_unit as 'in' | 'cm',
+      pot_size_unit: v.pot_size_unit,
       fertilizer_added: v.fertilizer_added,
       note: v.note || null,
-    })
-    commit()
-    onDone()
+    }
+
+    if (event) {
+      await updateEvent.mutateAsync({ eventId: event.id, payload })
+      onDone()
+      return
+    }
+
+    await createRepotting.mutateAsync(payload)
+    if (v.fertilizer_added && onLogFertilizer) {
+      onLogFertilizer(occurredAt)
+    } else {
+      onDone()
+    }
   }
 
   return (
@@ -97,7 +106,7 @@ export function LogRepottingForm({ plantId, onDone }: LogRepottingFormProps) {
           <div className="w-28">
             <Segmented
               value={unit}
-              onChange={v => setValue('pot_size_unit', v)}
+              onChange={v => setValue('pot_size_unit', v as 'in' | 'cm')}
               options={[
                 { value: 'in', label: 'in' },
                 { value: 'cm', label: 'cm' },
@@ -112,10 +121,10 @@ export function LogRepottingForm({ plantId, onDone }: LogRepottingFormProps) {
           onChange={v => setValue('fertilizer_added', v)}
           label="Fertilizer added during repot"
         />
-        {fertAdded && (
+        {fertAdded && !event && (
           <p className="mt-2 flex items-center gap-1.5 text-[12px] text-text-muted">
             <Info size={13} />
-            You can log a linked fertilizing event after saving.
+            Saving opens a linked fertilizing entry at the same time.
           </p>
         )}
       </div>
@@ -125,7 +134,7 @@ export function LogRepottingForm({ plantId, onDone }: LogRepottingFormProps) {
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting}>
           <Shovel size={16} />
-          Log repotting
+          {event ? 'Save changes' : 'Log repotting'}
         </Button>
       </div>
     </form>

@@ -34,6 +34,7 @@ auth.json
 # Local tooling and project docs (not for the shared repo)
 /.claude
 /.superpowers
+/docs/superpowers
 /docs/project
 /CLAUDE.md
 /temp

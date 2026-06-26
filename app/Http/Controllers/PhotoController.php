@@ -34,6 +34,7 @@ class PhotoController extends Controller
             'original_filename' => $file->getClientOriginalName(),
             'taken_on' => $request->date('taken_on') ?? now(),
             'caption' => $request->string('caption')->value() ?: null,
+            'care_event_id' => $request->input('care_event_id'),
         ]);
 
         if ($request->boolean('set_as_cover')) {
