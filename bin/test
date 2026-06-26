@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
-# Run the PHP test suite against an isolated in-memory SQLite database so it
-# never touches the dev MySQL data. The app container sets DB_CONNECTION=mysql
-# and SCOUT_DRIVER=meilisearch as real env vars, which override phpunit.xml, so
-# they are forced here via -e: sqlite for the DB, and Scout's collection engine
-# so tests never reach the live Meilisearch container. CI runs `php artisan test`
-# directly on a clean runner where no conflicting env is present.
+# Run the PHP test suite in a one-off app container. phpunit.xml drives the
+# testing profile (sqlite :memory:, Scout's collection engine), so the suite
+# never touches the dev MySQL data or the live Meilisearch container. --no-deps
+# skips mysql/meilisearch since the suite needs neither.
 set -euo pipefail
-exec docker compose run --rm --no-deps \
-  -e APP_ENV=testing \
-  -e DB_CONNECTION=sqlite \
-  -e DB_DATABASE=:memory: \
-  -e SCOUT_DRIVER=collection \
-  app php artisan test "$@"
+exec docker compose run --rm --no-deps app php artisan test "$@"
