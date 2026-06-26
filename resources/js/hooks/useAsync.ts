@@ -41,13 +41,24 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
 
   const storeVersion = useStoreVersion()
   const isMountedRef = useRef(true)
+  const fnRef = useRef(fn)
+
+  // The caller's deps array is the intended re-run signal (as with useMemo), so
+  // hold the latest factory in a ref rather than depending on its identity.
+  useEffect(() => {
+    fnRef.current = fn
+  })
+
+  // A variable-length deps array can only be a static effect dependency once
+  // collapsed to a single key; spreading it leaves nothing to verify.
+  const depsKey = JSON.stringify(deps)
 
   useEffect(() => {
     isMountedRef.current = true
 
     setState(s => ({ ...s, loading: true }))
 
-    Promise.resolve(fn())
+    Promise.resolve(fnRef.current())
       .then(d => {
         if (isMountedRef.current) {
           setState({ data: d, loading: false, error: null })
@@ -62,7 +73,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
     return () => {
       isMountedRef.current = false
     }
-  }, [...deps, storeVersion])
+  }, [depsKey, storeVersion])
 
   return state
 }
