@@ -212,6 +212,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
             })}
           </div>
         </Field>
+        <hr className="border-border" />
         <Field label="Light level" hint={`${light} / 10`}>
           <div className="flex items-center gap-3">
             <Moon size={18} className="shrink-0" style={{ color: 'var(--info)' }} />
@@ -228,6 +229,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
             <Sun size={18} className="shrink-0" style={{ color: 'var(--due-soon)' }} />
           </div>
         </Field>
+        <hr className="border-border" />
         <Field label="Growth rate">
           <Segmented
             value={growth || ''}
@@ -240,6 +242,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
             ]}
           />
         </Field>
+        <hr className="border-border" />
         <div className="grid grid-cols-2 gap-3">
           <Field label="Humidity" hint="%, ambient">
             <div className="relative">
@@ -283,6 +286,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
             </div>
           </Field>
         </div>
+        <hr className="border-border" />
         <Field label="Soil moisture">
           <div className="space-y-2">
             <div className="flex gap-1.5">
@@ -342,6 +346,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
             )}
           </div>
         </Field>
+        <hr className="border-border" />
         <div className="grid grid-cols-2 gap-3">
           <Field label="Leaf size" hint="mm, optional">
             <Input type="number" placeholder="120" {...register('leaf_size_mm')} />
