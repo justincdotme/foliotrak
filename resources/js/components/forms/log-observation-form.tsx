@@ -6,17 +6,20 @@ import {
   AlertTriangle,
   Check,
   ClipboardList,
+  Droplets,
   HeartPulse,
   ImageIcon,
   Moon,
   Plus,
   Sun,
+  Thermometer,
   X,
 } from 'lucide-react'
-import type { CareEvent, GrowthRate, Symptom } from '@/api/types'
+import type { CareEvent, GrowthRate, SoilMoistureLevel, Symptom } from '@/api/types'
 import { weightToGrams } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { useSymptoms } from '@/hooks/useCareLookups'
+import { useSettings } from '@/hooks/useSettings'
 import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
 import { HEALTH_LABELS, HEALTH_VAR } from '@/lib/domain'
 import { Button } from '@/components/ui/button'
@@ -36,6 +39,8 @@ const schema = z.object({
   growth_rate: z.string(),
   growth_note: z.string(),
   leaf_size_mm: z.string(),
+  ambient_humidity_pct: z.string(),
+  ambient_temp: z.string(),
   lb: z.string(),
   oz: z.string(),
   g: z.string(),
@@ -60,6 +65,8 @@ interface LogObservationFormProps {
 export function LogObservationForm({ plantId, onDone, event }: LogObservationFormProps) {
   const { createObservation, updateEvent, uploadEventPhoto } = useCareEventMutations(plantId)
   const { data: allSymptoms } = useSymptoms()
+  const { data: settings } = useSettings()
+  const tempUnit = settings?.temperature_unit ?? 'F'
 
   const detail = event?.observation
   const {
@@ -78,6 +85,9 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
       growth_rate: detail?.growth_rate ?? '',
       growth_note: detail?.growth_note ?? '',
       leaf_size_mm: detail?.leaf_size_mm != null ? String(detail.leaf_size_mm) : '',
+      ambient_humidity_pct:
+        detail?.ambient_humidity_pct != null ? String(detail.ambient_humidity_pct) : '',
+      ambient_temp: detail?.ambient_temp_display != null ? String(detail.ambient_temp_display) : '',
       lb: detail?.weight?.lb != null ? String(detail.weight.lb) : '0',
       oz: detail?.weight?.oz != null ? String(detail.weight.oz) : '0',
       g: detail?.weight?.g != null ? String(detail.weight.g) : '0',
@@ -93,6 +103,20 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
   )
   const [customDraft, setCustomDraft] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+
+  const initMoistureMode =
+    detail?.soil_moisture_relative != null
+      ? ('relative' as const)
+      : detail?.soil_moisture_precise != null
+        ? ('precise' as const)
+        : ('relative' as const)
+  const [moistureMode, setMoistureMode] = useState<'relative' | 'precise'>(initMoistureMode)
+  const [moistureRelative, setMoistureRelative] = useState<SoilMoistureLevel | null>(
+    detail?.soil_moisture_relative ?? null
+  )
+  const [moisturePrecise, setMoisturePrecise] = useState(
+    detail?.soil_moisture_precise != null ? detail.soil_moisture_precise : 5
+  )
 
   const healthStr = watch('overall_health')
   const lightStr = watch('light_level')
@@ -135,6 +159,10 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
       growth_note: v.growth_note || null,
       leaf_size_mm: v.leaf_size_mm ? Number(v.leaf_size_mm) : null,
       weight: grams > 0 ? { lb, oz, g } : null,
+      ambient_humidity_pct: v.ambient_humidity_pct ? Number(v.ambient_humidity_pct) : null,
+      ambient_temp: v.ambient_temp !== '' ? Number(v.ambient_temp) : null,
+      soil_moisture_relative: moistureMode === 'relative' ? moistureRelative : null,
+      soil_moisture_precise: moistureMode === 'precise' ? moisturePrecise : null,
       symptom_ids: symptoms,
       custom_symptoms: customs,
       note: v.note || null,
@@ -211,6 +239,108 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
               { value: 'fast', label: 'Fast' },
             ]}
           />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Humidity" hint="%, ambient">
+            <div className="relative">
+              <Droplets
+                size={16}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--info)' }}
+              />
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                placeholder="55"
+                className="pl-8"
+                aria-label="Ambient humidity percent"
+                {...register('ambient_humidity_pct')}
+              />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
+                %
+              </span>
+            </div>
+          </Field>
+          <Field label="Temperature" hint={`°${tempUnit}, ambient`}>
+            <div className="relative">
+              <Thermometer
+                size={16}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--accent)' }}
+              />
+              <Input
+                type="number"
+                step="0.1"
+                placeholder={tempUnit === 'F' ? '72' : '22'}
+                className="pl-8"
+                aria-label={`Ambient temperature in degrees ${tempUnit === 'F' ? 'Fahrenheit' : 'Celsius'}`}
+                {...register('ambient_temp')}
+              />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
+                {`°${tempUnit}`}
+              </span>
+            </div>
+          </Field>
+        </div>
+        <Field label="Soil moisture">
+          <div className="space-y-2">
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] font-medium transition-colors ${
+                  moistureMode === 'relative'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border-strong text-text-muted'
+                }`}
+                onClick={() => setMoistureMode('relative')}
+              >
+                Quick check
+              </button>
+              <button
+                type="button"
+                className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] font-medium transition-colors ${
+                  moistureMode === 'precise'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border-strong text-text-muted'
+                }`}
+                onClick={() => setMoistureMode('precise')}
+              >
+                Meter (1-10)
+              </button>
+            </div>
+            {moistureMode === 'relative' ? (
+              <Segmented
+                value={moistureRelative ?? ''}
+                onChange={v =>
+                  setMoistureRelative(moistureRelative === v ? null : (v as SoilMoistureLevel))
+                }
+                options={[
+                  { value: 'dry', label: 'Dry' },
+                  { value: 'moist', label: 'Moist' },
+                  { value: 'wet', label: 'Wet' },
+                ]}
+              />
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] text-text-subtle">1</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={moisturePrecise}
+                  onChange={e => setMoisturePrecise(Number(e.target.value))}
+                  className="flex-1"
+                  aria-label="Soil moisture level 1 to 10"
+                />
+                <span className="text-[12px] text-text-subtle">10</span>
+                <span className="tnum text-[13px] text-text min-w-[2ch] text-right">
+                  {moisturePrecise}
+                </span>
+              </div>
+            )}
+          </div>
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Leaf size" hint="mm, optional">

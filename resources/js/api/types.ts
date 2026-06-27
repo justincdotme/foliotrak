@@ -6,6 +6,7 @@ export type CareType = 'watering' | 'fertilizing' | 'repotting' | 'observation' 
 export type FertilizerForm = 'liquid' | 'powdered' | 'granular' | 'organic' | 'food' | 'other'
 export type GrowthRate = 'none' | 'slow' | 'moderate' | 'fast'
 export type CareStatus = 'ok' | 'due-soon' | 'overdue'
+export type SoilMoistureLevel = 'dry' | 'moist' | 'wet'
 
 export interface User {
   id: number
@@ -16,6 +17,7 @@ export interface User {
 
 export interface Settings {
   pushover_user_key: string | null
+  temperature_unit: 'F' | 'C'
 }
 
 export interface Plant {
@@ -42,8 +44,16 @@ export interface Tag {
   color: string | null
 }
 
+export interface EquipmentOption {
+  id: number
+  key: string
+  label: string
+  sort_order: number
+}
+
 export interface PlantWithTags extends Plant {
   tags: Tag[]
+  equipment: EquipmentOption[]
 }
 
 export interface Photo {
@@ -120,6 +130,12 @@ export interface ObservationDetail {
   leaf_size_mm: number | null
   weight_grams: number | null
   weight: WeightInput | null
+  ambient_humidity_pct: number | null
+  ambient_temp_c: number | null
+  ambient_temp_display: number | null
+  temperature_unit: 'F' | 'C'
+  soil_moisture_relative: SoilMoistureLevel | null
+  soil_moisture_precise: number | null
   symptoms: Symptom[]
 }
 
@@ -246,6 +262,7 @@ export interface SpeciesSuggestion {
   scientific_name: string
   canonical_name: string | null
   common_name: string | null
+  common_names: string[] | null
   rank: string | null
   family: string | null
 }

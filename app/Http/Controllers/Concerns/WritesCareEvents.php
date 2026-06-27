@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Concerns;
 use App\Models\CareEvent;
 use App\Models\CareEventType;
 use App\Models\Plant;
+use App\Support\Temperature;
 use App\Support\Weight;
 use Illuminate\Http\Request;
 
@@ -41,5 +42,17 @@ trait WritesCareEvents
         )->grams;
 
         return $grams > 0 ? $grams : null;
+    }
+
+    protected function celsiusFromDisplay(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return round(
+            Temperature::fromDisplay((float) $value, config('foliotrak.temperature_unit'))->celsius,
+            1,
+        );
     }
 }

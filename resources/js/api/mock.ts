@@ -100,6 +100,7 @@ export const GBIF: SpeciesSuggestion[] = [
     scientific_name: 'Epipremnum aureum (Linden & André) G.S.Bunting',
     canonical_name: 'Epipremnum aureum',
     common_name: 'Golden pothos',
+    common_names: ['Golden pothos', "Devil's ivy"],
     rank: 'SPECIES',
     family: 'Araceae',
   },
@@ -108,6 +109,7 @@ export const GBIF: SpeciesSuggestion[] = [
     scientific_name: 'Monstera deliciosa Liebm.',
     canonical_name: 'Monstera deliciosa',
     common_name: 'Swiss cheese plant',
+    common_names: ['Swiss cheese plant'],
     rank: 'SPECIES',
     family: 'Araceae',
   },
@@ -116,6 +118,7 @@ export const GBIF: SpeciesSuggestion[] = [
     scientific_name: 'Dracaena trifasciata (Prain) Mabb.',
     canonical_name: 'Dracaena trifasciata',
     common_name: 'Snake plant',
+    common_names: ['Snake plant', "Mother-in-law's tongue"],
     rank: 'SPECIES',
     family: 'Asparagaceae',
   },
@@ -124,6 +127,7 @@ export const GBIF: SpeciesSuggestion[] = [
     scientific_name: 'Ficus lyrata Warb.',
     canonical_name: 'Ficus lyrata',
     common_name: 'Fiddle-leaf fig',
+    common_names: ['Fiddle-leaf fig'],
     rank: 'SPECIES',
     family: 'Moraceae',
   },
@@ -132,6 +136,7 @@ export const GBIF: SpeciesSuggestion[] = [
     scientific_name: 'Zamioculcas zamiifolia (Lodd.) Engl.',
     canonical_name: 'Zamioculcas zamiifolia',
     common_name: 'ZZ plant',
+    common_names: ['ZZ plant'],
     rank: 'SPECIES',
     family: 'Araceae',
   },
@@ -140,6 +145,7 @@ export const GBIF: SpeciesSuggestion[] = [
     scientific_name: 'Spathiphyllum wallisii Regel',
     canonical_name: 'Spathiphyllum wallisii',
     common_name: 'Peace lily',
+    common_names: ['Peace lily'],
     rank: 'SPECIES',
     family: 'Araceae',
   },
@@ -148,6 +154,7 @@ export const GBIF: SpeciesSuggestion[] = [
     scientific_name: 'Chlorophytum comosum (Thunb.) Jacques',
     canonical_name: 'Chlorophytum comosum',
     common_name: 'Spider plant',
+    common_names: ['Spider plant'],
     rank: 'SPECIES',
     family: 'Asparagaceae',
   },
@@ -156,6 +163,7 @@ export const GBIF: SpeciesSuggestion[] = [
     scientific_name: 'Calathea orbifolia (Linden) H.Kenn.',
     canonical_name: 'Calathea orbifolia',
     common_name: 'Prayer plant',
+    common_names: ['Prayer plant'],
     rank: 'SPECIES',
     family: 'Marantaceae',
   },
@@ -362,6 +370,12 @@ const observation = (plantId: number, daysAgo: number, opts: ObservationOptions)
       leaf_size_mm: o.leaf_size_mm,
       weight_grams: o.weight_grams,
       weight: o.weight_grams != null ? gramsToWeight(o.weight_grams) : null,
+      ambient_humidity_pct: null,
+      ambient_temp_c: null,
+      ambient_temp_display: null,
+      temperature_unit: 'F',
+      soil_moisture_relative: null,
+      soil_moisture_precise: null,
       symptoms: [
         ...(o.symptom_ids || []).map(symptomById).filter(s => s !== undefined),
         ...customs,
@@ -762,6 +776,7 @@ const buildSeed = (): StoreData => {
       created_at: iso(acquiredDaysAgo),
       updated_at: iso(1),
       tags: tagNames.map(n => TAGS.find(t => t.name === n) ?? { id: 0, name: '', color: null }),
+      equipment: [],
     }
   }
 
@@ -926,6 +941,7 @@ export const mockApi = {
       created_at: iso(0),
       updated_at: iso(0),
       tags: data.tags || [],
+      equipment: [],
     }
     STORE.plants.push(p)
     return clone(p)

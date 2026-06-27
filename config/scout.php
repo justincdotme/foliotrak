@@ -143,7 +143,7 @@ return [
         'key' => env('MEILISEARCH_KEY'),
         'index-settings' => [
             SpeciesCache::class => [
-                'searchableAttributes' => ['scientific_name', 'canonical_name', 'common_name'],
+                'searchableAttributes' => ['scientific_name', 'canonical_name', 'common_name', 'common_names'],
             ],
         ],
     ],

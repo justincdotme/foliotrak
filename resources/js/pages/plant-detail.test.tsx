@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PlantDetailPage } from './plant-detail'
 
@@ -7,6 +8,9 @@ vi.mock('@/hooks/usePlantPhotos', () => ({ usePlantPhotos: vi.fn() }))
 vi.mock('@/hooks/useTimeline', () => ({ useTimeline: vi.fn() }))
 vi.mock('@/hooks/useRecommendations', () => ({ useRecommendations: vi.fn() }))
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
+vi.mock('@/hooks/useEquipment', () => ({
+  useEquipment: () => ({ data: [], loading: false }),
+}))
 vi.mock('@/components/charts/timeline-overlay', () => ({
   TimelineOverlay: () => <div data-testid="overlay" />,
 }))
@@ -53,6 +57,7 @@ const plant = {
   cover_photo: null,
   condition: { key: 'healthy', label: 'Healthy' },
   tags: [],
+  equipment: [],
 }
 
 const wateringEvent = {
@@ -106,8 +111,14 @@ beforeEach(() => {
   } as never)
 })
 
-const renderPage = () =>
-  render(<PlantDetailPage id={1} go={vi.fn()} openLog={vi.fn()} viewPhoto={vi.fn()} />)
+const renderPage = () => {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={qc}>
+      <PlantDetailPage id={1} go={vi.fn()} openLog={vi.fn()} viewPhoto={vi.fn()} />
+    </QueryClientProvider>
+  )
+}
 
 describe('PlantDetailPage charts', () => {
   it('shows only the activity heatmap when there are events but no observations', () => {

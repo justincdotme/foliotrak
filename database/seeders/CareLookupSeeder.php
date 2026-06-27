@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Models\CareEventType;
+use App\Models\Equipment;
 use App\Models\FertilizerForm;
 use App\Models\Nutrient;
 use App\Models\Symptom;
@@ -23,6 +24,7 @@ class CareLookupSeeder extends Seeder
         $this->seedFertilizerForms();
         $this->seedNutrients();
         $this->seedSymptoms();
+        $this->seedEquipment();
     }
 
     private function seedCareEventTypes(): void
@@ -108,6 +110,24 @@ class CareLookupSeeder extends Seeder
                     'sort_order' => $order + 1,
                     'is_custom' => false,
                 ],
+            );
+        }
+    }
+
+    private function seedEquipment(): void
+    {
+        $items = [
+            ['key' => 'humidifier', 'label' => 'Humidifier'],
+            ['key' => 'dehumidifier', 'label' => 'Dehumidifier'],
+            ['key' => 'grow_light', 'label' => 'Grow light'],
+            ['key' => 'heat_mat', 'label' => 'Heat mat'],
+            ['key' => 'fan', 'label' => 'Fan'],
+        ];
+
+        foreach ($items as $order => $item) {
+            Equipment::firstOrCreate(
+                ['key' => $item['key']],
+                ['label' => $item['label'], 'sort_order' => $order + 1],
             );
         }
     }

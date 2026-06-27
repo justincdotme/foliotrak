@@ -148,6 +148,29 @@ export function EventDetail({ e }: EventDetailProps) {
             </span>
           </span>
         )}
+        {o.ambient_humidity_pct != null && (
+          <span>
+            Humidity: <span className="tnum text-text">{o.ambient_humidity_pct}%</span>
+          </span>
+        )}
+        {o.ambient_temp_display != null && (
+          <span>
+            Temp:{' '}
+            <span className="tnum text-text">
+              {o.ambient_temp_display}°{o.temperature_unit}
+            </span>
+          </span>
+        )}
+        {o.soil_moisture_relative != null && (
+          <span>
+            Soil: <span className="text-text capitalize">{o.soil_moisture_relative}</span>
+          </span>
+        )}
+        {o.soil_moisture_precise != null && !o.soil_moisture_relative && (
+          <span>
+            Soil: <span className="tnum text-text">{o.soil_moisture_precise}/10</span>
+          </span>
+        )}
       </div>
       {o.symptoms?.length > 0 && (
         <div className="flex flex-wrap gap-1 pt-0.5">

@@ -34,6 +34,10 @@ class ObservationController extends Controller
                 'growth_note' => $request->filled('growth_note') ? $request->string('growth_note')->value() : null,
                 'leaf_size_mm' => $request->input('leaf_size_mm'),
                 'weight_grams' => $this->gramsFromComponents($request->input('weight')),
+                'ambient_humidity_pct' => $request->input('ambient_humidity_pct'),
+                'ambient_temp_c' => $this->celsiusFromDisplay($request->input('ambient_temp')),
+                'soil_moisture_relative' => $request->input('soil_moisture_relative'),
+                'soil_moisture_precise' => $request->input('soil_moisture_precise'),
             ]);
 
             $symptomIds = SymptomResolver::resolveIds(

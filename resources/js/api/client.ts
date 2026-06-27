@@ -3,6 +3,7 @@ import api from '@/lib/api'
 import type {
   CareEvent,
   DashboardData,
+  EquipmentOption,
   FertilizerFormOption,
   GroupInsights,
   NutrientOption,
@@ -34,6 +35,7 @@ export interface PlantPayload {
   fertilizing_interval_days_override?: number | null
   cover_photo_id?: number | null
   tag_ids?: number[]
+  equipment_ids?: number[]
 }
 
 export const listPlants = async (): Promise<PlantWithTags[]> =>
@@ -124,6 +126,10 @@ export interface ObservationPayload {
   growth_note?: string | null
   leaf_size_mm?: number | null
   weight?: WeightInput | null
+  ambient_humidity_pct?: number | null
+  ambient_temp?: number | null
+  soil_moisture_relative?: 'dry' | 'moist' | 'wet' | null
+  soil_moisture_precise?: number | null
   symptom_ids?: number[]
   custom_symptoms?: string[]
   note?: string | null
@@ -196,6 +202,9 @@ export const listNutrients = async (): Promise<NutrientOption[]> =>
 
 export const listFertilizerForms = async (): Promise<FertilizerFormOption[]> =>
   unwrap(await api.get<{ data: FertilizerFormOption[] }>('/api/fertilizer-forms'))
+
+export const listEquipment = async (): Promise<EquipmentOption[]> =>
+  unwrap(await api.get<{ data: EquipmentOption[] }>('/api/equipment'))
 
 // The /api/user route returns the model directly, not the `data` envelope the
 // API Resources use, so this one is read without unwrap.

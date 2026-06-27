@@ -106,11 +106,14 @@ class ImportSpeciesSeed extends Command
 
         $now = now()->toDateTimeString();
 
+        $commonNames = $data['common_names'] ?? null;
+
         return [
             'gbif_key' => (string) $key,
             'scientific_name' => $scientificName,
             'canonical_name' => $data['canonical_name'] ?? null,
             'common_name' => $data['common_name'] ?? null,
+            'common_names' => is_array($commonNames) ? json_encode($commonNames) : null,
             'rank' => $data['rank'] ?? null,
             'family' => $data['family'] ?? null,
             'cached_at' => $now,
@@ -127,7 +130,7 @@ class ImportSpeciesSeed extends Command
         SpeciesCache::upsert(
             $rows,
             ['gbif_key'],
-            ['scientific_name', 'canonical_name', 'common_name', 'rank', 'family', 'cached_at', 'updated_at'],
+            ['scientific_name', 'canonical_name', 'common_name', 'common_names', 'rank', 'family', 'cached_at', 'updated_at'],
         );
     }
 }

@@ -32,6 +32,8 @@ class StorePlantRequest extends FormRequest
             'fertilizing_interval_days_override' => ['nullable', 'integer', 'min:1', 'max:65535'],
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => ['integer', Rule::exists('plant_tags', 'id')],
+            'equipment_ids' => ['sometimes', 'array'],
+            'equipment_ids.*' => ['integer', Rule::exists('equipment', 'id')],
         ];
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\GrowthRate;
+use App\Enums\SoilMoistureLevel;
 use Database\Factories\ObservationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property GrowthRate|null $growth_rate
+ * @property SoilMoistureLevel|null $soil_moisture_relative
  */
 #[Fillable([
     'care_event_id',
@@ -24,6 +26,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     'growth_note',
     'leaf_size_mm',
     'weight_grams',
+    'ambient_humidity_pct',
+    'ambient_temp_c',
+    'soil_moisture_relative',
+    'soil_moisture_precise',
 ])]
 class Observation extends Model
 {
@@ -46,6 +52,10 @@ class Observation extends Model
             'growth_rate' => GrowthRate::class,
             'leaf_size_mm' => 'decimal:1',
             'weight_grams' => 'integer',
+            'ambient_humidity_pct' => 'integer',
+            'ambient_temp_c' => 'decimal:1',
+            'soil_moisture_relative' => SoilMoistureLevel::class,
+            'soil_moisture_precise' => 'integer',
         ];
     }
 

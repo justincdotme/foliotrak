@@ -15,6 +15,7 @@ use Laravel\Scout\Searchable;
     'scientific_name',
     'canonical_name',
     'common_name',
+    'common_names',
     'rank',
     'family',
     'payload',
@@ -32,6 +33,7 @@ class SpeciesCache extends Model
     protected function casts(): array
     {
         return [
+            'common_names' => 'array',
             'payload' => 'array',
             'cached_at' => 'datetime',
         ];
@@ -51,6 +53,7 @@ class SpeciesCache extends Model
             'scientific_name' => $this->scientific_name,
             'canonical_name' => $this->canonical_name,
             'common_name' => $this->common_name,
+            'common_names' => $this->common_names,
             'rank' => $this->rank,
             'family' => $this->family,
             'cached_at' => $this->cached_at,

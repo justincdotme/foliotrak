@@ -29,10 +29,13 @@ class SettingsController extends Controller
     }
 
     /**
-     * @return array{pushover_user_key: string|null}
+     * @return array{pushover_user_key: string|null, temperature_unit: string}
      */
     private function settings(User $user): array
     {
-        return ['pushover_user_key' => $user->pushover_user_key];
+        return [
+            'pushover_user_key' => $user->pushover_user_key,
+            'temperature_unit' => config('foliotrak.temperature_unit', 'F'),
+        ];
     }
 }

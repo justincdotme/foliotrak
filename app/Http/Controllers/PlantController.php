@@ -28,6 +28,7 @@ class PlantController extends Controller
      */
     private const RELATIONS = [
         'tags',
+        'equipment',
         'coverPhoto',
         'latestObservationEvent.observation.symptoms',
         'wateringEvents',
@@ -54,8 +55,9 @@ class PlantController extends Controller
         $this->authorize('create', Plant::class);
 
         $plant = DB::transaction(function () use ($request): Plant {
-            $plant = Plant::create($request->safe()->except('tag_ids'));
+            $plant = Plant::create($request->safe()->except(['tag_ids', 'equipment_ids']));
             $this->syncTags($request, $plant);
+            $this->syncEquipment($request, $plant);
 
             return $plant;
         });
@@ -77,7 +79,7 @@ class PlantController extends Controller
         $this->authorize('update', $plant);
 
         DB::transaction(function () use ($request, $plant, $recordRelocation): void {
-            $plant->update($request->safe()->except(['tag_ids', 'location']));
+            $plant->update($request->safe()->except(['tag_ids', 'equipment_ids', 'location']));
 
             // Location flows through the single relocation writer, which logs
             // the move and no-ops when the value is unchanged.
@@ -86,6 +88,7 @@ class PlantController extends Controller
             }
 
             $this->syncTags($request, $plant);
+            $this->syncEquipment($request, $plant);
         });
 
         return PlantResource::make($plant->load(self::RELATIONS));
@@ -108,6 +111,13 @@ class PlantController extends Controller
     {
         if ($request->has('tag_ids')) {
             $plant->tags()->sync($request->collect('tag_ids')->all());
+        }
+    }
+
+    private function syncEquipment(Request $request, Plant $plant): void
+    {
+        if ($request->has('equipment_ids')) {
+            $plant->equipment()->sync($request->collect('equipment_ids')->all());
         }
     }
 }

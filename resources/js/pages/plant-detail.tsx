@@ -13,11 +13,15 @@ import {
   MapPin,
   Pencil,
   Plus,
+  Settings2,
   Shovel,
   Sprout,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { CareEvent, CareType, Photo } from '@/api/types'
+import { updatePlant } from '@/api/client'
+import { useEquipment } from '@/hooks/useEquipment'
 import { usePlant } from '@/hooks/usePlant'
 import { usePlantPhotos } from '@/hooks/usePlantPhotos'
 import { useTimeline } from '@/hooks/useTimeline'
@@ -63,6 +67,8 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
     error: recommendationsError,
   } = useRecommendations(id)
   const { deleteEvent } = useCareEventMutations(id)
+  const { data: allEquipment } = useEquipment()
+  const queryClient = useQueryClient()
   const [editOpen, setEditOpen] = useState(false)
   const [photoOpen, setPhotoOpen] = useState(false)
 
@@ -214,6 +220,36 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
           Observe
         </Button>
       </div>
+
+      {/* Equipment near this plant */}
+      <Card className="p-4">
+        <SectionTitle icon={Settings2}>Equipment</SectionTitle>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {allEquipment.map(eq => {
+            const active = plant.equipment?.some(e => e.id === eq.id) ?? false
+            return (
+              <Chip
+                key={eq.id}
+                active={active}
+                outline={!active}
+                color="var(--primary)"
+                onClick={async () => {
+                  const current = plant.equipment?.map(e => e.id) ?? []
+                  const next = active ? current.filter(x => x !== eq.id) : [...current, eq.id]
+                  await updatePlant(id, { equipment_ids: next })
+                  queryClient.invalidateQueries({ queryKey: ['plant', id] })
+                  queryClient.invalidateQueries({ queryKey: ['plants'] })
+                }}
+              >
+                {eq.label}
+              </Chip>
+            )
+          })}
+        </div>
+        {allEquipment.length === 0 && (
+          <p className="text-[13px] text-text-muted mt-1">No equipment options available.</p>
+        )}
+      </Card>
 
       {/* Schedule (My schedule / Recommended) */}
       <ScheduleSection

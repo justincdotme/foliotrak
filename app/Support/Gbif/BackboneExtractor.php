@@ -181,7 +181,7 @@ class BackboneExtractor
     /**
      * @param  array<string, mixed>  $vernacular
      * @param  array<int, true>  $qualifying
-     * @return array<int, string>
+     * @return array<int, list<string>>
      */
     private function collectCommonNames(string $archivePath, array $vernacular, array $qualifying): array
     {
@@ -192,17 +192,33 @@ class BackboneExtractor
         }
 
         $commonNames = [];
+        $seen = [];
         foreach ($this->iterateRows($archivePath, $vernacular) as $row) {
             if (! in_array(strtolower(trim($this->cell($row, $languageIndex))), self::ENGLISH_LANGUAGE_CODES, true)) {
                 continue;
             }
             $key = $this->toKey($this->cell($row, $vernacular['keyIndex']));
-            if ($key === null || ! isset($qualifying[$key]) || isset($commonNames[$key])) {
+            if ($key === null || ! isset($qualifying[$key])) {
                 continue;
             }
-            $name = $this->normalize($this->cell($row, $nameIndex));
-            if ($name !== '') {
-                $commonNames[$key] = $name;
+            $raw = $this->normalize($this->cell($row, $nameIndex));
+            if ($raw === '') {
+                continue;
+            }
+
+            // Some TAXREF entries pack multiple names comma-separated into one field.
+            $parts = array_map('trim', explode(',', $raw));
+            foreach ($parts as $name) {
+                $name = $this->normalize($name);
+                if ($name === '') {
+                    continue;
+                }
+                $dedup = strtolower($name);
+                if (isset($seen[$key][$dedup])) {
+                    continue;
+                }
+                $seen[$key][$dedup] = true;
+                $commonNames[$key][] = $name;
             }
         }
 
@@ -212,7 +228,7 @@ class BackboneExtractor
     /**
      * @param  array<string, mixed>  $core
      * @param  array<string, int|null>  $plan
-     * @param  array<int, string>  $commonNames
+     * @param  array<int, list<string>>  $commonNames
      * @param  (callable(string): void)|null  $progress
      */
     private function writeSeed(string $archivePath, array $core, array $plan, array $commonNames, string $outputPath, ?callable $progress): int
@@ -249,7 +265,8 @@ class BackboneExtractor
                     }
                 }
                 if (isset($commonNames[$key])) {
-                    $record['common_name'] = $commonNames[$key];
+                    $record['common_name'] = $commonNames[$key][0];
+                    $record['common_names'] = $commonNames[$key];
                 }
                 $record['rank'] = $rank;
                 if ($plan['family'] !== null) {
