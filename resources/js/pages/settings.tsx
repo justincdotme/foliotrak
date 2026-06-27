@@ -3,13 +3,28 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { isAxiosError } from 'axios'
-import { AlertTriangle, Bell, Check, LogOut, Sun, User as UserIcon } from 'lucide-react'
+import {
+  AlertTriangle,
+  Bell,
+  Check,
+  LogOut,
+  Pencil,
+  Plus,
+  Sun,
+  Tags,
+  Trash2,
+  User as UserIcon,
+  X,
+} from 'lucide-react'
 import type { ThemeChoice } from '@/hooks/useTheme'
+import type { Tag } from '@/api/types'
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/useTags'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
+import { ConfirmDelete } from '@/components/app/confirm-delete'
 import { SectionTitle } from '@/components/app/section-title'
 import { Segmented } from '@/components/app/segmented'
 import { Spinner } from '@/components/app/spinner'
@@ -119,6 +134,232 @@ function PushoverKeyForm({
   )
 }
 
+function TagRow({
+  tag,
+  onUpdate,
+  onDelete,
+}: {
+  tag: Tag
+  onUpdate: (id: number, name: string) => Promise<unknown>
+  onDelete: (id: number) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(tag.name)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  const save = async () => {
+    const trimmed = name.trim()
+    if (!trimmed) {
+      setError('Name is required.')
+      return
+    }
+    try {
+      await onUpdate(tag.id, trimmed)
+      setEditing(false)
+      setError(null)
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 422) {
+        const messages = err.response.data?.errors?.name
+        setError(Array.isArray(messages) ? messages[0] : 'That name is taken.')
+      } else {
+        setError('Could not rename. Try again.')
+      }
+    }
+  }
+
+  const cancel = () => {
+    setName(tag.name)
+    setEditing(false)
+    setError(null)
+  }
+
+  return (
+    <div className="flex items-center gap-2 py-1.5">
+      <span
+        className="h-3 w-3 rounded-full shrink-0"
+        style={{ background: tag.color || 'var(--series-1)' }}
+      />
+      {editing ? (
+        <div className="flex-1 flex items-center gap-1.5">
+          <Input
+            ref={inputRef}
+            value={name}
+            onChange={e => {
+              setName(e.target.value)
+              setError(null)
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') save()
+              if (e.key === 'Escape') cancel()
+            }}
+            className="h-7 text-[13px] flex-1"
+            aria-invalid={error ? true : undefined}
+          />
+          <button type="button" onClick={save} className="p-1 text-primary hover:text-primary/80">
+            <Check size={14} />
+          </button>
+          <button type="button" onClick={cancel} className="p-1 text-text-muted hover:text-text">
+            <X size={14} />
+          </button>
+        </div>
+      ) : (
+        <>
+          <span className="flex-1 text-[13px]">{tag.name}</span>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="p-1 text-text-muted hover:text-text"
+            aria-label={`Rename ${tag.name}`}
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(tag.id)}
+            className="p-1 text-text-muted hover:text-overdue"
+            aria-label={`Delete ${tag.name}`}
+          >
+            <Trash2 size={13} />
+          </button>
+        </>
+      )}
+      {error && <span className="text-[11px] text-overdue">{error}</span>}
+    </div>
+  )
+}
+
+function TagManager() {
+  const { data: tags, loading } = useTags()
+  const createTag = useCreateTag()
+  const updateTag = useUpdateTag()
+  const deleteTagMut = useDeleteTag()
+  const [adding, setAdding] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null)
+  const addRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (adding) addRef.current?.focus()
+  }, [adding])
+
+  const submitNew = async () => {
+    const trimmed = newName.trim()
+    if (!trimmed) return
+    try {
+      await createTag.mutateAsync(trimmed)
+      setNewName('')
+      setAdding(false)
+      setCreateError(null)
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 422) {
+        const messages = err.response.data?.errors?.name
+        setCreateError(Array.isArray(messages) ? messages[0] : 'That name is taken.')
+      } else {
+        setCreateError('Could not create tag. Try again.')
+      }
+    }
+  }
+
+  const handleUpdate = (id: number, name: string) =>
+    updateTag.mutateAsync({ id, payload: { name } })
+
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      deleteTagMut.mutate(deleteTarget.id)
+      setDeleteTarget(null)
+    }
+  }
+
+  if (loading) return <Spinner />
+
+  return (
+    <>
+      {(tags ?? []).length === 0 && !adding && (
+        <p className="text-[13px] text-text-muted">
+          No tags yet. Create one to start grouping your plants.
+        </p>
+      )}
+      <div className="divide-y divide-border">
+        {(tags ?? []).map(t => (
+          <TagRow
+            key={t.id}
+            tag={t}
+            onUpdate={handleUpdate}
+            onDelete={id => {
+              const tag = (tags ?? []).find(x => x.id === id)
+              if (tag) setDeleteTarget(tag)
+            }}
+          />
+        ))}
+      </div>
+      {adding ? (
+        <div className="mt-2">
+          <div className="flex items-center gap-1.5">
+            <Input
+              ref={addRef}
+              value={newName}
+              onChange={e => {
+                setNewName(e.target.value)
+                setCreateError(null)
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') submitNew()
+                if (e.key === 'Escape') {
+                  setAdding(false)
+                  setNewName('')
+                  setCreateError(null)
+                }
+              }}
+              placeholder="Tag name"
+              className="h-8 text-[13px] flex-1"
+            />
+            <Button size="sm" onClick={submitNew} disabled={createTag.isPending || !newName.trim()}>
+              Add
+            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setAdding(false)
+                setNewName('')
+                setCreateError(null)
+              }}
+              className="p-1 text-text-muted hover:text-text"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {createError && <div className="mt-1 text-[11px] text-overdue">{createError}</div>}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="mt-2 flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text transition-colors"
+        >
+          <Plus size={14} />
+          Add a tag
+        </button>
+      )}
+      <ConfirmDelete
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        label={
+          deleteTarget
+            ? `"${deleteTarget.name}" will be removed from all plants that use it.`
+            : undefined
+        }
+      />
+    </>
+  )
+}
+
 export function SettingsPage({ theme, setTheme, onLogout }: SettingsPageProps) {
   const { data: settings, loading, error } = useSettings()
   const { user } = useCurrentUser()
@@ -144,6 +385,10 @@ export function SettingsPage({ theme, setTheme, onLogout }: SettingsPageProps) {
             onSave={key => update.mutateAsync({ pushover_user_key: key })}
           />
         )}
+      </Card>
+      <Card className="p-4">
+        <SectionTitle icon={Tags}>Tags</SectionTitle>
+        <TagManager />
       </Card>
       <Card className="p-4">
         <SectionTitle icon={Sun}>Appearance</SectionTitle>

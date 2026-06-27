@@ -5,6 +5,7 @@ import { AddPlantForm } from './add-plant-form'
 
 vi.mock('@/hooks/useTags', () => ({
   useTags: () => ({ data: [], loading: false, error: null }),
+  useCreateTag: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 vi.mock('@/hooks/useSpeciesSuggest', () => ({
   useSpeciesSuggest: () => ({ results: [], loading: false }),

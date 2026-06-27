@@ -24,11 +24,20 @@ class TagController extends Controller
         return TagResource::collection(Tag::query()->orderBy('name')->get());
     }
 
+    private const PALETTE_SIZE = 8;
+
     public function store(StoreTagRequest $request): JsonResponse
     {
         $this->authorize('create', Tag::class);
 
-        $tag = Tag::create($request->validated());
+        $data = $request->validated();
+
+        if (empty($data['color'])) {
+            $index = Tag::query()->count() % self::PALETTE_SIZE;
+            $data['color'] = 'var(--series-'.($index + 1).')';
+        }
+
+        $tag = Tag::create($data);
 
         return TagResource::make($tag)
             ->response()

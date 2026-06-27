@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use App\Models\Plant;
 
 class TagApiTest extends TestCase
 {
@@ -78,6 +79,41 @@ class TagApiTest extends TestCase
             ->assertOk();
     }
 
+    public function test_auto_assigns_color_when_none_provided(): void
+    {
+        $this->actAsHousehold();
+
+        $this->postJson('/api/tags', ['name' => 'First'])
+            ->assertCreated()
+            ->assertJsonPath('data.color', 'var(--series-1)');
+
+        $this->postJson('/api/tags', ['name' => 'Second'])
+            ->assertCreated()
+            ->assertJsonPath('data.color', 'var(--series-2)');
+    }
+
+    public function test_auto_color_cycles_through_palette(): void
+    {
+        $this->actAsHousehold();
+
+        for ($i = 1; $i <= 8; $i++) {
+            Tag::factory()->create(['name' => "Tag{$i}"]);
+        }
+
+        $this->postJson('/api/tags', ['name' => 'Ninth'])
+            ->assertCreated()
+            ->assertJsonPath('data.color', 'var(--series-1)');
+    }
+
+    public function test_explicit_color_is_preserved(): void
+    {
+        $this->actAsHousehold();
+
+        $this->postJson('/api/tags', ['name' => 'Custom', 'color' => '#ff0000'])
+            ->assertCreated()
+            ->assertJsonPath('data.color', '#ff0000');
+    }
+
     public function test_deletes_a_tag(): void
     {
         $this->actAsHousehold();
@@ -85,5 +121,20 @@ class TagApiTest extends TestCase
 
         $this->deleteJson("/api/tags/{$tag->id}")->assertNoContent();
         $this->assertDatabaseMissing('plant_tags', ['id' => $tag->id]);
+    }
+
+    public function test_deleting_a_tag_removes_its_plant_associations(): void
+    {
+        $this->actAsHousehold();
+        $tag = Tag::factory()->create();
+        $plant = Plant::factory()->create();
+        $plant->tags()->attach($tag);
+
+        $this->deleteJson("/api/tags/{$tag->id}")->assertNoContent();
+
+        $this->assertDatabaseMissing('plant_tag', [
+            'plant_id' => $plant->id,
+            'tag_id' => $tag->id,
+        ]);
     }
 }

@@ -9,8 +9,8 @@ import { inputClass } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
-import { Chip } from '@/components/app/chip'
 import { LocationCombobox } from '@/components/app/location-combobox'
+import { TagInlineCreate } from '@/components/app/tag-inline-create'
 
 const today = (): string => new Date().toISOString().slice(0, 10)
 
@@ -196,21 +196,11 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
       </Field>
       <Field label="Tags">
         <div className="flex flex-wrap gap-1.5">
-          {(allTags || []).map(t => {
-            const sel = !!selectedTags.find(x => x.id === t.id)
-            return (
-              <Chip
-                key={t.id}
-                color={t.color || 'var(--series-1)'}
-                active={sel}
-                outline={!sel}
-                onClick={() => toggleTag(t)}
-              >
-                {sel && <Check size={12} />}
-                {t.name}
-              </Chip>
-            )
-          })}
+          <TagInlineCreate
+            allTags={allTags || []}
+            selectedTags={selectedTags}
+            onToggle={toggleTag}
+          />
         </div>
       </Field>
       <Field label="Photo" hint="optional, becomes the cover">
