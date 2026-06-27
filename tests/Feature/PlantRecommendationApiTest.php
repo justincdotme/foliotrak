@@ -123,6 +123,31 @@ class PlantRecommendationApiTest extends TestCase
             ->assertJsonPath('data.position_insights.0.health_after.sample_size', 2);
     }
 
+    public function test_health_by_location_groups_observations_by_location_at_observation_time(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create(['location' => 'kitchen window']);
+        $this->water($plant, [60, 53]);
+        $this->observe($plant, [[45, 5], [40, 4], [20, 3], [15, 2]]);
+
+        $move = CareEvent::factory()->ofType('relocation')->for($plant)->create(['occurred_at' => now()->subDays(30)]);
+        $move->relocation()->create(['from_location' => 'shelf', 'to_location' => 'kitchen window']);
+
+        // Observations at 45 and 40 days ago predate the move → shelf bucket (median 4.5)
+        // Observations at 20 and 15 days ago postdate the move → kitchen window bucket (median 2.5)
+        // Both buckets have sample_size=2; 'kitchen window' < 'shelf' alphabetically → kitchen window first
+        $this->getJson("/api/plants/{$plant->id}/recommendations")
+            ->assertOk()
+            ->assertJsonCount(2, 'data.health_by_location')
+            ->assertJsonPath('data.health_by_location.0.location', 'kitchen window')
+            ->assertJsonPath('data.health_by_location.0.sample_size', 2)
+            ->assertJsonPath('data.health_by_location.0.median_health', 2.5)
+            ->assertJsonPath('data.health_by_location.1.location', 'shelf')
+            ->assertJsonPath('data.health_by_location.1.sample_size', 2)
+            ->assertJsonPath('data.health_by_location.1.median_health', 4.5);
+    }
+
     /**
      * @param  list<int>  $daysAgo
      */

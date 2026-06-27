@@ -5,6 +5,7 @@ import { PlantDetailPage } from './plant-detail'
 vi.mock('@/hooks/usePlant', () => ({ usePlant: vi.fn() }))
 vi.mock('@/hooks/usePlantPhotos', () => ({ usePlantPhotos: vi.fn() }))
 vi.mock('@/hooks/useTimeline', () => ({ useTimeline: vi.fn() }))
+vi.mock('@/hooks/useRecommendations', () => ({ useRecommendations: vi.fn() }))
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
 vi.mock('@/components/charts/timeline-overlay', () => ({
   TimelineOverlay: () => <div data-testid="overlay" />,
@@ -21,6 +22,9 @@ vi.mock('@/components/charts/growth-trend', () => ({
 vi.mock('@/components/charts/activity-heatmap', () => ({
   ActivityHeatmap: () => <div data-testid="heatmap" />,
 }))
+vi.mock('@/components/charts/health-by-location', () => ({
+  HealthByLocation: () => <div data-testid="locations" />,
+}))
 // Non-chart children pull their own react-query hooks; stub them so this test
 // isolates the chart-gating logic (repo convention: mock at the boundary).
 vi.mock('@/components/plant/edit-plant-modal', () => ({ EditPlantModal: () => null }))
@@ -31,6 +35,7 @@ vi.mock('@/components/plant/timeline-item', () => ({ TimelineItem: () => null })
 import { usePlant } from '@/hooks/usePlant'
 import { usePlantPhotos } from '@/hooks/usePlantPhotos'
 import { useTimeline } from '@/hooks/useTimeline'
+import { useRecommendations } from '@/hooks/useRecommendations'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 
 const plant = {
@@ -74,10 +79,28 @@ const setTimeline = (over: Record<string, unknown>) =>
     error: null,
   } as never)
 
+const setRecommendations = (healthByLocation: unknown[]) =>
+  vi.mocked(useRecommendations).mockReturnValue({
+    data: {
+      plant_id: 1,
+      gate: { state: 'ready', history_days: 60, required_days: 28, days_to_go: 0 },
+      watering: null,
+      position_insights: [],
+      health_by_location: healthByLocation,
+    },
+    loading: false,
+    error: null,
+  } as never)
+
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(usePlant).mockReturnValue({ data: plant, loading: false, error: null } as never)
   vi.mocked(usePlantPhotos).mockReturnValue({ data: [], loading: false, error: null } as never)
+  vi.mocked(useRecommendations).mockReturnValue({
+    data: null,
+    loading: false,
+    error: null,
+  } as never)
   vi.mocked(useCareEventMutations).mockReturnValue({
     deleteEvent: { mutateAsync: vi.fn() },
   } as never)
@@ -145,5 +168,41 @@ describe('PlantDetailPage charts', () => {
 
     expect(screen.getByText('Nothing to chart yet')).toBeInTheDocument()
     expect(screen.queryByTestId('heatmap')).not.toBeInTheDocument()
+  })
+})
+
+describe('PlantDetailPage health by location', () => {
+  const bucket = (location: string, sample_size: number) => ({
+    location,
+    median_health: 4,
+    sample_size,
+    healths: Array(sample_size).fill(4),
+  })
+
+  it('renders the location comparison once two or more spots have readings', () => {
+    setTimeline({ events: [wateringEvent] })
+    setRecommendations([bucket('Office', 2), bucket('Kitchen', 3)])
+
+    renderPage()
+
+    expect(screen.getByTestId('locations')).toBeInTheDocument()
+  })
+
+  it('hides the location comparison with only one spot', () => {
+    setTimeline({ events: [wateringEvent] })
+    setRecommendations([bucket('Office', 4)])
+
+    renderPage()
+
+    expect(screen.queryByTestId('locations')).not.toBeInTheDocument()
+  })
+
+  it('ignores spots with no readings when deciding to show the comparison', () => {
+    setTimeline({ events: [wateringEvent] })
+    setRecommendations([bucket('Office', 3), bucket('Hallway', 0)])
+
+    renderPage()
+
+    expect(screen.queryByTestId('locations')).not.toBeInTheDocument()
   })
 })

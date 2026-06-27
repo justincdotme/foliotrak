@@ -1,14 +1,24 @@
-import { Bell, Check, Clock, Info, Droplets, FlaskConical, Calendar } from 'lucide-react'
+import {
+  Bell,
+  Check,
+  Clock,
+  Info,
+  Droplets,
+  FlaskConical,
+  Calendar,
+  ClipboardList,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { CareEvent, Plant, Recommendation } from '@/api/types'
+import type { Plant, PlantRecommendations } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { SectionTitle } from '@/components/app/section-title'
+import { Spinner } from '@/components/app/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { WaterDrop } from '@/components/app/water-drop'
-import { ageDays, fmtDateY } from '@/lib/format'
+import { fmtDateY } from '@/lib/format'
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
 
 type NextDue = {
@@ -22,9 +32,10 @@ type NextDue = {
 
 interface ScheduleSectionProps {
   plant: Plant
-  recs: Recommendation[]
+  recommendations: PlantRecommendations | null
+  recommendationsLoading?: boolean
+  recommendationsError?: boolean
   due: NextDue
-  events: CareEvent[]
 }
 
 function NextDueRow({ due }: { due: NextDue }) {
@@ -86,7 +97,81 @@ function NextDueRow({ due }: { due: NextDue }) {
   )
 }
 
-export function ScheduleSection({ plant, recs, due, events }: ScheduleSectionProps) {
+// The Recommended tab below the four-week gate: a calm countdown, never an error state.
+function CountdownGate({
+  historyDays,
+  daysToGo,
+  requiredDays,
+}: {
+  historyDays: number
+  daysToGo: number
+  requiredDays: number
+}) {
+  return (
+    <div className="rounded-[8px] border border-dashed border-border-strong bg-surface-raised p-4 text-center opacity-95">
+      <Clock size={22} className="mx-auto text-text-subtle mb-2" />
+      <div className="font-medium">Keep logging.</div>
+      <div className="text-[13px] text-text-muted mt-1">
+        {daysToGo} day{daysToGo === 1 ? '' : 's'} remaining to unlock recommendations.
+      </div>
+      <div className="mt-3 h-1.5 rounded-full bg-border overflow-hidden">
+        <div
+          className="h-full bg-primary"
+          style={{ width: Math.min(100, (historyDays / requiredDays) * 100) + '%' }}
+        />
+      </div>
+      <div className="text-[11px] text-text-subtle mt-1.5 tnum">
+        {historyDays} of {requiredDays} days of history
+      </div>
+    </div>
+  )
+}
+
+// Past the gate but no health readings yet, so the health-aware cadence cannot be derived.
+function NoHealthDataGate() {
+  return (
+    <div className="rounded-[8px] border border-dashed border-border-strong bg-surface-raised p-4 text-center">
+      <ClipboardList size={22} className="mx-auto text-text-subtle mb-2" />
+      <div className="font-medium">Add a health reading.</div>
+      <div className="text-[13px] text-text-muted mt-1">
+        There is enough history, but no overall-health observations yet. Log one and a watering
+        suggestion will appear here.
+      </div>
+    </div>
+  )
+}
+
+// A settled-but-failed recommendations fetch must not read as a perpetual spinner.
+function RecommendationsUnavailable() {
+  return (
+    <div className="rounded-[8px] border border-dashed border-border-strong bg-surface-raised p-4 text-center text-[13px] text-text-muted">
+      Recommendations could not load right now. Try again in a moment.
+    </div>
+  )
+}
+
+function FertilizerPending() {
+  return (
+    <div className="rounded-[8px] border border-border p-3 flex items-start gap-3 opacity-90">
+      <FlaskConical size={18} className="text-accent mt-0.5 shrink-0" />
+      <div className="flex-1">
+        <div className="font-medium text-text-muted">Fertilizer suggestion coming later</div>
+        <div className="text-[12px] text-text-subtle mt-0.5">
+          Once there is enough feeding history to compare, a cadence will appear here. Set your own
+          under My schedule for now.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function ScheduleSection({
+  plant,
+  recommendations,
+  recommendationsLoading = false,
+  recommendationsError = false,
+  due,
+}: ScheduleSectionProps) {
   const [tab, setTab] = useState('mine')
   const [editing, setEditing] = useState(false)
   const [wInt, setWInt] = useState(plant.watering_interval_days_override ?? '')
@@ -97,15 +182,9 @@ export function ScheduleSection({ plant, recs, due, events }: ScheduleSectionPro
     setFInt(plant.fertilizing_interval_days_override ?? '')
   }, [plant.id, plant.watering_interval_days_override, plant.fertilizing_interval_days_override])
 
-  const firstEvent = events
-    .filter(e => e.plant_id === plant.id)
-    .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime())[0]
-
-  const historyDays = firstEvent ? ageDays(firstEvent.occurred_at) : 0
-  const unlocked = historyDays >= 28
-  const weeks = Math.round(historyDays / 7)
-  const recWater = recs.find(r => r.type === 'watering')
-  const recFert = recs.find(r => r.type === 'fertilizing')
+  const gate = recommendations?.gate
+  const watering = recommendations?.watering ?? null
+  const locked = gate?.state === 'countdown'
   const hasMine =
     plant.watering_interval_days_override != null ||
     plant.fertilizing_interval_days_override != null
@@ -120,12 +199,8 @@ export function ScheduleSection({ plant, recs, due, events }: ScheduleSectionPro
     setEditing(false)
   }
 
-  const applyRec = async (which: 'watering' | 'fertilizing', days: number) => {
-    await update.mutateAsync(
-      which === 'watering'
-        ? { watering_interval_days_override: days }
-        : { fertilizing_interval_days_override: days }
-    )
+  const adoptWatering = async (days: number) => {
+    await update.mutateAsync({ watering_interval_days_override: days })
     setTab('mine')
   }
 
@@ -137,7 +212,7 @@ export function ScheduleSection({ plant, recs, due, events }: ScheduleSectionPro
           <TabsTrigger value="mine">My schedule</TabsTrigger>
           <TabsTrigger value="rec">
             Recommended
-            {!unlocked && (
+            {locked && (
               <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-border-strong text-text-subtle">
                 soon
               </span>
@@ -225,95 +300,59 @@ export function ScheduleSection({ plant, recs, due, events }: ScheduleSectionPro
         </TabsContent>
 
         <TabsContent value="rec" className="space-y-3">
-          {!unlocked ? (
-            <div className="rounded-[8px] border border-dashed border-border-strong bg-surface-raised p-4 text-center opacity-95">
-              <Clock size={22} className="mx-auto text-text-subtle mb-2" />
-              <div className="font-medium">Keep logging.</div>
-              <div className="text-[13px] text-text-muted mt-1">
-                {28 - historyDays} day{28 - historyDays === 1 ? '' : 's'} remaining to unlock
-                recommendations.
-              </div>
-              <div className="mt-3 h-1.5 rounded-full bg-border overflow-hidden">
-                <div
-                  className="h-full bg-primary"
-                  style={{ width: Math.min(100, (historyDays / 28) * 100) + '%' }}
-                />
-              </div>
-              <div className="text-[11px] text-text-subtle mt-1.5 tnum">
-                {historyDays} of 28 days of history
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-left opacity-50 pointer-events-none">
-                <div className="rounded-[8px] border border-border p-2.5">
-                  <div className="text-[11px] text-text-subtle">Watering</div>
-                  <div className="font-medium text-text-subtle">Locked</div>
-                </div>
-                <div className="rounded-[8px] border border-border p-2.5">
-                  <div className="text-[11px] text-text-subtle">Fertilizing</div>
-                  <div className="font-medium text-text-subtle">Locked</div>
-                </div>
-              </div>
-            </div>
+          {recommendationsLoading ? (
+            <Spinner />
+          ) : recommendationsError || !recommendations || !gate ? (
+            <RecommendationsUnavailable />
+          ) : gate.state === 'countdown' ? (
+            <CountdownGate
+              historyDays={gate.history_days}
+              daysToGo={gate.days_to_go}
+              requiredDays={gate.required_days}
+            />
+          ) : gate.state === 'no_health_data' ? (
+            <>
+              <NoHealthDataGate />
+              <FertilizerPending />
+            </>
           ) : (
             <>
-              {recWater && recWater.interval_days != null && (
+              {watering ? (
                 <div className="rounded-[8px] border border-border p-3">
                   <div className="flex items-start gap-3">
                     <Droplets size={18} className="text-info mt-0.5 shrink-0" />
                     <div className="flex-1">
                       <div className="font-medium">
-                        Water about every <span className="tnum">{recWater.interval_days}</span>{' '}
+                        Water about every <span className="tnum">{watering.interval_days}</span>{' '}
                         days
-                        {recWater.amount_ml && (
+                        {watering.amount_ml != null && (
                           <>
-                            , about <span className="tnum">{recWater.amount_ml} ml</span>
+                            , about <span className="tnum">{watering.amount_ml} ml</span>
                           </>
                         )}
                       </div>
-                      <div className="text-[12px] text-text-subtle mt-0.5">
-                        Based on {recWater.sample_size} waterings over {weeks} weeks.
-                      </div>
+                      <div className="text-[12px] text-text-muted mt-1">{watering.rationale}</div>
                     </div>
                   </div>
-                  {plant.watering_interval_days_override !== recWater.interval_days && (
+                  {plant.watering_interval_days_override !== watering.interval_days && (
                     <Button
                       size="sm"
                       variant="ghost"
                       className="mt-2"
-                      onClick={() => applyRec('watering', recWater.interval_days ?? 0)}
+                      onClick={() => adoptWatering(watering.interval_days)}
+                      disabled={update.isPending}
                     >
                       <Check size={14} />
                       Use this for my schedule
                     </Button>
                   )}
                 </div>
-              )}
-              {recFert && recFert.interval_days != null && (
-                <div className="rounded-[8px] border border-border p-3">
-                  <div className="flex items-start gap-3">
-                    <FlaskConical size={18} className="text-accent mt-0.5 shrink-0" />
-                    <div className="flex-1">
-                      <div className="font-medium">
-                        Fertilize about every <span className="tnum">{recFert.interval_days}</span>{' '}
-                        days
-                      </div>
-                      <div className="text-[12px] text-text-subtle mt-0.5">
-                        Based on {recFert.sample_size} feedings. Small sample; a starting point.
-                      </div>
-                    </div>
-                  </div>
-                  {plant.fertilizing_interval_days_override !== recFert.interval_days && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="mt-2"
-                      onClick={() => applyRec('fertilizing', recFert.interval_days ?? 0)}
-                    >
-                      <Check size={14} />
-                      Use this for my schedule
-                    </Button>
-                  )}
+              ) : (
+                <div className="rounded-[8px] border border-border p-3 text-[13px] text-text-muted">
+                  Not enough waterings logged yet to suggest a cadence.
                 </div>
               )}
+              <FertilizerPending />
               <p className="text-[11px] text-text-subtle flex items-center gap-1.5">
                 <Info size={12} />
                 Suggestions reflect your own logged cadence, not a universal rule.

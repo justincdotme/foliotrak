@@ -1,49 +1,57 @@
+import { ResponsiveHeatMap } from '@nivo/heatmap'
 import { Card } from '@/components/ui/card'
-import { prettyVar } from './chart-utils'
+import { pairsToHeatmapSeries } from './chart-utils'
 import type { CorrelationPair } from '@/api/types'
 
 interface CorrelationHeatmapProps {
   pairs: CorrelationPair[]
 }
 
+// Greener cells lean positive, terracotta lean negative; paler cells sit closer to no link.
+const cellColor = (value: number | null): string => {
+  if (value == null) return 'var(--surface-raised)'
+  const base = value >= 0 ? 'var(--primary)' : 'var(--accent)'
+  return `color-mix(in srgb, ${base} ${Math.round(15 + Math.abs(value) * 70)}%, var(--surface-raised))`
+}
+
 export function CorrelationHeatmap({ pairs }: CorrelationHeatmapProps) {
-  const cellColor = (c: number): string => {
-    const a = Math.abs(c)
-    const base = c >= 0 ? 'var(--primary)' : 'var(--accent)'
-    return `color-mix(in srgb,${base} ${15 + a * 70}%, var(--surface-raised))`
-  }
+  const data = pairsToHeatmapSeries(pairs)
 
   return (
     <Card className="p-4">
-      <div className="flex items-baseline gap-2 mb-1">
-        <h3 className="text-[13px] font-semibold text-text">Correlation matrix</h3>
-      </div>
+      <h3 className="text-[13px] font-semibold text-text mb-1">Correlation matrix</h3>
       <p className="text-[11px] text-text-subtle mb-3">
-        Potential factors coinciding with better outcomes. Each cell shows Spearman ρ, sample size,
-        and significance.
+        Potential factors that coincided with outcomes across the group. Each cell shows the
+        correlation; hover for its sample size and whether it holds up against the other factors
+        tested. Patterns here may indicate, never prove.
       </p>
-      <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(2,minmax(0,1fr))' }}>
-        {pairs.map((p, i) => (
-          <div
-            key={i}
-            className="rounded-[8px] border border-border p-3"
-            style={{ background: cellColor(p.correlation) }}
-          >
-            <div className="text-[12px] font-medium text-text">
-              {prettyVar(p.x_variable)} <span className="text-text-subtle">/</span>{' '}
-              {prettyVar(p.y_variable)}
+      <div className="h-[220px]">
+        <ResponsiveHeatMap
+          data={data}
+          margin={{ top: 30, right: 16, bottom: 16, left: 110 }}
+          valueFormat={value => value.toFixed(2)}
+          colors={cell => cellColor(cell.value)}
+          emptyColor="var(--surface-raised)"
+          borderColor="var(--border)"
+          borderWidth={1}
+          enableLabels
+          labelTextColor="var(--text)"
+          axisTop={{ tickSize: 0, tickPadding: 6 }}
+          axisLeft={{ tickSize: 0, tickPadding: 6 }}
+          theme={{ text: { fontSize: 10, fill: 'var(--text-subtle)' } }}
+          animate={false}
+          isInteractive
+          tooltip={({ cell }) => (
+            <div className="rounded-[6px] border border-border bg-surface-raised px-2 py-1 text-[11px] text-text shadow-sm">
+              {cell.serieId} vs {cell.data.x}:{' '}
+              {cell.value == null ? 'no reading' : cell.value.toFixed(2)}
+              {cell.data.n != null && <> · n = {cell.data.n}</>}
+              {cell.value != null && (
+                <> · {cell.data.significant ? 'holds up after adjustment' : 'could be chance'}</>
+              )}
             </div>
-            <div className="tnum text-2xl font-semibold mt-1 text-text">
-              {p.correlation >= 0 ? '+' : ''}
-              {p.correlation.toFixed(2)}
-            </div>
-            <div className="text-[11px] text-text-muted mt-1 tnum">
-              n = {p.sample_size} · CI {p.confidence_band.lower.toFixed(2)}–
-              {p.confidence_band.upper.toFixed(2)} ·{' '}
-              {p.p_value < 0.05 ? 'significant' : 'not significant'} (p {p.p_value.toFixed(2)})
-            </div>
-          </div>
-        ))}
+          )}
+        />
       </div>
     </Card>
   )
