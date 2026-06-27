@@ -10,7 +10,7 @@ export interface UseSuggestResult {
 // Keeps GBIF traffic low: a typing burst collapses to one request, and nothing
 // fires below the minimum query length. The cache and outbound throttle that
 // further protect GBIF live server-side.
-const MIN_QUERY_LENGTH = 2
+const MIN_QUERY_LENGTH = 3
 const DEBOUNCE_MS = 300
 
 export function useSpeciesSuggest(query: string): UseSuggestResult {

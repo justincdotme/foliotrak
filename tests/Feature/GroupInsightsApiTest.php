@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\PlantStatus;
 use App\Models\CareEvent;
 use App\Models\Observation;
 use App\Models\Plant;
@@ -106,6 +107,36 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.plants', [])
             ->assertJsonPath('data.comparison', [])
             ->assertJsonPath('data.correlation_pairs', []);
+    }
+
+    public function test_group_insights_excludes_archived_plants(): void
+    {
+        $this->actAsHousehold();
+
+        $tag = Tag::factory()->create(['name' => 'Pothos']);
+
+        $active1 = Plant::factory()->create(['common_name' => 'Active One']);
+        $active1->tags()->attach($tag);
+        $this->observe($active1, overallHealth: 4, daysAgo: 5);
+
+        $active2 = Plant::factory()->create(['common_name' => 'Active Two']);
+        $active2->tags()->attach($tag);
+        $this->observe($active2, overallHealth: 3, daysAgo: 3);
+
+        $archived = Plant::factory()->create([
+            'common_name' => 'Archived',
+            'status' => PlantStatus::Archived,
+        ]);
+        $archived->tags()->attach($tag);
+        $this->observe($archived, overallHealth: 2, daysAgo: 1);
+
+        $response = $this->getJson("/api/insights/group?tag={$tag->id}")->assertOk();
+
+        $response
+            ->assertJsonPath('data.plants', [$active1->id, $active2->id])
+            ->assertJsonCount(2, 'data.comparison')
+            ->assertJsonPath('data.comparison.0.plant_id', $active1->id)
+            ->assertJsonPath('data.comparison.1.plant_id', $active2->id);
     }
 
     public function test_group_insights_reports_a_pooled_watering_interval_correlation(): void

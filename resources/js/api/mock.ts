@@ -1208,14 +1208,22 @@ export const mockApi = {
       {
         plant_id: 4,
         common_name: 'Fiddle-leaf fig',
-        problem: 'Recent health decline coincided with a move away from the window',
-        severity: 'alert',
+        problems: [
+          {
+            problem: 'Recent health decline coincided with a move away from the window',
+            severity: 'alert',
+          },
+        ],
       },
       {
         plant_id: 2,
         common_name: 'Monstera',
-        problem: 'Yellowing leaf logged 7 weeks ago; watch for repeat',
-        severity: 'warning',
+        problems: [
+          {
+            problem: 'Yellowing leaf logged 7 weeks ago; watch for repeat',
+            severity: 'warning',
+          },
+        ],
       },
     ]
 

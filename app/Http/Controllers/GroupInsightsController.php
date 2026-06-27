@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\PlantStatus;
 use App\Http\Requests\InsightsGroupRequest;
 use App\Models\Plant;
 use App\Models\Tag;
@@ -22,7 +23,7 @@ class GroupInsightsController extends Controller
 
         // The comparison reads health observations; the correlation factors declare what else
         // they need, so the eager-load set grows with the factors instead of being hardcoded.
-        $with = ['plants' => fn ($query) => $query->orderBy('id')];
+        $with = ['plants' => fn ($query) => $query->where('status', PlantStatus::Active->value)->orderBy('id')];
         foreach (array_unique(['observationEvents.observation', ...CorrelationEngine::plantRelations()]) as $relation) {
             $with[] = "plants.{$relation}";
         }
