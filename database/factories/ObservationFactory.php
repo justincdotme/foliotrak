@@ -27,6 +27,10 @@ class ObservationFactory extends Factory
             'growth_note' => null,
             'leaf_size_mm' => null,
             'weight_grams' => fake()->numberBetween(100, 3000),
+            'ambient_humidity_pct' => fake()->numberBetween(30, 80),
+            'ambient_temp_c' => fake()->randomFloat(1, 15, 30),
+            'soil_moisture_relative' => null,
+            'soil_moisture_precise' => fake()->numberBetween(1, 10),
         ];
     }
 }

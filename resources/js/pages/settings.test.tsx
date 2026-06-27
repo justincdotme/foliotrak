@@ -31,7 +31,10 @@ function setup(opts: {
 }) {
   const mutateAsync = opts.mutateAsync ?? vi.fn().mockResolvedValue({ pushover_user_key: null })
   vi.mocked(useSettings).mockReturnValue({
-    data: opts.loading || opts.error ? null : { pushover_user_key: opts.key ?? null },
+    data:
+      opts.loading || opts.error
+        ? null
+        : { pushover_user_key: opts.key ?? null, temperature_unit: 'F' as const },
     loading: opts.loading ?? false,
     error: opts.error ?? null,
   })
@@ -43,7 +46,7 @@ function setup(opts: {
 
 function settingsValue(key: string | null) {
   vi.mocked(useSettings).mockReturnValue({
-    data: { pushover_user_key: key },
+    data: { pushover_user_key: key, temperature_unit: 'F' as const },
     loading: false,
     error: null,
   })

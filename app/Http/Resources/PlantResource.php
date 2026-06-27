@@ -35,6 +35,7 @@ class PlantResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
+            'equipment' => EquipmentResource::collection($this->whenLoaded('equipment')),
         ];
     }
 }

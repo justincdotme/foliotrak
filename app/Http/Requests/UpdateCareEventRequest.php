@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\GrowthRate;
+use App\Enums\SoilMoistureLevel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -56,6 +57,10 @@ class UpdateCareEventRequest extends FormRequest
             'weight.lb' => ['nullable', 'numeric', 'min:0', 'max:9999'],
             'weight.oz' => ['nullable', 'numeric', 'min:0', 'max:9999'],
             'weight.g' => ['nullable', 'numeric', 'min:0', 'max:999999'],
+            'ambient_humidity_pct' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100'],
+            'ambient_temp' => ['sometimes', 'nullable', 'numeric', 'min:-50', 'max:60'],
+            'soil_moisture_relative' => ['sometimes', 'nullable', Rule::enum(SoilMoistureLevel::class)],
+            'soil_moisture_precise' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:10'],
             'symptom_ids' => ['sometimes', 'nullable', 'array'],
             'symptom_ids.*' => ['integer', Rule::exists('symptoms', 'id')],
             'custom_symptoms' => ['sometimes', 'nullable', 'array'],

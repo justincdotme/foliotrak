@@ -22,6 +22,7 @@ class SpeciesSuggestionResource extends JsonResource
             'scientific_name' => data_get($this->resource, 'scientific_name'),
             'canonical_name' => data_get($this->resource, 'canonical_name'),
             'common_name' => data_get($this->resource, 'common_name'),
+            'common_names' => data_get($this->resource, 'common_names'),
             'rank' => data_get($this->resource, 'rank'),
             'family' => data_get($this->resource, 'family'),
         ];

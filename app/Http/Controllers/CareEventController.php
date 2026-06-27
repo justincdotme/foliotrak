@@ -94,9 +94,12 @@ class CareEventController extends Controller
 
     private function updateObservation(CareEvent $event, UpdateCareEventRequest $request): void
     {
-        $data = $this->present($request, ['overall_health', 'health_note', 'light_level', 'growth_rate', 'growth_note', 'leaf_size_mm']);
+        $data = $this->present($request, ['overall_health', 'health_note', 'light_level', 'growth_rate', 'growth_note', 'leaf_size_mm', 'ambient_humidity_pct', 'soil_moisture_relative', 'soil_moisture_precise']);
         if ($request->has('weight')) {
             $data['weight_grams'] = $this->gramsFromComponents($request->input('weight'));
+        }
+        if ($request->has('ambient_temp')) {
+            $data['ambient_temp_c'] = $this->celsiusFromDisplay($request->input('ambient_temp'));
         }
         if ($data !== []) {
             $event->observation()->update($data);

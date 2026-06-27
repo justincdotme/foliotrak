@@ -28,7 +28,7 @@ class SettingsApiTest extends TestCase
 
         $this->getJson('/api/settings')
             ->assertOk()
-            ->assertExactJson(['data' => ['pushover_user_key' => self::SAMPLE_KEY]]);
+            ->assertExactJson(['data' => ['pushover_user_key' => self::SAMPLE_KEY, 'temperature_unit' => 'F']]);
     }
 
     public function test_patch_sets_and_persists_the_pushover_key(): void

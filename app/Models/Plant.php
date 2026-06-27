@@ -67,6 +67,14 @@ class Plant extends Model
     }
 
     /**
+     * @return BelongsToMany<Equipment, $this>
+     */
+    public function equipment(): BelongsToMany
+    {
+        return $this->belongsToMany(Equipment::class, 'equipment_plant');
+    }
+
+    /**
      * @return HasMany<Photo, $this>
      */
     public function photos(): HasMany

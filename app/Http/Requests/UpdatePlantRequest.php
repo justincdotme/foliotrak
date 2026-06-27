@@ -34,10 +34,12 @@ class UpdatePlantRequest extends FormRequest
             'notes' => ['sometimes', 'nullable', 'string'],
             'watering_interval_days_override' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:65535'],
             'fertilizing_interval_days_override' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:65535'],
-            // A cover must be one of this plant's own photos; null clears it (D25).
+            // A cover must be one of this plant's own photos; null clears it.
             'cover_photo_id' => ['sometimes', 'nullable', 'integer', Rule::exists('photos', 'id')->where('plant_id', $plantId)],
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => ['integer', Rule::exists('plant_tags', 'id')],
+            'equipment_ids' => ['sometimes', 'array'],
+            'equipment_ids.*' => ['integer', Rule::exists('equipment', 'id')],
         ];
     }
 }

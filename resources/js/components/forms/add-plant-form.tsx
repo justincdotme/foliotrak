@@ -31,6 +31,13 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const [active, setActive] = useState(-1)
   const { results, loading } = useSpeciesSuggest(common)
 
+  const matchedAlias = (g: SpeciesSuggestion): string | null => {
+    const q = common.trim().toLowerCase()
+    if (!q || !g.common_names?.length) return null
+    if (g.common_name?.toLowerCase().includes(q)) return null
+    return g.common_names.find(n => n.toLowerCase().includes(q)) ?? null
+  }
+
   const pick = (g: SpeciesSuggestion) => {
     setCommon(g.common_name || g.canonical_name || '')
     setSci(g.canonical_name || '')
@@ -143,6 +150,12 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
                     <span className="italic">{g.canonical_name}</span>
                     {g.common_name && <span className="text-text-muted"> · {g.common_name}</span>}
                   </span>
+                  {(() => {
+                    const alias = matchedAlias(g)
+                    return alias ? (
+                      <span className="text-[11px] text-primary">also called {alias}</span>
+                    ) : null
+                  })()}
                   <span className="text-[11px] text-text-subtle">
                     {g.rank?.toLowerCase()} · {g.family}
                   </span>

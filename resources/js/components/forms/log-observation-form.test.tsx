@@ -29,6 +29,14 @@ vi.mock('@/hooks/useCareLookups', () => ({
   }),
 }))
 
+vi.mock('@/hooks/useSettings', () => ({
+  useSettings: () => ({
+    data: { pushover_user_key: null, temperature_unit: 'F' as const },
+    loading: false,
+    error: null,
+  }),
+}))
+
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 
@@ -118,6 +126,12 @@ describe('LogObservationForm', () => {
         leaf_size_mm: 90,
         weight_grams: 1200,
         weight: { lb: 2, oz: 10, g: 4.6 },
+        ambient_humidity_pct: null,
+        ambient_temp_c: null,
+        ambient_temp_display: null,
+        temperature_unit: 'F' as const,
+        soil_moisture_relative: null,
+        soil_moisture_precise: null,
         symptoms: [
           {
             id: 1,
