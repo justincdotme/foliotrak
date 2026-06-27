@@ -9,6 +9,10 @@ vi.mock('@/hooks/useTags', () => ({
 vi.mock('@/hooks/useSpeciesSuggest', () => ({
   useSpeciesSuggest: () => ({ results: [], loading: false }),
 }))
+vi.mock('@/hooks/useLocations', () => ({
+  useLocations: () => ({ data: [], loading: false, error: null }),
+  useCreateLocation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}))
 vi.mock('@/hooks/usePlantMutations', () => ({ useCreatePlant: vi.fn() }))
 import { useCreatePlant } from '@/hooks/usePlantMutations'
 
@@ -28,7 +32,7 @@ describe('AddPlantForm', () => {
     const onDone = vi.fn()
     render(<AddPlantForm onDone={onDone} />)
 
-    await userEvent.type(screen.getByRole('combobox'), 'Pothos')
+    await userEvent.type(screen.getByPlaceholderText(/Pothos, Monstera/), 'Pothos')
     await userEvent.click(screen.getByRole('button', { name: /add plant/i }))
 
     expect(mutateAsync).toHaveBeenCalledWith(

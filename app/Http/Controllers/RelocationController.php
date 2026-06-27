@@ -22,7 +22,7 @@ class RelocationController extends Controller
 
         $event = $recordRelocation->record(
             $plant,
-            $request->string('to_location')->value(),
+            $request->integer('to_location_id'),
             $request->date('occurred_at'),
             $request->filled('note') ? $request->string('note')->value() : null,
             $request->user()?->id,
@@ -33,7 +33,7 @@ class RelocationController extends Controller
             return response()->noContent();
         }
 
-        return CareEventResource::make($event->load(['careEventType', 'relocation']))
+        return CareEventResource::make($event->load(['careEventType', 'relocation.fromLocation', 'relocation.toLocation']))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }

@@ -4,6 +4,7 @@ use App\Http\Controllers\CareEventController;
 use App\Http\Controllers\CareEventTypeController;
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\FertilizerFormController;
 use App\Http\Controllers\FertilizingController;
 use App\Http\Controllers\GroupInsightsController;
@@ -51,6 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('nutrients', [NutrientController::class, 'index']);
     Route::get('symptoms', [SymptomController::class, 'index']);
     Route::get('equipment', [EquipmentController::class, 'index']);
+    Route::get('locations', [LocationController::class, 'index']);
+    Route::post('locations', [LocationController::class, 'store']);
 
     Route::get('species/suggest', [SpeciesController::class, 'suggest']);
 

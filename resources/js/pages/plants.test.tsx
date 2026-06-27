@@ -15,7 +15,7 @@ const makePlant = (o: Partial<PlantWithTags>): PlantWithTags =>
     common_name: 'Pothos',
     scientific_name: 'Epipremnum aureum',
     gbif_key: null,
-    location: 'Shelf',
+    location: { id: 1, name: 'Shelf' },
     acquired_on: null,
     status: 'active',
     notes: null,
@@ -52,7 +52,7 @@ describe('PlantsPage', () => {
   })
 
   it('filters the list by the selected tag', async () => {
-    const living: Tag = { id: 2, name: 'Living room', color: null }
+    const living: Tag = { id: 2, name: 'Tropical', color: null }
     const office: Tag = { id: 3, name: 'Office', color: null }
     setPlants(
       [

@@ -104,10 +104,10 @@ export function EventDetail({ e }: EventDetailProps) {
         Moved{' '}
         {r.from_location && (
           <>
-            from <span className="text-text">{r.from_location}</span>{' '}
+            from <span className="text-text">{r.from_location.name}</span>{' '}
           </>
         )}
-        to <span className="text-text">{r.to_location}</span>
+        to <span className="text-text">{r.to_location?.name}</span>
       </div>
     )
   }

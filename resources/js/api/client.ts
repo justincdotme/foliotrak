@@ -6,6 +6,7 @@ import type {
   EquipmentOption,
   FertilizerFormOption,
   GroupInsights,
+  Location,
   NutrientOption,
   Photo,
   PlantRecommendations,
@@ -27,7 +28,7 @@ export interface PlantPayload {
   common_name?: string | null
   scientific_name?: string | null
   gbif_key?: string | null
-  location?: string | null
+  location_id?: number | null
   acquired_on?: string | null
   status?: PlantStatus
   notes?: string | null
@@ -143,8 +144,8 @@ export type CareEventUpdatePayload = Partial<
     Omit<RepottingPayload, 'occurred_at'> &
     Omit<ObservationPayload, 'occurred_at'> & {
       occurred_at: string
-      to_location: string | null
-      from_location: string | null
+      to_location_id: number | null
+      from_location_id: number | null
     }
 >
 
@@ -219,3 +220,9 @@ export const getSettings = async (): Promise<Settings> =>
 
 export const updateSettings = async (payload: SettingsPayload): Promise<Settings> =>
   unwrap(await api.patch<{ data: Settings }>('/api/settings', payload))
+
+export const listLocations = async (): Promise<Location[]> =>
+  unwrap(await api.get<{ data: Location[] }>('/api/locations'))
+
+export const createLocation = async (name: string): Promise<Location> =>
+  unwrap(await api.post<{ data: Location }>('/api/locations', { name }))

@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['care_event_id', 'from_location', 'to_location'])]
+/**
+ * @property int|null $from_location_id
+ * @property int|null $to_location_id
+ */
+#[Fillable(['care_event_id', 'from_location_id', 'to_location_id'])]
 class RelocationDetail extends Model
 {
     protected $primaryKey = 'care_event_id';
@@ -25,5 +29,21 @@ class RelocationDetail extends Model
     public function careEvent(): BelongsTo
     {
         return $this->belongsTo(CareEvent::class);
+    }
+
+    /**
+     * @return BelongsTo<Location, $this>
+     */
+    public function fromLocation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'from_location_id');
+    }
+
+    /**
+     * @return BelongsTo<Location, $this>
+     */
+    public function toLocation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'to_location_id');
     }
 }

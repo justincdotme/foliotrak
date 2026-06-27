@@ -14,7 +14,11 @@ const relocation: CareEvent = {
   note: null,
   created_at: '2026-06-20T12:00:00.000Z',
   updated_at: '2026-06-20T12:00:00.000Z',
-  relocation: { care_event_id: 9, from_location: 'shelf', to_location: 'bright window' },
+  relocation: {
+    care_event_id: 9,
+    from_location: { id: 1, name: 'shelf' },
+    to_location: { id: 2, name: 'bright window' },
+  },
 }
 
 const linkedPhoto: Photo = {

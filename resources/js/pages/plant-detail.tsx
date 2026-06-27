@@ -168,7 +168,7 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[12px] text-text-muted">
             <span className="flex items-center gap-1">
               <MapPin size={12} />
-              {plant.location || 'No location'}
+              {plant.location?.name || 'No location'}
             </span>
             {plant.acquired_on && (
               <span className="flex items-center gap-1">

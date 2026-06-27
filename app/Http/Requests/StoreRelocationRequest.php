@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreRelocationRequest extends FormRequest
 {
@@ -20,7 +21,7 @@ class StoreRelocationRequest extends FormRequest
     {
         return [
             'occurred_at' => ['nullable', 'date'],
-            'to_location' => ['required', 'string', 'max:255'],
+            'to_location_id' => ['required', 'integer', Rule::exists('locations', 'id')],
             'note' => ['nullable', 'string', 'max:65535'],
         ];
     }

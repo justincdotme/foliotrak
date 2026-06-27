@@ -5,7 +5,12 @@ import type { CareEvent } from '@/api/types'
 import { RelocationEditForm } from './relocation-edit-form'
 
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
+vi.mock('@/hooks/useLocations', () => ({
+  useLocations: vi.fn(),
+  useCreateLocation: vi.fn(),
+}))
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+import { useLocations, useCreateLocation } from '@/hooks/useLocations'
 
 const updateEvent = { mutateAsync: vi.fn() }
 
@@ -21,6 +26,15 @@ beforeEach(() => {
     deleteEvent: { mutateAsync: vi.fn() },
     uploadEventPhoto: { mutateAsync: vi.fn() },
   } as unknown as ReturnType<typeof useCareEventMutations>)
+  vi.mocked(useLocations).mockReturnValue({
+    data: [
+      { id: 1, name: 'shelf' },
+      { id: 2, name: 'bright window' },
+    ],
+    loading: false,
+    error: null,
+  })
+  vi.mocked(useCreateLocation).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as never)
 })
 
 const relocationEvent: CareEvent = {
@@ -33,27 +47,27 @@ const relocationEvent: CareEvent = {
   note: 'moved for light',
   created_at: '2026-06-20T12:00:00.000Z',
   updated_at: '2026-06-20T12:00:00.000Z',
-  relocation: { care_event_id: 9, from_location: 'shelf', to_location: 'bright window' },
+  relocation: {
+    care_event_id: 9,
+    from_location: { id: 1, name: 'shelf' },
+    to_location: { id: 2, name: 'bright window' },
+  },
 }
 
 describe('RelocationEditForm', () => {
-  it('prefills the destination, shows the origin read-only, and updates without from_location', async () => {
+  it('shows the origin read-only and submits with location IDs', async () => {
     render(<RelocationEditForm plantId={1} event={relocationEvent} onDone={vi.fn()} />)
 
-    expect(screen.getByDisplayValue('bright window')).toBeInTheDocument()
-    // The origin is shown for context but is not an editable field.
     expect(screen.getByText('shelf')).toBeInTheDocument()
-    expect(screen.queryByDisplayValue('shelf')).toBeNull()
 
     await userEvent.click(screen.getByRole('button', { name: /Save changes/ }))
 
-    // The exact payload match also proves from_location is not sent.
     await waitFor(() =>
       expect(updateEvent.mutateAsync).toHaveBeenCalledWith({
         eventId: 9,
         payload: {
           occurred_at: expect.any(String),
-          to_location: 'bright window',
+          to_location_id: 2,
           note: 'moved for light',
         },
       })

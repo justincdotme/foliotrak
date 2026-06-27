@@ -18,9 +18,11 @@ class PlantRecommendationController extends Controller
 
         $plant->load([
             'careEvents',
+            'location',
             'wateringEvents.watering',
             'observationEvents.observation',
-            'relocationEvents.relocation',
+            'relocationEvents.relocation.fromLocation',
+            'relocationEvents.relocation.toLocation',
         ]);
 
         return new RecommendationResource($plant);

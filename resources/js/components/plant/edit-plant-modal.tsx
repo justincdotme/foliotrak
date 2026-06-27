@@ -1,10 +1,10 @@
-import { Check, Info, MapPin } from 'lucide-react'
+import { Check, Info } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { PlantWithTags, Tag } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Chip } from '@/components/app/chip'
 import { Field } from '@/components/app/field'
-import { Input } from '@/components/ui/input'
+import { LocationCombobox } from '@/components/app/location-combobox'
 import { Modal } from '@/components/app/modal'
 import { Segmented } from '@/components/app/segmented'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,14 +26,14 @@ const STATUS_HELP: Record<string, string> = {
 export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const { data: allTags } = useTags()
   const update = useUpdatePlant(plant.id)
-  const [location, setLocation] = useState(plant.location || '')
+  const [locationId, setLocationId] = useState<number | null>(plant.location?.id ?? null)
   const [notes, setNotes] = useState(plant.notes || '')
   const [status, setStatus] = useState(plant.status)
   const [tags, setTags] = useState<Tag[]>(plant.tags)
 
   useEffect(() => {
     if (open) {
-      setLocation(plant.location || '')
+      setLocationId(plant.location?.id ?? null)
       setNotes(plant.notes || '')
       setStatus(plant.status)
       setTags(plant.tags)
@@ -44,11 +44,9 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const toggleTag = (t: Tag) =>
     setTags(ts => (ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]))
 
-  // A location change is recorded server-side as a relocation care event, so the
-  // mutation also refreshes the timeline where the move appears.
   const save = async () => {
     await update.mutateAsync({
-      location: location.trim() || null,
+      location_id: locationId,
       notes: notes.trim() || null,
       status,
       tag_ids: tags.map(t => t.id),
@@ -76,18 +74,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
     >
       <div className="space-y-4">
         <Field label="Location" hint="where it lives now">
-          <div className="relative">
-            <MapPin
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle"
-            />
-            <Input
-              value={location}
-              onChange={e => setLocation(e.target.value)}
-              className="pl-9"
-              placeholder="Living room shelf"
-            />
-          </div>
+          <LocationCombobox value={locationId} onChange={setLocationId} />
         </Field>
         <Field label="Notes">
           <Textarea

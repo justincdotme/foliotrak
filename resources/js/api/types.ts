@@ -1,6 +1,3 @@
-// The production API contract. The mock module returns these exact shapes; the
-// real app swaps each mock body for a fetch() without changing the signatures.
-
 export type PlantStatus = 'active' | 'archived' | 'dead'
 export type CareType = 'watering' | 'fertilizing' | 'repotting' | 'observation' | 'relocation'
 export type FertilizerForm = 'liquid' | 'powdered' | 'granular' | 'organic' | 'food' | 'other'
@@ -20,12 +17,17 @@ export interface Settings {
   temperature_unit: 'F' | 'C'
 }
 
+export interface Location {
+  id: number
+  name: string
+}
+
 export interface Plant {
   id: number
   common_name: string | null
   scientific_name: string | null
   gbif_key: string | null
-  location: string | null
+  location: Location | null
   acquired_on: string | null
   status: PlantStatus
   notes: string | null
@@ -116,8 +118,8 @@ export interface Symptom {
 
 export interface RelocationDetail {
   care_event_id: number
-  from_location: string | null
-  to_location: string | null
+  from_location: Location | null
+  to_location: Location | null
 }
 
 export interface ObservationDetail {
@@ -166,8 +168,8 @@ export interface Recommendation {
   computed_at: string
 }
 
-// Gated, health-aware recommendation served by GET /api/plants/{plant}/recommendations.
-// Richer than the flat Recommendation above, which the timeline bundle keeps empty.
+// Separate from Recommendation above because the dedicated endpoint adds the history gate
+// and health-aware detail the timeline bundle does not need.
 export type RecommendationState = 'countdown' | 'ready' | 'no_health_data'
 
 export interface RecommendationGate {
@@ -200,16 +202,15 @@ export interface HealthSummary {
 
 export interface PositionInsight {
   moved_on: string
-  from_location: string | null
-  to_location: string | null
+  from_location: Location | null
+  to_location: Location | null
   health_before: HealthSummary
   health_after: HealthSummary
 }
 
-// Health grouped by the location the plant lived in at each observation. `healths` carries
-// every raw reading so the chart can plot each point, not only the median.
+// `healths` carries every raw reading so the chart can plot each point, not only the median.
 export interface LocationHealth {
-  location: string | null
+  location: Location | null
   median_health: number | null
   sample_size: number
   healths: number[]
@@ -234,15 +235,13 @@ export type ConditionKey =
   | 'unknown'
   | 'dead'
 
-// Derived at-a-glance condition (no stored column): the latest observation plus
-// watering status, resolved to a label for display.
+// Computed from the latest observation and watering status, not stored.
 export interface Condition {
   key: ConditionKey
   label: string
 }
 
-// Lookup rows served by the seeded-vocabulary read endpoints. The forms render
-// chips and options from these live ids rather than hardcoding them.
+// Forms render chips and options from these live ids rather than hardcoding them.
 export interface FertilizerFormOption {
   id: number
   key: FertilizerForm

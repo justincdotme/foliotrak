@@ -24,7 +24,7 @@ class StorePlantRequest extends FormRequest
             'common_name' => ['nullable', 'string', 'max:255'],
             'scientific_name' => ['nullable', 'string', 'max:255'],
             'gbif_key' => ['nullable', 'string', 'max:64'],
-            'location' => ['nullable', 'string', 'max:255'],
+            'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')],
             'acquired_on' => ['nullable', 'date'],
             'status' => ['nullable', Rule::enum(PlantStatus::class)],
             'notes' => ['nullable', 'string'],

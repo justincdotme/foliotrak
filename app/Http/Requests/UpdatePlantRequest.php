@@ -28,7 +28,7 @@ class UpdatePlantRequest extends FormRequest
             'common_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'scientific_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'gbif_key' => ['sometimes', 'nullable', 'string', 'max:64'],
-            'location' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'location_id' => ['sometimes', 'nullable', 'integer', Rule::exists('locations', 'id')],
             'acquired_on' => ['sometimes', 'nullable', 'date'],
             'status' => ['sometimes', Rule::enum(PlantStatus::class)],
             'notes' => ['sometimes', 'nullable', 'string'],

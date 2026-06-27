@@ -89,7 +89,7 @@ function PlantCard({ p, onClick }: PlantCardProps) {
         <div className="text-[12px] text-text-subtle italic truncate">{p.scientific_name}</div>
         <div className="flex items-center gap-1 text-[12px] text-text-muted mt-1.5">
           <MapPin size={12} />
-          {p.location || 'No location'}
+          {p.location?.name || 'No location'}
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
           {p.tags.map(t => (

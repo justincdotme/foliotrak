@@ -18,7 +18,7 @@ class TagSeederTest extends TestCase
         $this->seed(TagSeeder::class);
 
         $this->assertEqualsCanonicalizing(
-            ['Living room', 'Bright window', 'Low light', 'Office'],
+            ['Tropical', 'Succulent', 'Trailing', 'Pet-safe'],
             Tag::query()->pluck('name')->all(),
         );
     }

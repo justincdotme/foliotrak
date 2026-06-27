@@ -8,7 +8,7 @@ use Closure;
 use Illuminate\Support\Carbon;
 
 /**
- * The per-plant "did moving help" signal (ADR-0020). For each logged move it summarizes the
+ * The per-plant "did moving help" signal. For each logged move it summarizes the
  * overall-health readings in the four weeks before and the four weeks after, so a relocation
  * can be read against the plant's own health. Descriptive and non-causal; a move is only
  * reported when there is at least one reading on each side to compare.
@@ -18,9 +18,9 @@ final class PositionInsight
     private const WINDOW_DAYS = 28;
 
     /**
-     * @param  list<array{date: Carbon, from: string|null, to: string|null}>  $moves
+     * @param  list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}>  $moves
      * @param  list<array{date: Carbon, health: int}>  $healthObservations
-     * @return list<array{moved_on: string, from_location: string|null, to_location: string|null, health_before: array{median: float|null, sample_size: int}, health_after: array{median: float|null, sample_size: int}}>
+     * @return list<array{moved_on: string, from_location: array{id: int, name: string}|null, to_location: array{id: int, name: string}|null, health_before: array{median: float|null, sample_size: int}, health_after: array{median: float|null, sample_size: int}}>
      */
     public static function forMoves(array $moves, array $healthObservations): array
     {
