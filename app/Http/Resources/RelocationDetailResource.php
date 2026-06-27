@@ -20,8 +20,8 @@ class RelocationDetailResource extends JsonResource
     {
         return [
             'care_event_id' => $this->care_event_id,
-            'from_location' => $this->from_location,
-            'to_location' => $this->to_location,
+            'from_location' => $this->fromLocation ? ['id' => $this->fromLocation->id, 'name' => $this->fromLocation->name] : null,
+            'to_location' => $this->toLocation ? ['id' => $this->toLocation->id, 'name' => $this->toLocation->name] : null,
         ];
     }
 }

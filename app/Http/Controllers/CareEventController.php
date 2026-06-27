@@ -121,15 +121,15 @@ class CareEventController extends Controller
      */
     private function updateRelocation(CareEvent $event, UpdateCareEventRequest $request): void
     {
-        $data = $this->present($request, ['from_location', 'to_location']);
+        $data = $this->present($request, ['from_location_id', 'to_location_id']);
         if ($data === []) {
             return;
         }
 
         $event->relocation()->update($data);
 
-        if ($request->has('to_location') && $this->isLatestRelocation($event)) {
-            $event->plant->update(['location' => $request->input('to_location')]);
+        if ($request->has('to_location_id') && $this->isLatestRelocation($event)) {
+            $event->plant->update(['location_id' => $request->input('to_location_id')]);
         }
     }
 
@@ -172,7 +172,7 @@ class CareEventController extends Controller
             'fertilizing' => ['fertilizing.fertilizerForm', 'fertilizing.nutrients.nutrient'],
             'repotting' => ['repotting'],
             'observation' => ['observation.symptoms'],
-            'relocation' => ['relocation'],
+            'relocation' => ['relocation.fromLocation', 'relocation.toLocation'],
             default => [],
         };
     }

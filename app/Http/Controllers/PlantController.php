@@ -30,6 +30,7 @@ class PlantController extends Controller
         'tags',
         'equipment',
         'coverPhoto',
+        'location',
         'latestObservationEvent.observation.symptoms',
         'wateringEvents',
     ];
@@ -79,12 +80,10 @@ class PlantController extends Controller
         $this->authorize('update', $plant);
 
         DB::transaction(function () use ($request, $plant, $recordRelocation): void {
-            $plant->update($request->safe()->except(['tag_ids', 'equipment_ids', 'location']));
+            $plant->update($request->safe()->except(['tag_ids', 'equipment_ids', 'location_id']));
 
-            // Location flows through the single relocation writer, which logs
-            // the move and no-ops when the value is unchanged.
-            if ($request->has('location')) {
-                $recordRelocation->record($plant, $request->input('location'), userId: $request->user()?->id);
+            if ($request->has('location_id')) {
+                $recordRelocation->record($plant, $request->input('location_id'), userId: $request->user()?->id);
             }
 
             $this->syncTags($request, $plant);

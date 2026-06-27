@@ -170,10 +170,10 @@ export const GBIF: SpeciesSuggestion[] = [
 ]
 
 export const TAGS: Tag[] = [
-  { id: 1, name: 'Living room', color: 'var(--series-1)' },
-  { id: 2, name: 'Low light', color: 'var(--series-3)' },
-  { id: 3, name: 'Office', color: 'var(--series-4)' },
-  { id: 4, name: 'Bright window', color: 'var(--series-2)' },
+  { id: 1, name: 'Tropical', color: 'var(--series-1)' },
+  { id: 2, name: 'Succulent', color: 'var(--series-2)' },
+  { id: 3, name: 'Trailing', color: 'var(--series-3)' },
+  { id: 4, name: 'Pet-safe', color: 'var(--series-4)' },
 ]
 
 export const USER: User = {
@@ -385,15 +385,15 @@ const observation = (plantId: number, daysAgo: number, opts: ObservationOptions)
 }
 
 interface RelocationOptions {
-  from?: string | null
-  to?: string | null
+  from?: { id: number; name: string } | null
+  to?: { id: number; name: string } | null
   note?: string | null
 }
 
 const relocation = (plantId: number, daysAgo: number, opts: RelocationOptions): CareEvent => {
   const o = {
-    from: null as string | null,
-    to: null as string | null,
+    from: null as { id: number; name: string } | null,
+    to: null as { id: number; name: string } | null,
     note: null as string | null,
     ...opts,
   }
@@ -642,9 +642,9 @@ const buildSeed = (): StoreData => {
       'Pothos',
       'Epipremnum aureum',
       '2872573',
-      'Living room shelf',
+      { id: 1, name: 'Living room shelf' },
       84,
-      ['Living room', 'Low light'],
+      ['Tropical', 'Trailing'],
       'Trailing over the bookcase. Cutting from a friend.'
     ),
     plant(
@@ -652,9 +652,9 @@ const buildSeed = (): StoreData => {
       'Monstera',
       'Monstera deliciosa',
       '2872586',
-      'Living room corner',
+      { id: 2, name: 'Living room corner' },
       77,
-      ['Living room', 'Bright window'],
+      ['Tropical'],
       null
     ),
     plant(
@@ -662,9 +662,9 @@ const buildSeed = (): StoreData => {
       'Snake plant',
       'Dracaena trifasciata',
       '2769096',
-      'Hallway',
+      { id: 3, name: 'Hallway' },
       66,
-      ['Low light'],
+      ['Succulent', 'Pet-safe'],
       'Basically indestructible.'
     ),
     plant(
@@ -672,9 +672,9 @@ const buildSeed = (): StoreData => {
       'Fiddle-leaf fig',
       'Ficus lyrata',
       '5361896',
-      'Bright window',
+      { id: 4, name: 'Bright window' },
       56,
-      ['Living room', 'Bright window'],
+      ['Tropical'],
       'The drama queen.'
     ),
     plant(
@@ -682,9 +682,9 @@ const buildSeed = (): StoreData => {
       'ZZ plant',
       'Zamioculcas zamiifolia',
       '2872588',
-      'Office desk',
+      { id: 5, name: 'Office desk' },
       18,
-      ['Office', 'Low light'],
+      ['Pet-safe'],
       'Just brought home.'
     ),
   ]
@@ -754,7 +754,7 @@ const buildSeed = (): StoreData => {
     common: string,
     sci: string,
     gbif: string,
-    location: string,
+    location: { id: number; name: string } | null,
     acquiredDaysAgo: number,
     tagNames: string[],
     notes: string | null
@@ -929,7 +929,7 @@ export const mockApi = {
       common_name: data.common_name ?? null,
       scientific_name: data.scientific_name ?? null,
       gbif_key: data.gbif_key ?? null,
-      location: data.location ?? null,
+      location: (data as { location?: { id: number; name: string } | null }).location ?? null,
       acquired_on: data.acquired_on ?? dateOnly(iso(0)),
       status: 'active',
       notes: data.notes ?? null,
@@ -1083,15 +1083,15 @@ export const mockApi = {
     plantId: number,
     data: {
       occurred_at?: string
-      from_location?: string | null
-      to_location?: string | null
+      from_location?: { id: number; name: string } | null
+      to_location?: { id: number; name: string } | null
       note?: string | null
     }
   ): Promise<CareEvent> => {
     await wait(180)
     const e = relocation(plantId, ageDays(data.occurred_at ?? iso(0)), {
-      from: data.from_location,
-      to: data.to_location,
+      from: data.from_location ?? null,
+      to: data.to_location ?? null,
       note: data.note,
     })
     e.occurred_at = data.occurred_at ?? iso(0)

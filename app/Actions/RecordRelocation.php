@@ -19,19 +19,19 @@ final class RecordRelocation
 {
     public function record(
         Plant $plant,
-        ?string $toLocation,
+        ?int $toLocationId,
         ?Carbon $occurredAt = null,
         ?string $note = null,
         ?int $userId = null,
     ): ?CareEvent {
-        if ($toLocation === $plant->location) {
+        if ($toLocationId === $plant->location_id) {
             return null;
         }
 
-        return DB::transaction(function () use ($plant, $toLocation, $occurredAt, $note, $userId): CareEvent {
-            $fromLocation = $plant->location;
+        return DB::transaction(function () use ($plant, $toLocationId, $occurredAt, $note, $userId): CareEvent {
+            $fromLocationId = $plant->location_id;
 
-            $plant->location = $toLocation;
+            $plant->location_id = $toLocationId;
             $plant->save();
 
             $event = $plant->careEvents()->create([
@@ -42,8 +42,8 @@ final class RecordRelocation
             ]);
 
             $event->relocation()->create([
-                'from_location' => $fromLocation,
-                'to_location' => $toLocation,
+                'from_location_id' => $fromLocationId,
+                'to_location_id' => $toLocationId,
             ]);
 
             return $event;

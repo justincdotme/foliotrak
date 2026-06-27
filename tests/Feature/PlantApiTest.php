@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\PlantStatus;
+use App\Models\Location;
 use App\Models\Photo;
 use App\Models\Plant;
 use App\Models\Tag;
@@ -42,12 +43,13 @@ class PlantApiTest extends TestCase
     public function test_creates_a_plant_and_returns_the_contract_shape(): void
     {
         $this->actAsHousehold();
+        $south = Location::factory()->create(['name' => 'south window']);
 
         $response = $this->postJson('/api/plants', [
             'common_name' => 'Swiss cheese plant',
             'scientific_name' => 'Monstera deliciosa',
             'gbif_key' => '2868125',
-            'location' => 'south window',
+            'location_id' => $south->id,
             'acquired_on' => '2026-01-15',
             'notes' => 'Repotted on arrival.',
             'watering_interval_days_override' => 7,
@@ -58,7 +60,7 @@ class PlantApiTest extends TestCase
             ->assertJsonPath('data.common_name', 'Swiss cheese plant')
             ->assertJsonPath('data.scientific_name', 'Monstera deliciosa')
             ->assertJsonPath('data.gbif_key', '2868125')
-            ->assertJsonPath('data.location', 'south window')
+            ->assertJsonPath('data.location.name', 'south window')
             ->assertJsonPath('data.acquired_on', '2026-01-15')
             ->assertJsonPath('data.status', 'active')
             ->assertJsonPath('data.watering_interval_days_override', 7)
@@ -118,22 +120,24 @@ class PlantApiTest extends TestCase
     public function test_updates_plant_attributes_including_location(): void
     {
         $this->actAsHousehold();
-        $plant = Plant::factory()->create(['location' => 'south window', 'status' => PlantStatus::Active]);
+        $south = Location::factory()->create(['name' => 'south window']);
+        $east = Location::factory()->create(['name' => 'east window']);
+        $plant = Plant::factory()->create(['location_id' => $south->id, 'status' => PlantStatus::Active]);
 
         $this->patchJson("/api/plants/{$plant->id}", [
-            'location' => 'east window',
+            'location_id' => $east->id,
             'status' => 'archived',
             'notes' => 'Moved for winter light.',
             'watering_interval_days_override' => 10,
         ])
             ->assertOk()
-            ->assertJsonPath('data.location', 'east window')
+            ->assertJsonPath('data.location.name', 'east window')
             ->assertJsonPath('data.status', 'archived')
             ->assertJsonPath('data.watering_interval_days_override', 10);
 
         $this->assertDatabaseHas('plants', [
             'id' => $plant->id,
-            'location' => 'east window',
+            'location_id' => $east->id,
             'status' => 'archived',
         ]);
     }

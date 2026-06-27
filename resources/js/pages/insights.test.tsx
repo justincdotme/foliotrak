@@ -17,7 +17,7 @@ import { useTags } from '@/hooks/useTags'
 import { useGroupInsights } from '@/hooks/useGroupInsights'
 
 // First live tag id is deliberately not 1, to pin "default to the first tag".
-const tags = [{ id: 5, name: 'Living room', color: null }]
+const tags = [{ id: 5, name: 'Tropical', color: null }]
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -50,7 +50,7 @@ const groupData = (
   correlation_pairs: ReturnType<typeof pair>[] = []
 ) => ({
   tag_id: 5,
-  tag_name: 'Living room',
+  tag_name: 'Tropical',
   plants,
   comparison,
   correlation_pairs,

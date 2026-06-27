@@ -16,7 +16,9 @@ interface HealthByLocationProps {
   data: LocationHealth[]
 }
 
-const label = (location: string | null): string => location ?? 'Unspecified'
+import type { Location } from '@/api/types'
+
+const label = (location: Location | null): string => location?.name ?? 'Unspecified'
 
 // The per-location sample size rides on the axis label so each median carries its own n, since
 // integer health on a categorical axis collapses repeated readings into one dot.

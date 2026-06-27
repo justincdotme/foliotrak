@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\CareEvent;
+use App\Models\Location;
 use App\Models\Observation;
 use App\Models\Plant;
 use App\Models\User;
@@ -104,19 +105,21 @@ class PlantRecommendationApiTest extends TestCase
     public function test_a_move_with_readings_on_each_side_is_reported_as_a_position_insight(): void
     {
         $this->actAsHousehold();
+        $shelf = Location::factory()->create(['name' => 'shelf']);
+        $kitchen = Location::factory()->create(['name' => 'kitchen window']);
 
         $plant = Plant::factory()->create();
         $this->water($plant, [60, 53]);
         $this->observe($plant, [[45, 5], [40, 4], [20, 3], [15, 2]]);
 
         $move = CareEvent::factory()->ofType('relocation')->for($plant)->create(['occurred_at' => now()->subDays(30)]);
-        $move->relocation()->create(['from_location' => 'shelf', 'to_location' => 'kitchen window']);
+        $move->relocation()->create(['from_location_id' => $shelf->id, 'to_location_id' => $kitchen->id]);
 
         $this->getJson("/api/plants/{$plant->id}/recommendations")
             ->assertOk()
             ->assertJsonCount(1, 'data.position_insights')
-            ->assertJsonPath('data.position_insights.0.from_location', 'shelf')
-            ->assertJsonPath('data.position_insights.0.to_location', 'kitchen window')
+            ->assertJsonPath('data.position_insights.0.from_location.name', 'shelf')
+            ->assertJsonPath('data.position_insights.0.to_location.name', 'kitchen window')
             ->assertJsonPath('data.position_insights.0.health_before.median', 4.5)
             ->assertJsonPath('data.position_insights.0.health_before.sample_size', 2)
             ->assertJsonPath('data.position_insights.0.health_after.median', 2.5)
@@ -126,24 +129,26 @@ class PlantRecommendationApiTest extends TestCase
     public function test_health_by_location_groups_observations_by_location_at_observation_time(): void
     {
         $this->actAsHousehold();
+        $shelf = Location::factory()->create(['name' => 'shelf']);
+        $kitchen = Location::factory()->create(['name' => 'kitchen window']);
 
-        $plant = Plant::factory()->create(['location' => 'kitchen window']);
+        $plant = Plant::factory()->create(['location_id' => $kitchen->id]);
         $this->water($plant, [60, 53]);
         $this->observe($plant, [[45, 5], [40, 4], [20, 3], [15, 2]]);
 
         $move = CareEvent::factory()->ofType('relocation')->for($plant)->create(['occurred_at' => now()->subDays(30)]);
-        $move->relocation()->create(['from_location' => 'shelf', 'to_location' => 'kitchen window']);
+        $move->relocation()->create(['from_location_id' => $shelf->id, 'to_location_id' => $kitchen->id]);
 
-        // Observations at 45 and 40 days ago predate the move → shelf bucket (median 4.5)
-        // Observations at 20 and 15 days ago postdate the move → kitchen window bucket (median 2.5)
-        // Both buckets have sample_size=2; 'kitchen window' < 'shelf' alphabetically → kitchen window first
+        // Observations at 45 and 40 days ago predate the move -> shelf bucket (median 4.5)
+        // Observations at 20 and 15 days ago postdate the move -> kitchen window bucket (median 2.5)
+        // Both buckets have sample_size=2; 'kitchen window' < 'shelf' alphabetically -> kitchen window first
         $this->getJson("/api/plants/{$plant->id}/recommendations")
             ->assertOk()
             ->assertJsonCount(2, 'data.health_by_location')
-            ->assertJsonPath('data.health_by_location.0.location', 'kitchen window')
+            ->assertJsonPath('data.health_by_location.0.location.name', 'kitchen window')
             ->assertJsonPath('data.health_by_location.0.sample_size', 2)
             ->assertJsonPath('data.health_by_location.0.median_health', 2.5)
-            ->assertJsonPath('data.health_by_location.1.location', 'shelf')
+            ->assertJsonPath('data.health_by_location.1.location.name', 'shelf')
             ->assertJsonPath('data.health_by_location.1.sample_size', 2)
             ->assertJsonPath('data.health_by_location.1.median_health', 4.5);
     }

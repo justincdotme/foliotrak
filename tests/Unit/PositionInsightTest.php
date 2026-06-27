@@ -22,7 +22,7 @@ class PositionInsightTest extends TestCase
     public function test_a_move_with_readings_on_both_sides_summarizes_before_and_after(): void
     {
         $insights = PositionInsight::forMoves(
-            [['date' => $this->movedAt->copy(), 'from' => 'shelf', 'to' => 'kitchen window']],
+            [['date' => $this->movedAt->copy(), 'from' => $this->loc(1, 'shelf'), 'to' => $this->loc(2, 'kitchen window')]],
             [
                 $this->obs(-20, 4), $this->obs(-10, 4),
                 $this->obs(5, 2), $this->obs(12, 2), $this->obs(20, 3),
@@ -33,8 +33,8 @@ class PositionInsightTest extends TestCase
         $insight = $insights[0];
 
         $this->assertSame('2026-05-01', $insight['moved_on']);
-        $this->assertSame('shelf', $insight['from_location']);
-        $this->assertSame('kitchen window', $insight['to_location']);
+        $this->assertSame('shelf', $insight['from_location']['name']);
+        $this->assertSame('kitchen window', $insight['to_location']['name']);
         $this->assertSame(4.0, $insight['health_before']['median']);
         $this->assertSame(2, $insight['health_before']['sample_size']);
         $this->assertSame(2.0, $insight['health_after']['median']);
@@ -44,11 +44,11 @@ class PositionInsightTest extends TestCase
     public function test_a_move_with_readings_on_only_one_side_is_skipped(): void
     {
         $afterOnly = PositionInsight::forMoves(
-            [['date' => $this->movedAt->copy(), 'from' => null, 'to' => 'desk']],
+            [['date' => $this->movedAt->copy(), 'from' => null, 'to' => $this->loc(1, 'desk')]],
             [$this->obs(5, 4), $this->obs(10, 5)],
         );
         $beforeOnly = PositionInsight::forMoves(
-            [['date' => $this->movedAt->copy(), 'from' => null, 'to' => 'desk']],
+            [['date' => $this->movedAt->copy(), 'from' => null, 'to' => $this->loc(1, 'desk')]],
             [$this->obs(-5, 4), $this->obs(-10, 5)],
         );
 
@@ -59,7 +59,7 @@ class PositionInsightTest extends TestCase
     public function test_readings_outside_the_four_week_window_are_excluded(): void
     {
         $insights = PositionInsight::forMoves(
-            [['date' => $this->movedAt->copy(), 'from' => 'a', 'to' => 'b']],
+            [['date' => $this->movedAt->copy(), 'from' => $this->loc(1, 'a'), 'to' => $this->loc(2, 'b')]],
             [
                 $this->obs(-40, 1), // older than four weeks, excluded
                 $this->obs(-10, 4),
@@ -80,8 +80,8 @@ class PositionInsightTest extends TestCase
 
         $insights = PositionInsight::forMoves(
             [
-                ['date' => $first->copy(), 'from' => 'a', 'to' => 'b'],
-                ['date' => $second->copy(), 'from' => 'b', 'to' => 'c'],
+                ['date' => $first->copy(), 'from' => $this->loc(1, 'a'), 'to' => $this->loc(2, 'b')],
+                ['date' => $second->copy(), 'from' => $this->loc(2, 'b'), 'to' => $this->loc(3, 'c')],
             ],
             [
                 ['date' => $first->copy()->subDays(5), 'health' => 5],
@@ -94,6 +94,14 @@ class PositionInsightTest extends TestCase
         $this->assertCount(2, $insights);
         $this->assertSame('2026-03-01', $insights[0]['moved_on']);
         $this->assertSame('2026-05-01', $insights[1]['moved_on']);
+    }
+
+    /**
+     * @return array{id: int, name: string}
+     */
+    private function loc(int $id, string $name): array
+    {
+        return ['id' => $id, 'name' => $name];
     }
 
     /**

@@ -27,7 +27,7 @@ use Illuminate\Support\Carbon;
     'common_name',
     'scientific_name',
     'gbif_key',
-    'location',
+    'location_id',
     'acquired_on',
     'status',
     'notes',
@@ -55,7 +55,16 @@ class Plant extends Model
             'watering_interval_days_override' => 'integer',
             'fertilizing_interval_days_override' => 'integer',
             'cover_photo_id' => 'integer',
+            'location_id' => 'integer',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Location, $this>
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     /**

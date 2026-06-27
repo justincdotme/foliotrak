@@ -21,7 +21,7 @@ class PlantFactory extends Factory
             'common_name' => fake()->randomElement(['Pothos', 'Monstera', 'Snake plant', 'Fiddle leaf fig', 'ZZ plant']),
             'scientific_name' => fake()->optional()->randomElement(['Epipremnum aureum', 'Monstera deliciosa', 'Dracaena trifasciata']),
             'gbif_key' => null,
-            'location' => fake()->randomElement(['south window', 'kitchen sill', 'office desk', 'bathroom shelf']),
+            'location_id' => null,
             'acquired_on' => fake()->optional()->dateTimeBetween('-2 years')?->format('Y-m-d'),
             'status' => PlantStatus::Active,
             'notes' => fake()->optional()->sentence(),

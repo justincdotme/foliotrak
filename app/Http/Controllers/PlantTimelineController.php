@@ -19,6 +19,7 @@ class PlantTimelineController extends Controller
         $plant->load([
             'tags',
             'coverPhoto',
+            'location',
             'latestObservationEvent.observation.symptoms',
             'wateringEvents',
             'photos' => fn ($query) => $query->orderByDesc('taken_on'),
@@ -29,7 +30,8 @@ class PlantTimelineController extends Controller
             'careEvents.fertilizing.nutrients.nutrient',
             'careEvents.repotting',
             'careEvents.observation.symptoms',
-            'careEvents.relocation',
+            'careEvents.relocation.fromLocation',
+            'careEvents.relocation.toLocation',
         ]);
 
         return new PlantTimelineResource($plant);

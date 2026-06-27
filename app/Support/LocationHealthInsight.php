@@ -14,47 +14,48 @@ use Illuminate\Support\Carbon;
 final class LocationHealthInsight
 {
     /**
-     * @param  list<array{date: Carbon, from: string|null, to: string|null}>  $relocations  Oldest first.
+     * @param  list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}>  $relocations  Oldest first.
      * @param  list<array{date: Carbon, health: int}>  $healthObservations  Chronological.
-     * @return list<array{location: string|null, median_health: float|null, sample_size: int, healths: list<int>}>
+     * @param  array{id: int, name: string}|null  $currentLocation
+     * @return list<array{location: array{id: int, name: string}|null, median_health: float|null, sample_size: int, healths: list<int>}>
      */
     public static function forPlant(
         array $relocations,
         array $healthObservations,
-        ?string $currentLocation,
+        ?array $currentLocation,
     ): array {
-        /** @var array<string, list<int>> $nonNullBuckets */
-        $nonNullBuckets = [];
+        /** @var array<int, array{location: array{id: int, name: string}, healths: list<int>}> $buckets keyed by location ID */
+        $buckets = [];
         /** @var list<int> $nullHealths */
         $nullHealths = [];
 
         foreach ($healthObservations as $obs) {
-            $location = self::locationAt($obs['date'], $relocations, $currentLocation);
-            if ($location === null) {
+            $loc = self::locationAt($obs['date'], $relocations, $currentLocation);
+            if ($loc === null) {
                 $nullHealths[] = $obs['health'];
             } else {
-                if (! isset($nonNullBuckets[$location])) {
-                    $nonNullBuckets[$location] = [];
+                if (! isset($buckets[$loc['id']])) {
+                    $buckets[$loc['id']] = ['location' => $loc, 'healths' => []];
                 }
-                $nonNullBuckets[$location][] = $obs['health'];
+                $buckets[$loc['id']]['healths'][] = $obs['health'];
             }
         }
 
-        /** @var list<array{location: string, median_health: float|null, sample_size: int, healths: list<int>}> $result */
+        /** @var list<array{location: array{id: int, name: string}, median_health: float|null, sample_size: int, healths: list<int>}> $result */
         $result = [];
-        foreach ($nonNullBuckets as $location => $healths) {
+        foreach ($buckets as $bucket) {
             $result[] = [
-                'location' => $location,
-                'median_health' => Stats::median($healths),
-                'sample_size' => count($healths),
-                'healths' => $healths,
+                'location' => $bucket['location'],
+                'median_health' => Stats::median($bucket['healths']),
+                'sample_size' => count($bucket['healths']),
+                'healths' => $bucket['healths'],
             ];
         }
 
         usort(
             $result,
             fn (array $a, array $b): int => $b['sample_size'] <=> $a['sample_size']
-            ?: strcmp($a['location'], $b['location'])
+            ?: strcmp($a['location']['name'], $b['location']['name'])
         );
 
         if ($nullHealths !== []) {
@@ -70,15 +71,15 @@ final class LocationHealthInsight
     }
 
     /**
-     * Resolves the plant's location at time $t using its relocation chain.
-     *
-     * @param  list<array{date: Carbon, from: string|null, to: string|null}>  $relocations
+     * @param  list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}>  $relocations
+     * @param  array{id: int, name: string}|null  $currentLocation
+     * @return array{id: int, name: string}|null
      */
     private static function locationAt(
         Carbon $t,
         array $relocations,
-        ?string $currentLocation,
-    ): ?string {
+        ?array $currentLocation,
+    ): ?array {
         if ($relocations === []) {
             return $currentLocation;
         }

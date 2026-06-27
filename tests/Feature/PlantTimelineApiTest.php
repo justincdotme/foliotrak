@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Enums\GrowthRate;
 use App\Models\CareEvent;
+use App\Models\Location;
 use App\Models\Observation;
 use App\Models\Photo;
 use App\Models\Plant;
@@ -78,7 +79,9 @@ class PlantTimelineApiTest extends TestCase
         ]);
 
         $relocation = CareEvent::factory()->ofType('relocation')->for($plant)->create(['occurred_at' => now()->subDay()]);
-        $relocation->relocation()->create(['from_location' => 'shelf', 'to_location' => 'window']);
+        $shelf = Location::factory()->create(['name' => 'shelf']);
+        $window = Location::factory()->create(['name' => 'window']);
+        $relocation->relocation()->create(['from_location_id' => $shelf->id, 'to_location_id' => $window->id]);
 
         Photo::factory()->create(['plant_id' => $plant->id, 'taken_on' => now()->subDays(3)]);
 
@@ -99,7 +102,7 @@ class PlantTimelineApiTest extends TestCase
         $response
             ->assertJsonCount(4, 'data.events')
             ->assertJsonPath('data.events.0.type', 'relocation')
-            ->assertJsonPath('data.events.0.relocation.to_location', 'window')
+            ->assertJsonPath('data.events.0.relocation.to_location.name', 'window')
             ->assertJsonPath('data.events.2.type', 'watering')
             ->assertJsonPath('data.events.2.watering.amount_ml', 200);
 

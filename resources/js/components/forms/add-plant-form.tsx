@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type KeyboardEvent, type SyntheticEvent } from 'react'
-import { Check, ImageIcon, MapPin, Plus, Search } from 'lucide-react'
+import { Check, ImageIcon, Plus, Search } from 'lucide-react'
 import type { SpeciesSuggestion, Tag } from '@/api/types'
 import { cn } from '@/lib/utils'
 import { useSpeciesSuggest } from '@/hooks/useSpeciesSuggest'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { Chip } from '@/components/app/chip'
+import { LocationCombobox } from '@/components/app/location-combobox'
 
 const today = (): string => new Date().toISOString().slice(0, 10)
 
@@ -23,7 +24,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const [common, setCommon] = useState('')
   const [sci, setSci] = useState('')
   const [gbifKey, setGbifKey] = useState<string | null>(null)
-  const [location, setLocation] = useState('')
+  const [locationId, setLocationId] = useState<number | null>(null)
   const [acquired, setAcquired] = useState(today())
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -84,7 +85,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
           common_name: common.trim(),
           scientific_name: sci || null,
           gbif_key: gbifKey,
-          location: location || null,
+          location_id: locationId,
           acquired_on: acquired,
           tag_ids: selectedTags.map(t => t.id),
         },
@@ -188,15 +189,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
         )}
       </Field>
       <Field label="Location" hint="optional">
-        <div className="relative">
-          <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
-          <Input
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-            className="pl-9"
-            placeholder="Living room shelf"
-          />
-        </div>
+        <LocationCombobox value={locationId} onChange={setLocationId} />
       </Field>
       <Field label="Acquired on" hint="optional">
         <Input type="date" value={acquired} onChange={e => setAcquired(e.target.value)} />

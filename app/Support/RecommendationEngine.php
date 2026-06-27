@@ -10,15 +10,15 @@ use Illuminate\Support\Carbon;
 
 /**
  * Assembles a plant's recommendations payload: the four-week gate, the health-aware watering
- * cadence, and the per-plant "did moving help" insights. The gate is measured from the plant's
- * earliest care event of any type, matching the prototype's own derivation.
+ * cadence and the per-plant "did moving help" insights. The gate is measured from the plant's
+ * earliest care event of any type.
  */
 final class RecommendationEngine
 {
     public const GATE_DAYS = 28;
 
     /**
-     * @return array{plant_id: int, gate: array{state: string, history_days: int, required_days: int, days_to_go: int}, watering: array<string, mixed>|null, position_insights: list<array<string, mixed>>, health_by_location: list<array{location: string|null, median_health: float|null, sample_size: int, healths: list<int>}>}
+     * @return array{plant_id: int, gate: array{state: string, history_days: int, required_days: int, days_to_go: int}, watering: array<string, mixed>|null, position_insights: list<array<string, mixed>>, health_by_location: list<array{location: array{id: int, name: string}|null, median_health: float|null, sample_size: int, healths: list<int>}>}
      */
     public static function forPlant(Plant $plant): array
     {
@@ -52,7 +52,11 @@ final class RecommendationEngine
                 ? self::watering($plant, $healthObservations, $earliest, $now)
                 : null,
             'position_insights' => PositionInsight::forMoves(self::moves($plant), $healthObservations),
-            'health_by_location' => LocationHealthInsight::forPlant(self::moves($plant), $healthObservations, $plant->location),
+            'health_by_location' => LocationHealthInsight::forPlant(
+                self::moves($plant),
+                $healthObservations,
+                $plant->location ? ['id' => $plant->location->id, 'name' => $plant->location->name] : null,
+            ),
         ];
     }
 
@@ -100,15 +104,19 @@ final class RecommendationEngine
     }
 
     /**
-     * @return list<array{date: Carbon, from: string|null, to: string|null}>
+     * @return list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}>
      */
     private static function moves(Plant $plant): array
     {
         return $plant->relocationEvents
             ->map(fn (CareEvent $event): array => [
                 'date' => $event->occurred_at,
-                'from' => $event->relocation?->from_location,
-                'to' => $event->relocation?->to_location,
+                'from' => $event->relocation?->fromLocation
+                    ? ['id' => $event->relocation->fromLocation->id, 'name' => $event->relocation->fromLocation->name]
+                    : null,
+                'to' => $event->relocation?->toLocation
+                    ? ['id' => $event->relocation->toLocation->id, 'name' => $event->relocation->toLocation->name]
+                    : null,
             ])
             ->values()
             ->all();

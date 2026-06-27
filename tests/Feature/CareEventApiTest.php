@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\FertilizerForm;
 use App\Models\FertilizingNutrient;
+use App\Models\Location;
 use App\Models\Nutrient;
 use App\Models\Plant;
 use App\Models\Symptom;
@@ -316,17 +317,20 @@ class CareEventApiTest extends TestCase
     public function test_editing_the_latest_relocation_keeps_the_plant_location_in_sync(): void
     {
         $this->actAsHousehold();
-        $plant = Plant::factory()->create(['location' => 'south window']);
+        $south = Location::factory()->create(['name' => 'south window']);
+        $east = Location::factory()->create(['name' => 'east window']);
+        $west = Location::factory()->create(['name' => 'west window']);
+        $plant = Plant::factory()->create(['location_id' => $south->id]);
 
-        $eventId = $this->postJson("/api/plants/{$plant->id}/relocations", ['to_location' => 'east window'])
+        $eventId = $this->postJson("/api/plants/{$plant->id}/relocations", ['to_location_id' => $east->id])
             ->json('data.id');
 
-        $this->patchJson("/api/care-events/{$eventId}", ['to_location' => 'west window'])
+        $this->patchJson("/api/care-events/{$eventId}", ['to_location_id' => $west->id])
             ->assertOk()
-            ->assertJsonPath('data.relocation.to_location', 'west window');
+            ->assertJsonPath('data.relocation.to_location.name', 'west window');
 
         // The plant's current location must follow its latest move, never drift.
-        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location' => 'west window']);
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $west->id]);
     }
 
     public function test_a_zero_weight_is_stored_as_not_recorded(): void

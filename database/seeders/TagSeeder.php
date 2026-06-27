@@ -9,17 +9,17 @@ use Illuminate\Database\Seeder;
 
 class TagSeeder extends Seeder
 {
-    /**
-     * Starter location tags so the plant list filter and the tag picker work on a
-     * fresh install. They mirror the prototype's defaults and stay user-editable.
-     */
+    private const RETIRED = ['Living room', 'Bright window', 'Low light', 'Office'];
+
     public function run(): void
     {
+        Tag::whereIn('name', self::RETIRED)->delete();
+
         $tags = [
-            ['name' => 'Living room', 'color' => 'var(--series-1)'],
-            ['name' => 'Bright window', 'color' => 'var(--series-2)'],
-            ['name' => 'Low light', 'color' => 'var(--series-3)'],
-            ['name' => 'Office', 'color' => 'var(--series-4)'],
+            ['name' => 'Tropical', 'color' => 'var(--series-1)'],
+            ['name' => 'Succulent', 'color' => 'var(--series-2)'],
+            ['name' => 'Trailing', 'color' => 'var(--series-3)'],
+            ['name' => 'Pet-safe', 'color' => 'var(--series-4)'],
         ];
 
         foreach ($tags as $tag) {

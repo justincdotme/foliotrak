@@ -23,7 +23,7 @@ class PlantResource extends JsonResource
             'common_name' => $this->common_name,
             'scientific_name' => $this->scientific_name,
             'gbif_key' => $this->gbif_key,
-            'location' => $this->location,
+            'location' => $this->location ? ['id' => $this->location->id, 'name' => $this->location->name] : null,
             'acquired_on' => $this->acquired_on?->format('Y-m-d'),
             'status' => $this->status->value,
             'notes' => $this->notes,

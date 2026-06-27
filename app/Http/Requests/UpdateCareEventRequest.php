@@ -66,8 +66,8 @@ class UpdateCareEventRequest extends FormRequest
             'custom_symptoms' => ['sometimes', 'nullable', 'array'],
             'custom_symptoms.*' => ['string', 'max:96'],
 
-            'to_location' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'from_location' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'to_location_id' => ['sometimes', 'nullable', 'integer', Rule::exists('locations', 'id')],
+            'from_location_id' => ['sometimes', 'nullable', 'integer', Rule::exists('locations', 'id')],
         ];
     }
 }

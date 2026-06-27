@@ -47,7 +47,7 @@ const plant = {
   common_name: 'Pothos',
   scientific_name: 'Epipremnum',
   gbif_key: null,
-  location: 'Shelf',
+  location: { id: 1, name: 'Shelf' },
   acquired_on: null,
   status: 'active',
   notes: null,
@@ -183,8 +183,9 @@ describe('PlantDetailPage charts', () => {
 })
 
 describe('PlantDetailPage health by location', () => {
-  const bucket = (location: string, sample_size: number) => ({
-    location,
+  let locId = 100
+  const bucket = (name: string, sample_size: number) => ({
+    location: { id: locId++, name },
     median_health: 4,
     sample_size,
     healths: Array(sample_size).fill(4),
