@@ -1,0 +1,147 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature;
+
+use App\Models\CareEvent;
+use App\Models\Observation;
+use App\Models\Plant;
+use App\Models\User;
+use Database\Seeders\CareLookupSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
+
+class PlantRecommendationApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(CareLookupSeeder::class);
+        $this->travelTo(Carbon::parse('2026-06-26 09:00:00'));
+    }
+
+    private function actAsHousehold(): User
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        return $user;
+    }
+
+    public function test_recommendations_require_authentication(): void
+    {
+        $plant = Plant::factory()->create();
+
+        $this->getJson("/api/plants/{$plant->id}/recommendations")->assertUnauthorized();
+    }
+
+    public function test_unknown_plant_returns_not_found(): void
+    {
+        $this->actAsHousehold();
+
+        $this->getJson('/api/plants/9999/recommendations')->assertNotFound();
+    }
+
+    public function test_a_plant_under_four_weeks_returns_the_countdown_state(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create();
+        $this->water($plant, [5, 1]);
+        $this->observe($plant, [[3, 4]]);
+
+        $this->getJson("/api/plants/{$plant->id}/recommendations")
+            ->assertOk()
+            ->assertJsonPath('data.gate.state', 'countdown')
+            ->assertJsonPath('data.gate.history_days', 5)
+            ->assertJsonPath('data.gate.days_to_go', 23)
+            ->assertJsonPath('data.watering', null);
+    }
+
+    public function test_past_the_gate_without_health_observations_returns_no_health_data(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create();
+        $this->water($plant, [40, 33, 26, 19, 12, 5]);
+
+        $this->getJson("/api/plants/{$plant->id}/recommendations")
+            ->assertOk()
+            ->assertJsonPath('data.gate.state', 'no_health_data')
+            ->assertJsonPath('data.watering', null)
+            ->assertJsonPath('data.position_insights', []);
+    }
+
+    public function test_a_seasoned_plant_returns_a_watering_recommendation_with_its_sample_size(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create();
+        $this->water($plant, [56, 49, 42, 35, 28, 21, 14, 7], amountMl: 200);
+        $this->observe($plant, [[50, 4], [20, 4]]);
+
+        $this->getJson("/api/plants/{$plant->id}/recommendations")
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => ['plant_id', 'gate' => ['state', 'history_days', 'required_days', 'days_to_go'], 'watering', 'position_insights'],
+            ])
+            ->assertJsonPath('data.gate.state', 'ready')
+            ->assertJsonPath('data.gate.days_to_go', 0)
+            ->assertJsonPath('data.watering.basis', 'stable')
+            ->assertJsonPath('data.watering.interval_days', 7)
+            ->assertJsonPath('data.watering.amount_ml', 200)
+            ->assertJsonPath('data.watering.sample_size', 8)
+            ->assertJsonPath('data.watering.health_sample_size', 2)
+            ->assertJsonPath('data.position_insights', []);
+    }
+
+    public function test_a_move_with_readings_on_each_side_is_reported_as_a_position_insight(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create();
+        $this->water($plant, [60, 53]);
+        $this->observe($plant, [[45, 5], [40, 4], [20, 3], [15, 2]]);
+
+        $move = CareEvent::factory()->ofType('relocation')->for($plant)->create(['occurred_at' => now()->subDays(30)]);
+        $move->relocation()->create(['from_location' => 'shelf', 'to_location' => 'kitchen window']);
+
+        $this->getJson("/api/plants/{$plant->id}/recommendations")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.position_insights')
+            ->assertJsonPath('data.position_insights.0.from_location', 'shelf')
+            ->assertJsonPath('data.position_insights.0.to_location', 'kitchen window')
+            ->assertJsonPath('data.position_insights.0.health_before.median', 4.5)
+            ->assertJsonPath('data.position_insights.0.health_before.sample_size', 2)
+            ->assertJsonPath('data.position_insights.0.health_after.median', 2.5)
+            ->assertJsonPath('data.position_insights.0.health_after.sample_size', 2);
+    }
+
+    /**
+     * @param  list<int>  $daysAgo
+     */
+    private function water(Plant $plant, array $daysAgo, ?int $amountMl = null): void
+    {
+        foreach ($daysAgo as $days) {
+            $event = CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($days)]);
+            $event->watering()->create(['amount_ml' => $amountMl]);
+        }
+    }
+
+    /**
+     * @param  list<array{0: int, 1: int}>  $observations  pairs of [days ago, overall health]
+     */
+    private function observe(Plant $plant, array $observations): void
+    {
+        foreach ($observations as [$daysAgo, $health]) {
+            $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
+            Observation::factory()->create(['care_event_id' => $event->id, 'overall_health' => $health]);
+        }
+    }
+}

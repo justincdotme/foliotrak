@@ -10,6 +10,7 @@ use App\Http\Controllers\NutrientController;
 use App\Http\Controllers\ObservationController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\PlantController;
+use App\Http\Controllers\PlantRecommendationController;
 use App\Http\Controllers\PlantTimelineController;
 use App\Http\Controllers\RelocationController;
 use App\Http\Controllers\RepottingController;
@@ -30,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('tags', TagController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('plants/{plant}/timeline', [PlantTimelineController::class, 'show']);
+    Route::get('plants/{plant}/recommendations', [PlantRecommendationController::class, 'show']);
 
     Route::get('plants/{plant}/photos', [PhotoController::class, 'index']);
     Route::post('plants/{plant}/photos', [PhotoController::class, 'store']);

@@ -118,6 +118,22 @@ class Plant extends Model
     }
 
     /**
+     * @return HasMany<CareEvent, $this>
+     */
+    public function observationEvents(): HasMany
+    {
+        return $this->careEventsOfType('observation');
+    }
+
+    /**
+     * @return HasMany<CareEvent, $this>
+     */
+    public function relocationEvents(): HasMany
+    {
+        return $this->careEventsOfType('relocation');
+    }
+
+    /**
      * Every logged event of one type, oldest first, so the median interval and the
      * latest event both read from one eager-loaded collection.
      *
