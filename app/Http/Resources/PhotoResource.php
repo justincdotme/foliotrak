@@ -23,6 +23,7 @@ class PhotoResource extends JsonResource
             'plant_id' => $this->plant_id,
             'care_event_id' => $this->care_event_id,
             'path' => $this->path,
+            'thumb_path' => $this->thumb_path,
             'original_filename' => $this->original_filename,
             'taken_on' => $this->taken_on->format('Y-m-d'),
             'caption' => $this->caption,

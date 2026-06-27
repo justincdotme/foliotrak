@@ -1,4 +1,4 @@
-import { Check, Leaf, MapPin, Plus, Search, Sprout } from 'lucide-react'
+import { Check, MapPin, Plus, Search, Sprout } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { StatusPill } from '@/components/app/status-pill'
 import { WaterDrop } from '@/components/app/water-drop'
 import type { CareStatus, PlantWithTags } from '@/api/types'
 import { photoUrl } from '@/lib/photos'
+import { cn } from '@/lib/utils'
 import { usePlants } from '@/hooks/usePlants'
 import { useTags } from '@/hooks/useTags'
 
@@ -48,44 +49,33 @@ function PlantCard({ p, onClick }: PlantCardProps) {
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col text-left bg-surface border border-border rounded-[10px] overflow-hidden hover:border-border-strong transition-colors"
+      className="group flex flex-col text-left bg-surface border border-border rounded-[10px] overflow-hidden hover:border-border-strong transition-colors p-3"
     >
-      <div
-        className="aspect-[4/3] relative grid place-items-center text-text-subtle overflow-hidden"
-        style={
-          p.cover_photo
-            ? undefined
-            : {
-                backgroundImage:
-                  'repeating-linear-gradient(135deg, color-mix(in srgb, var(--primary) 9%, transparent) 0 12px, transparent 12px 24px)',
-              }
-        }
-      >
-        {p.cover_photo ? (
-          <img
-            src={photoUrl(p.cover_photo.path)}
-            alt=""
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        ) : (
-          <Leaf size={28} />
-        )}
-        <div className="absolute top-2 left-2">
-          <ConditionChip cond={cond} />
-        </div>
-        {p.status === 'active' ? (
-          <div className="absolute top-2 right-2 bg-surface/85 backdrop-blur rounded-full p-0.5">
-            <WaterDrop due={due} size={24} />
-          </div>
-        ) : (
+      <div className="aspect-[4/3] relative overflow-hidden rounded-lg bg-surface-raised">
+        <img
+          src={
+            p.cover_photo
+              ? photoUrl(p.cover_photo.thumb_path ?? p.cover_photo.path)
+              : '/images/plant-silhouette-thumb.png'
+          }
+          alt=""
+          loading="lazy"
+          className={cn(
+            'absolute inset-0 h-full w-full object-cover',
+            !p.cover_photo && 'opacity-20'
+          )}
+        />
+        {p.status !== 'active' && (
           <div className="absolute top-2 right-2">
             <StatusPill status={p.status} />
           </div>
         )}
       </div>
-      <div className="p-3">
-        <div className="font-medium truncate">{p.common_name}</div>
+      <div className="mt-3">
+        <div className="flex items-center gap-2">
+          <div className="font-medium truncate">{p.common_name}</div>
+          <ConditionChip cond={cond} />
+        </div>
         <div className="text-[12px] text-text-subtle italic truncate">{p.scientific_name}</div>
         <div className="flex items-center gap-1 text-[12px] text-text-muted mt-1.5">
           <MapPin size={12} />
@@ -103,6 +93,7 @@ function PlantCard({ p, onClick }: PlantCardProps) {
             className="mt-2.5 pt-2.5 border-t border-border flex items-center gap-1.5 text-[12px] font-medium"
             style={{ color: wl.color }}
           >
+            <WaterDrop due={due} size={16} />
             {wl.text}
           </div>
         )}

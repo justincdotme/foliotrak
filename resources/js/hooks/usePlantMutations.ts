@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PhotoUpload, PlantPayload } from '@/api/client'
-import { createPlant, setCoverPhoto, updatePlant, uploadPhoto } from '@/api/client'
+import { createPlant, deletePhoto, setCoverPhoto, updatePlant, uploadPhoto } from '@/api/client'
 
 export interface CreatePlantInput {
   payload: PlantPayload
@@ -63,6 +63,17 @@ export function useSetCoverPhoto(plantId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (photoId: number | null) => setCoverPhoto(plantId, photoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plant', plantId] })
+      queryClient.invalidateQueries({ queryKey: ['plants'] })
+    },
+  })
+}
+
+export function useDeletePhoto(plantId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (photoId: number) => deletePhoto(photoId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plant', plantId] })
       queryClient.invalidateQueries({ queryKey: ['plants'] })

@@ -1,4 +1,3 @@
-import { Leaf } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { photoUrl } from '@/lib/photos'
 
@@ -17,27 +16,13 @@ export function PhotoTile({ photo, className = '', onClick }: PhotoTileProps) {
         'relative overflow-hidden rounded-md border border-border bg-surface-raised group',
         className
       )}
-      style={
-        photo?.path
-          ? undefined
-          : {
-              backgroundImage:
-                'repeating-linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, transparent) 0 10px, transparent 10px 20px)',
-            }
-      }
     >
-      {photo?.path ? (
-        <img
-          src={photoUrl(photo.path)}
-          alt={photo.caption || 'Plant photo'}
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      ) : (
-        <div className="absolute inset-0 grid place-items-center text-text-subtle">
-          <Leaf size={20} />
-        </div>
-      )}
+      <img
+        src={photo?.path ? photoUrl(photo.path) : '/images/plant-silhouette-thumb.png'}
+        alt={photo?.caption || 'Plant photo'}
+        loading="lazy"
+        className={cn('absolute inset-0 h-full w-full object-cover', !photo?.path && 'opacity-20')}
+      />
       {photo?.caption && (
         <div className="absolute inset-x-0 bottom-0 p-1.5 text-[11px] text-left text-white bg-gradient-to-t from-black/55 to-transparent">
           {photo.caption}

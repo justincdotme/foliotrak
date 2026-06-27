@@ -61,11 +61,19 @@ export interface Photo {
   plant_id: number
   care_event_id: number | null
   path: string
+  thumb_path: string | null
   original_filename: string | null
   taken_on: string
   caption: string | null
   created_at: string
   updated_at: string
+}
+
+export interface CropArea {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export interface WateringDetail {

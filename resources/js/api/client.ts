@@ -2,6 +2,7 @@ import type { AxiosResponse } from 'axios'
 import api from '@/lib/api'
 import type {
   CareEvent,
+  CropArea,
   DashboardData,
   EquipmentOption,
   FertilizerFormOption,
@@ -62,6 +63,8 @@ export interface PhotoUpload {
   takenOn?: string | null
   setAsCover?: boolean
   careEventId?: number | null
+  heroCrop?: CropArea | null
+  thumbCrop?: CropArea | null
 }
 
 export const uploadPhoto = async (plantId: number, upload: PhotoUpload): Promise<Photo> => {
@@ -71,12 +74,18 @@ export const uploadPhoto = async (plantId: number, upload: PhotoUpload): Promise
   if (upload.takenOn) form.append('taken_on', upload.takenOn)
   if (upload.setAsCover) form.append('set_as_cover', '1')
   if (upload.careEventId != null) form.append('care_event_id', String(upload.careEventId))
+  if (upload.heroCrop) form.append('hero_crop', JSON.stringify(upload.heroCrop))
+  if (upload.thumbCrop) form.append('thumb_crop', JSON.stringify(upload.thumbCrop))
 
   return unwrap(await api.post<{ data: Photo }>(`/api/plants/${plantId}/photos`, form))
 }
 
 export const setCoverPhoto = (plantId: number, photoId: number | null): Promise<PlantWithTags> =>
   updatePlant(plantId, { cover_photo_id: photoId })
+
+export const deletePhoto = async (photoId: number): Promise<void> => {
+  await api.delete(`/api/photos/${photoId}`)
+}
 
 export const suggestSpecies = async (q: string, limit = 8): Promise<SpeciesSuggestion[]> =>
   unwrap(

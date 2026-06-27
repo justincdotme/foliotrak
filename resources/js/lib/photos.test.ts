@@ -17,6 +17,7 @@ const photo = (id: number, careEventId: number | null): Photo => ({
   plant_id: 1,
   care_event_id: careEventId,
   path: `p${id}.jpg`,
+  thumb_path: null,
   original_filename: null,
   taken_on: '2026-06-20',
   caption: null,
