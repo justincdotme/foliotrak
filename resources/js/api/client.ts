@@ -54,6 +54,16 @@ export const updatePlant = async (id: number, payload: PlantPayload): Promise<Pl
 export const listTags = async (): Promise<Tag[]> =>
   unwrap(await api.get<{ data: Tag[] }>('/api/tags'))
 
+export const createTag = async (name: string): Promise<Tag> =>
+  unwrap(await api.post<{ data: Tag }>('/api/tags', { name }))
+
+export const updateTag = async (id: number, payload: { name?: string }): Promise<Tag> =>
+  unwrap(await api.patch<{ data: Tag }>(`/api/tags/${id}`, payload))
+
+export const deleteTag = async (id: number): Promise<void> => {
+  await api.delete(`/api/tags/${id}`)
+}
+
 export const listPhotos = async (plantId: number): Promise<Photo[]> =>
   unwrap(await api.get<{ data: Photo[] }>(`/api/plants/${plantId}/photos`))
 

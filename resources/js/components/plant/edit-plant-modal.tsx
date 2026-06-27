@@ -1,12 +1,13 @@
-import { Check, Info } from 'lucide-react'
+import { Info } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { PlantWithTags, Tag } from '@/api/types'
 import { Button } from '@/components/ui/button'
-import { Chip } from '@/components/app/chip'
 import { Field } from '@/components/app/field'
 import { LocationCombobox } from '@/components/app/location-combobox'
 import { Modal } from '@/components/app/modal'
 import { Segmented } from '@/components/app/segmented'
+import { TagInlineCreate } from '@/components/app/tag-inline-create'
 import { Textarea } from '@/components/ui/textarea'
 import { useTags } from '@/hooks/useTags'
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
@@ -85,21 +86,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
         </Field>
         <Field label="Tags">
           <div className="flex flex-wrap gap-1.5">
-            {(allTags || []).map(t => {
-              const sel = !!tags.find(x => x.id === t.id)
-              return (
-                <Chip
-                  key={t.id}
-                  color={t.color || undefined}
-                  active={sel}
-                  outline={!sel}
-                  onClick={() => toggleTag(t)}
-                >
-                  {sel && <Check size={12} />}
-                  {t.name}
-                </Chip>
-              )
-            })}
+            <TagInlineCreate allTags={allTags || []} selectedTags={tags} onToggle={toggleTag} />
           </div>
         </Field>
         <Field label="Status">

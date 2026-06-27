@@ -9,9 +9,16 @@ vi.mock('@/hooks/useSettings', () => ({
   useUpdateSettings: vi.fn(),
 }))
 vi.mock('@/hooks/useCurrentUser', () => ({ useCurrentUser: vi.fn() }))
+vi.mock('@/hooks/useTags', () => ({
+  useTags: vi.fn(),
+  useCreateTag: vi.fn(),
+  useUpdateTag: vi.fn(),
+  useDeleteTag: vi.fn(),
+}))
 
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/useTags'
 
 const SAVED_KEY = 'z9y8x7w6v5'.repeat(3)
 const NEW_KEY = 'a1b2c3d4e5'.repeat(3)
@@ -21,6 +28,18 @@ const USER: User = {
   name: 'Justin Tester',
   email: 'j@home.lan',
   pushover_user_key: SAVED_KEY,
+}
+
+const TAGS = [
+  { id: 1, name: 'Tropical', color: 'var(--series-1)' },
+  { id: 2, name: 'Succulent', color: 'var(--series-2)' },
+]
+
+function mockTagHooks() {
+  vi.mocked(useTags).mockReturnValue({ data: TAGS, loading: false, error: null })
+  vi.mocked(useCreateTag).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as never)
+  vi.mocked(useUpdateTag).mockReturnValue({ mutateAsync: vi.fn() } as never)
+  vi.mocked(useDeleteTag).mockReturnValue({ mutate: vi.fn() } as never)
 }
 
 function setup(opts: {
@@ -52,7 +71,10 @@ function settingsValue(key: string | null) {
   })
 }
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  mockTagHooks()
+})
 
 describe('SettingsPage', () => {
   it('shows the saved key and the live account details', () => {
@@ -143,5 +165,72 @@ describe('SettingsPage', () => {
 
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
     expect(screen.queryByText(/unable to load/i)).not.toBeInTheDocument()
+  })
+})
+
+describe('TagManager', () => {
+  it('lists existing tags with rename and delete controls', () => {
+    setup({ key: null })
+
+    expect(screen.getByText('Tropical')).toBeInTheDocument()
+    expect(screen.getByText('Succulent')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /rename tropical/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete tropical/i })).toBeInTheDocument()
+  })
+
+  it('shows empty state when no tags exist', () => {
+    vi.mocked(useTags).mockReturnValue({ data: [], loading: false, error: null })
+    setup({ key: null })
+
+    expect(screen.getByText(/no tags yet/i)).toBeInTheDocument()
+  })
+
+  it('opens the add-tag input when clicking the add button', async () => {
+    setup({ key: null })
+
+    await userEvent.click(screen.getByText(/add a tag/i))
+    expect(screen.getByPlaceholderText(/tag name/i)).toBeInTheDocument()
+  })
+
+  it('creates a tag via the add input', async () => {
+    const mutateAsync = vi
+      .fn()
+      .mockResolvedValue({ id: 3, name: 'Trailing', color: 'var(--series-3)' })
+    vi.mocked(useCreateTag).mockReturnValue({ mutateAsync, isPending: false } as never)
+    setup({ key: null })
+
+    await userEvent.click(screen.getByText(/add a tag/i))
+    await userEvent.type(screen.getByPlaceholderText(/tag name/i), 'Trailing')
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }))
+
+    expect(mutateAsync).toHaveBeenCalledWith('Trailing')
+  })
+
+  it('enters rename mode and calls update', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({ id: 1, name: 'Fern', color: 'var(--series-1)' })
+    vi.mocked(useUpdateTag).mockReturnValue({ mutateAsync } as never)
+    setup({ key: null })
+
+    await userEvent.click(screen.getByRole('button', { name: /rename tropical/i }))
+
+    const inputs = screen.getAllByRole('textbox')
+    const renameInput = inputs.find(
+      el => (el as HTMLInputElement).value === 'Tropical'
+    ) as HTMLInputElement
+    expect(renameInput).toBeTruthy()
+
+    await userEvent.clear(renameInput)
+    await userEvent.type(renameInput, 'Fern')
+    await userEvent.keyboard('{Enter}')
+
+    expect(mutateAsync).toHaveBeenCalledWith({ id: 1, payload: { name: 'Fern' } })
+  })
+
+  it('shows a delete confirmation before removing a tag', async () => {
+    setup({ key: null })
+
+    await userEvent.click(screen.getByRole('button', { name: /delete tropical/i }))
+
+    expect(screen.getByText(/will be removed from all plants/i)).toBeInTheDocument()
   })
 })
