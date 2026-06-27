@@ -116,37 +116,43 @@ export function DashboardPage({ go }: DashboardPageProps) {
           <EmptyState title="Looking good">No flagged problems detected.</EmptyState>
         ) : (
           <div className="space-y-2">
-            {d.flagged_problems.map((f, i) => (
-              <button
-                key={i}
-                onClick={() => go(`/plants/${f.plant_id}`)}
-                className="w-full text-left flex items-start gap-3 p-3 rounded-[8px] border border-border hover:bg-surface-raised transition-colors"
-              >
-                <span
-                  className="mt-0.5 shrink-0"
-                  style={{
-                    color: f.severity === 'alert' ? 'var(--overdue)' : 'var(--due-soon)',
-                  }}
+            {d.flagged_problems.map(f => {
+              const worst = f.problems.some(p => p.severity === 'alert') ? 'alert' : 'warning'
+              return (
+                <button
+                  key={f.plant_id}
+                  onClick={() => go(`/plants/${f.plant_id}`)}
+                  className="w-full text-left flex items-start gap-3 p-3 rounded-[8px] border border-border hover:bg-surface-raised transition-colors"
                 >
-                  <AlertTriangle size={16} />
-                </span>
-                <div className="min-w-0">
-                  <div className="font-medium flex items-center gap-2">
-                    {f.common_name}
-                    <span
-                      className="text-[11px] font-normal px-1.5 py-0.5 rounded-full"
-                      style={{
-                        background: `color-mix(in srgb,${f.severity === 'alert' ? 'var(--overdue)' : 'var(--due-soon)'} 16%,transparent)`,
-                        color: f.severity === 'alert' ? 'var(--overdue)' : 'var(--due-soon)',
-                      }}
-                    >
-                      {f.severity}
-                    </span>
+                  <span
+                    className="mt-0.5 shrink-0"
+                    style={{ color: worst === 'alert' ? 'var(--overdue)' : 'var(--due-soon)' }}
+                  >
+                    <AlertTriangle size={16} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-medium">{f.common_name}</div>
+                    {f.problems.map((p, j) => (
+                      <div
+                        key={j}
+                        className="text-[12px] text-text-muted mt-0.5 flex items-center gap-1.5"
+                      >
+                        <span
+                          className="text-[11px] px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background: `color-mix(in srgb,${p.severity === 'alert' ? 'var(--overdue)' : 'var(--due-soon)'} 16%,transparent)`,
+                            color: p.severity === 'alert' ? 'var(--overdue)' : 'var(--due-soon)',
+                          }}
+                        >
+                          {p.severity}
+                        </span>
+                        {p.problem}
+                      </div>
+                    ))}
                   </div>
-                  <div className="text-[12px] text-text-muted mt-0.5">{f.problem}</div>
-                </div>
-              </button>
-            ))}
+                </button>
+              )
+            })}
           </div>
         )}
       </Card>

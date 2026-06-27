@@ -273,8 +273,7 @@ export interface RecentActivity {
 export interface FlaggedProblem {
   plant_id: number
   common_name: string | null
-  problem: string
-  severity: 'warning' | 'alert'
+  problems: Array<{ problem: string; severity: 'warning' | 'alert' }>
 }
 
 export interface DashboardData {

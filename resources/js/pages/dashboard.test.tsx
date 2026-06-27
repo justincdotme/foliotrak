@@ -41,7 +41,11 @@ const data: DashboardData = {
     },
   ],
   flagged_problems: [
-    { plant_id: 1, common_name: 'Pothos', problem: 'Root rot reported', severity: 'alert' },
+    {
+      plant_id: 1,
+      common_name: 'Pothos',
+      problems: [{ problem: 'Root rot reported', severity: 'alert' as const }],
+    },
   ],
 }
 

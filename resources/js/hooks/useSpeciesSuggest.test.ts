@@ -18,7 +18,7 @@ describe('useSpeciesSuggest', () => {
   })
 
   it('does not call the API below the minimum query length', () => {
-    renderHook(() => useSpeciesSuggest('p'))
+    renderHook(() => useSpeciesSuggest('po'))
     act(() => {
       vi.advanceTimersByTime(500)
     })

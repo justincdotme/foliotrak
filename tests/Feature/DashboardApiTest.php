@@ -168,11 +168,21 @@ class DashboardApiTest extends TestCase
         $response = $this->getJson('/api/dashboard')->assertOk();
 
         // The healthy plant produces no flag, so exactly the three troubled plants appear.
-        $response
-            ->assertJsonCount(3, 'data.flagged_problems')
-            ->assertJsonFragment(['plant_id' => $lowHealth->id, 'problem' => 'Low overall health (2/5)', 'severity' => 'alert'])
-            ->assertJsonFragment(['plant_id' => $rootBound->id, 'problem' => 'Root-bound signs', 'severity' => 'warning'])
-            ->assertJsonFragment(['plant_id' => $pest->id, 'problem' => 'Pest activity', 'severity' => 'alert']);
+        $response->assertJsonCount(3, 'data.flagged_problems');
+
+        $flagged = collect($response->json('data.flagged_problems'));
+        $this->assertContains(
+            ['problem' => 'Low overall health (2/5)', 'severity' => 'alert'],
+            $flagged->firstWhere('plant_id', $lowHealth->id)['problems'],
+        );
+        $this->assertContains(
+            ['problem' => 'Root-bound signs', 'severity' => 'warning'],
+            $flagged->firstWhere('plant_id', $rootBound->id)['problems'],
+        );
+        $this->assertContains(
+            ['problem' => 'Pest activity', 'severity' => 'alert'],
+            $flagged->firstWhere('plant_id', $pest->id)['problems'],
+        );
     }
 
     public function test_days_left_rounds_the_fractional_delta_to_whole_days(): void
@@ -249,15 +259,28 @@ class DashboardApiTest extends TestCase
 
         $response = $this->getJson('/api/dashboard')->assertOk();
 
-        $response
-            ->assertJsonFragment(['plant_id' => $rotting->id, 'problem' => 'Root rot reported', 'severity' => 'alert'])
-            ->assertJsonFragment(['plant_id' => $diseased->id, 'problem' => 'Disease signs', 'severity' => 'alert'])
-            ->assertJsonFragment(['plant_id' => $compounded->id, 'problem' => 'Low overall health (1/5)', 'severity' => 'alert'])
-            ->assertJsonFragment(['plant_id' => $compounded->id, 'problem' => 'Pest activity', 'severity' => 'alert']);
+        $flagged = collect($response->json('data.flagged_problems'));
+
+        $this->assertContains(
+            ['problem' => 'Root rot reported', 'severity' => 'alert'],
+            $flagged->firstWhere('plant_id', $rotting->id)['problems'],
+        );
+        $this->assertContains(
+            ['problem' => 'Disease signs', 'severity' => 'alert'],
+            $flagged->firstWhere('plant_id', $diseased->id)['problems'],
+        );
+        $compoundedEntry = $flagged->firstWhere('plant_id', $compounded->id);
+        $this->assertContains(
+            ['problem' => 'Low overall health (1/5)', 'severity' => 'alert'],
+            $compoundedEntry['problems'],
+        );
+        $this->assertContains(
+            ['problem' => 'Pest activity', 'severity' => 'alert'],
+            $compoundedEntry['problems'],
+        );
 
         // Health 3 sits above the low-health threshold, so the fair plant produces no flag.
-        $fairFlags = collect($response->json('data.flagged_problems'))->where('plant_id', $fair->id);
-        $this->assertCount(0, $fairFlags);
+        $this->assertNull($flagged->firstWhere('plant_id', $fair->id));
     }
 
     /**

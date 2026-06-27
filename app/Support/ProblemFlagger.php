@@ -48,6 +48,29 @@ class ProblemFlagger
     }
 
     /**
+     * @return array{plant_id: int, common_name: string|null, problems: list<array{problem: string, severity: string}>}|null
+     */
+    public static function forPlant(Plant $plant): ?array
+    {
+        $flags = self::flags($plant);
+        if ($flags === []) {
+            return null;
+        }
+
+        return [
+            'plant_id' => $plant->id,
+            'common_name' => $plant->common_name,
+            'problems' => array_map(
+                static fn (array $flag): array => [
+                    'problem' => $flag['problem'],
+                    'severity' => $flag['severity'],
+                ],
+                $flags,
+            ),
+        ];
+    }
+
+    /**
      * @return array{plant_id: int, common_name: string|null, problem: string, severity: string}
      */
     private static function flag(Plant $plant, string $problem, string $severity): array

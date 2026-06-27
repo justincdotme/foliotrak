@@ -42,7 +42,9 @@ class DashboardController extends Controller
             ->all();
 
         $flaggedProblems = $plants
-            ->flatMap(fn (Plant $plant): array => ProblemFlagger::flags($plant))
+            ->map(fn (Plant $plant): ?array => ProblemFlagger::forPlant($plant))
+            ->filter()
+            ->values()
             ->all();
 
         return response()->json([
