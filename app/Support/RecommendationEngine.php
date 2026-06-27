@@ -18,7 +18,7 @@ final class RecommendationEngine
     public const GATE_DAYS = 28;
 
     /**
-     * @return array{plant_id: int, gate: array{state: string, history_days: int, required_days: int, days_to_go: int}, watering: array<string, mixed>|null, position_insights: list<array<string, mixed>>}
+     * @return array{plant_id: int, gate: array{state: string, history_days: int, required_days: int, days_to_go: int}, watering: array<string, mixed>|null, position_insights: list<array<string, mixed>>, health_by_location: list<array{location: string|null, median_health: float|null, sample_size: int, healths: list<int>}>}
      */
     public static function forPlant(Plant $plant): array
     {
@@ -52,6 +52,7 @@ final class RecommendationEngine
                 ? self::watering($plant, $healthObservations, $earliest, $now)
                 : null,
             'position_insights' => PositionInsight::forMoves(self::moves($plant), $healthObservations),
+            'health_by_location' => LocationHealthInsight::forPlant(self::moves($plant), $healthObservations, $plant->location),
         ];
     }
 

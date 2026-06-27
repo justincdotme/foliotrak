@@ -7,6 +7,12 @@ vi.mock('@/hooks/useGroupInsights', () => ({ useGroupInsights: vi.fn() }))
 vi.mock('@/components/charts/group-comparison', () => ({
   GroupComparison: () => <div data-testid="group-comparison" />,
 }))
+vi.mock('@/components/charts/correlation-scatter', () => ({
+  CorrelationScatter: () => <div data-testid="corr-scatter" />,
+}))
+vi.mock('@/components/charts/correlation-heatmap', () => ({
+  CorrelationHeatmap: () => <div data-testid="corr-heatmap" />,
+}))
 import { useTags } from '@/hooks/useTags'
 import { useGroupInsights } from '@/hooks/useGroupInsights'
 
@@ -27,12 +33,27 @@ const cmp = (plant_id: number, common_name: string) => ({
   fertilizer_interval_days: null,
 })
 
-const groupData = (plants: number[], comparison: ReturnType<typeof cmp>[]) => ({
+const pair = (x_variable: string) => ({
+  x_variable,
+  y_variable: 'overall_health',
+  correlation: 0.4,
+  p_value: 0.05,
+  sample_size: 12,
+  confidence_band: { lower: 0.1, upper: 0.7 },
+  significant_after_fdr: false,
+  points: [],
+})
+
+const groupData = (
+  plants: number[],
+  comparison: ReturnType<typeof cmp>[],
+  correlation_pairs: ReturnType<typeof pair>[] = []
+) => ({
   tag_id: 5,
   tag_name: 'Living room',
   plants,
   comparison,
-  correlation_pairs: [],
+  correlation_pairs,
 })
 
 describe('InsightsPage', () => {
@@ -59,6 +80,37 @@ describe('InsightsPage', () => {
 
     expect(screen.getByTestId('group-comparison')).toBeInTheDocument()
     expect(screen.getByText('Correlation analysis is coming')).toBeInTheDocument()
+  })
+
+  it('renders a scatter and no matrix for a single correlation pair', () => {
+    vi.mocked(useGroupInsights).mockReturnValue({
+      data: groupData([1, 2], [cmp(1, 'A'), cmp(2, 'B')], [pair('watering_interval_days')]),
+      loading: false,
+      error: null,
+    })
+
+    render(<InsightsPage />)
+
+    expect(screen.getByTestId('corr-scatter')).toBeInTheDocument()
+    expect(screen.queryByTestId('corr-heatmap')).not.toBeInTheDocument()
+    expect(screen.queryByText('Correlation analysis is coming')).not.toBeInTheDocument()
+  })
+
+  it('adds the matrix once two or more factors are present', () => {
+    vi.mocked(useGroupInsights).mockReturnValue({
+      data: groupData(
+        [1, 2],
+        [cmp(1, 'A'), cmp(2, 'B')],
+        [pair('watering_interval_days'), pair('light_level')]
+      ),
+      loading: false,
+      error: null,
+    })
+
+    render(<InsightsPage />)
+
+    expect(screen.getByTestId('corr-heatmap')).toBeInTheDocument()
+    expect(screen.getAllByTestId('corr-scatter')).toHaveLength(2)
   })
 
   it('shows the at-least-2-plants empty state for a single-plant tag', () => {

@@ -7,6 +7,7 @@ import type {
   GroupInsights,
   NutrientOption,
   Photo,
+  PlantRecommendations,
   PlantStatus,
   PlantTimeline,
   PlantWithTags,
@@ -177,6 +178,9 @@ export const deleteCareEvent = async (eventId: number): Promise<void> => {
 
 export const getTimeline = async (plantId: number): Promise<PlantTimeline> =>
   unwrap(await api.get<{ data: PlantTimeline }>(`/api/plants/${plantId}/timeline`))
+
+export const getRecommendations = async (plantId: number): Promise<PlantRecommendations> =>
+  unwrap(await api.get<{ data: PlantRecommendations }>(`/api/plants/${plantId}/recommendations`))
 
 export const getDashboard = async (): Promise<DashboardData> =>
   unwrap(await api.get<{ data: DashboardData }>('/api/dashboard'))

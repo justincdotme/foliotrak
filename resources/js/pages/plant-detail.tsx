@@ -21,6 +21,7 @@ import type { CareEvent, CareType, Photo } from '@/api/types'
 import { usePlant } from '@/hooks/usePlant'
 import { usePlantPhotos } from '@/hooks/usePlantPhotos'
 import { useTimeline } from '@/hooks/useTimeline'
+import { useRecommendations } from '@/hooks/useRecommendations'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -34,6 +35,7 @@ import { Spinner } from '@/components/app/spinner'
 import { StatusPill } from '@/components/app/status-pill'
 import { ActivityHeatmap } from '@/components/charts/activity-heatmap'
 import { GrowthTrend } from '@/components/charts/growth-trend'
+import { HealthByLocation } from '@/components/charts/health-by-location'
 import { HealthTrend } from '@/components/charts/health-trend'
 import { TimelineOverlay } from '@/components/charts/timeline-overlay'
 import { WeightTrend } from '@/components/charts/weight-trend'
@@ -55,6 +57,11 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
   const { data: plant, loading } = usePlant(id)
   const { data: photos } = usePlantPhotos(id)
   const { data: timeline } = useTimeline(id)
+  const {
+    data: recommendations,
+    loading: recommendationsLoading,
+    error: recommendationsError,
+  } = useRecommendations(id)
   const { deleteEvent } = useCareEventMutations(id)
   const [editOpen, setEditOpen] = useState(false)
   const [photoOpen, setPhotoOpen] = useState(false)
@@ -73,13 +80,16 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
       </Card>
     )
 
-  // The timeline bundle carries the trend series; recommendations and the
-  // watering-due signal arrive with later features, so they stay empty here.
+  // The timeline bundle carries the trend series; the watering-due signal arrives with a later
+  // per-plant due feature, so it stays null here.
   const healthTrend = timeline?.health_trend ?? []
   const weightTrend = timeline?.weight_trend ?? []
   const growthTrend = timeline?.growth_trend ?? []
-  const recommendations = timeline?.recommendations ?? []
   const photoList = photos ?? []
+
+  // Health-by-location reads as a comparison only with two or more spots; a single spot adds
+  // nothing the health trend does not already show.
+  const locationBuckets = (recommendations?.health_by_location ?? []).filter(l => l.sample_size > 0)
 
   // Each observation-derived series is charted only when it holds a real value;
   // overall_health is optional, so a length check alone would draw an empty line.
@@ -206,7 +216,13 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
       </div>
 
       {/* Schedule (My schedule / Recommended) */}
-      <ScheduleSection plant={plant} recs={recommendations} due={due} events={events} />
+      <ScheduleSection
+        plant={plant}
+        recommendations={recommendations}
+        recommendationsLoading={recommendationsLoading}
+        recommendationsError={!!recommendationsError}
+        due={due}
+      />
 
       <EditPlantModal plant={plant} open={editOpen} onClose={() => setEditOpen(false)} />
       <PrimaryPhotoModal
@@ -237,6 +253,9 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
           </div>
         </div>
       )}
+
+      {/* Health by location (did moving help) */}
+      {locationBuckets.length >= 2 && <HealthByLocation data={locationBuckets} />}
 
       {/* Photos */}
       <Card className="p-4">

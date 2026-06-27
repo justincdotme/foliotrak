@@ -190,11 +190,21 @@ export interface PositionInsight {
   health_after: HealthSummary
 }
 
+// Health grouped by the location the plant lived in at each observation. `healths` carries
+// every raw reading so the chart can plot each point, not only the median.
+export interface LocationHealth {
+  location: string | null
+  median_health: number | null
+  sample_size: number
+  healths: number[]
+}
+
 export interface PlantRecommendations {
   plant_id: number
   gate: RecommendationGate
   watering: WateringRecommendation | null
   position_insights: PositionInsight[]
+  health_by_location: LocationHealth[]
 }
 
 export type ConditionKey =

@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/app/empty-state'
 import { Spinner } from '@/components/app/spinner'
 import { GroupComparison } from '@/components/charts/group-comparison'
 import { CorrelationPending } from '@/components/charts/correlation-pending'
+import { CorrelationScatter } from '@/components/charts/correlation-scatter'
+import { CorrelationHeatmap } from '@/components/charts/correlation-heatmap'
 import { useTags } from '@/hooks/useTags'
 import { useGroupInsights } from '@/hooks/useGroupInsights'
 
@@ -73,7 +75,28 @@ export function InsightsPage() {
       ) : (
         <>
           <GroupComparison comparison={data.comparison} />
-          <CorrelationPending />
+          {data.correlation_pairs.length === 0 ? (
+            <CorrelationPending />
+          ) : (
+            <>
+              {/* The matrix only reads as a matrix with two or more factors; one factor is just
+                  the scatter below it, so the heatmap waits until a second factor lands. */}
+              {data.correlation_pairs.length >= 2 && (
+                <CorrelationHeatmap pairs={data.correlation_pairs} />
+              )}
+              <div
+                className="grid gap-4"
+                style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}
+              >
+                {data.correlation_pairs.map((pair, i) => (
+                  <CorrelationScatter
+                    key={`${pair.x_variable}-${pair.y_variable}-${i}`}
+                    pair={pair}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

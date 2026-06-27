@@ -6,7 +6,14 @@ vi.mock('@/lib/api', () => ({
 }))
 
 import api from '@/lib/api'
-import { getDashboard, getGroupInsights, listPlants, suggestSpecies, uploadPhoto } from './client'
+import {
+  getDashboard,
+  getGroupInsights,
+  getRecommendations,
+  listPlants,
+  suggestSpecies,
+  uploadPhoto,
+} from './client'
 
 const envelope = <T>(data: T) => ({ data: { data } }) as unknown as AxiosResponse<{ data: T }>
 
@@ -76,5 +83,19 @@ describe('api client', () => {
 
     await expect(getGroupInsights(3)).resolves.toEqual(payload)
     expect(api.get).toHaveBeenCalledWith('/api/insights/group', { params: { tag: 3 } })
+  })
+
+  it('unwraps the recommendations envelope for a plant', async () => {
+    const payload = {
+      plant_id: 7,
+      gate: { state: 'ready', history_days: 60, required_days: 28, days_to_go: 0 },
+      watering: null,
+      position_insights: [],
+      health_by_location: [],
+    }
+    vi.mocked(api.get).mockResolvedValue(envelope(payload))
+
+    await expect(getRecommendations(7)).resolves.toEqual(payload)
+    expect(api.get).toHaveBeenCalledWith('/api/plants/7/recommendations')
   })
 })
