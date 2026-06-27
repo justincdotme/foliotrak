@@ -146,6 +146,53 @@ export interface Recommendation {
   computed_at: string
 }
 
+// Gated, health-aware recommendation served by GET /api/plants/{plant}/recommendations.
+// Richer than the flat Recommendation above, which the timeline bundle keeps empty.
+export type RecommendationState = 'countdown' | 'ready' | 'no_health_data'
+
+export interface RecommendationGate {
+  state: RecommendationState
+  history_days: number
+  required_days: number
+  days_to_go: number
+}
+
+// stable: cadence steady, the plain median; revert: recommend the earlier cadence the plant
+// was healthier at; maintain: the recent cadence held or improved health.
+export type WateringRecommendationBasis = 'stable' | 'revert' | 'maintain'
+
+export interface WateringRecommendation {
+  interval_days: number
+  amount_ml: number | null
+  sample_size: number
+  health_sample_size: number
+  basis: WateringRecommendationBasis
+  baseline_interval_days: number | null
+  recent_interval_days: number | null
+  rationale: string
+  computed_at: string
+}
+
+export interface HealthSummary {
+  median: number | null
+  sample_size: number
+}
+
+export interface PositionInsight {
+  moved_on: string
+  from_location: string | null
+  to_location: string | null
+  health_before: HealthSummary
+  health_after: HealthSummary
+}
+
+export interface PlantRecommendations {
+  plant_id: number
+  gate: RecommendationGate
+  watering: WateringRecommendation | null
+  position_insights: PositionInsight[]
+}
+
 export type ConditionKey =
   | 'healthy'
   | 'fair'
@@ -233,6 +280,11 @@ export interface GrowthTrendPoint {
   value: GrowthRate | null
 }
 
+export interface CorrelationPoint {
+  x: number
+  y: number
+}
+
 export interface CorrelationPair {
   x_variable: string
   y_variable: string
@@ -240,6 +292,10 @@ export interface CorrelationPair {
   p_value: number
   sample_size: number
   confidence_band: { lower: number; upper: number }
+  // Server-computed Benjamini-Hochberg significance across every tested pair, and the raw
+  // observation points the scatter plots, not values synthesized from the coefficient.
+  significant_after_fdr: boolean
+  points: CorrelationPoint[]
 }
 
 export interface GroupComparison {

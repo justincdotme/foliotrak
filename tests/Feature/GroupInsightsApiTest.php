@@ -108,6 +108,79 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.correlation_pairs', []);
     }
 
+    public function test_group_insights_reports_a_pooled_watering_interval_correlation(): void
+    {
+        $this->actAsHousehold();
+
+        $tag = Tag::factory()->create(['name' => 'Pothos']);
+
+        $golden = Plant::factory()->create();
+        $golden->tags()->attach($tag);
+        $this->water($golden, [50, 44, 35, 27]);
+        $this->observe($golden, overallHealth: 5, daysAgo: 43);
+        $this->observe($golden, overallHealth: 3, daysAgo: 34);
+        $this->observe($golden, overallHealth: 4, daysAgo: 26);
+
+        $marble = Plant::factory()->create();
+        $marble->tags()->attach($tag);
+        $this->water($marble, [48, 41, 30, 22]);
+        $this->observe($marble, overallHealth: 5, daysAgo: 40);
+        $this->observe($marble, overallHealth: 2, daysAgo: 29);
+        $this->observe($marble, overallHealth: 4, daysAgo: 21);
+
+        $this->getJson("/api/insights/group?tag={$tag->id}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.correlation_pairs')
+            ->assertJsonStructure([
+                'data' => [
+                    'correlation_pairs' => [
+                        ['x_variable', 'y_variable', 'correlation', 'p_value', 'sample_size', 'confidence_band' => ['lower', 'upper'], 'significant_after_fdr', 'points'],
+                    ],
+                ],
+            ])
+            ->assertJsonPath('data.correlation_pairs.0.x_variable', 'watering_interval_days')
+            ->assertJsonPath('data.correlation_pairs.0.y_variable', 'overall_health')
+            ->assertJsonPath('data.correlation_pairs.0.sample_size', 6)
+            ->assertJsonCount(6, 'data.correlation_pairs.0.points');
+    }
+
+    public function test_group_insights_does_not_crash_on_a_constant_watering_cadence(): void
+    {
+        $this->actAsHousehold();
+
+        $tag = Tag::factory()->create(['name' => 'Steady']);
+
+        foreach ([1, 2] as $offset) {
+            $plant = Plant::factory()->create();
+            $plant->tags()->attach($tag);
+            $this->water($plant, [50, 43, 36, 29, 22, 15]); // every 7 days: a constant interval
+            $this->observe($plant, overallHealth: 3, daysAgo: 40);
+            $this->observe($plant, overallHealth: 4, daysAgo: 25);
+            $this->observe($plant, overallHealth: 3 + $offset, daysAgo: 10);
+        }
+
+        // A fixed cadence makes the pooled interval constant; Spearman must report no correlation
+        // rather than dividing by zero and 500ing.
+        $this->getJson("/api/insights/group?tag={$tag->id}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.correlation_pairs')
+            ->assertJsonPath('data.correlation_pairs.0.sample_size', 6)
+            ->assertJsonPath('data.correlation_pairs.0.significant_after_fdr', false);
+    }
+
+    /**
+     * @param  list<int>  $daysAgo
+     */
+    private function water(Plant $plant, array $daysAgo): void
+    {
+        foreach ($daysAgo as $days) {
+            $event = CareEvent::factory()->ofType('watering')->for($plant)->create([
+                'occurred_at' => now()->subDays($days),
+            ]);
+            $event->watering()->create(['amount_ml' => 200]);
+        }
+    }
+
     private function observe(Plant $plant, int $overallHealth, int $daysAgo): void
     {
         $event = CareEvent::factory()->ofType('observation')->for($plant)->create([

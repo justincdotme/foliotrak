@@ -1258,6 +1258,8 @@ export const mockApi = {
           p_value: 0.08,
           sample_size: 48,
           confidence_band: { lower: 0.06, upper: 0.68 },
+          significant_after_fdr: false,
+          points: [],
         },
         {
           x_variable: 'light_level',
@@ -1266,6 +1268,8 @@ export const mockApi = {
           p_value: 0.02,
           sample_size: 22,
           confidence_band: { lower: 0.28, upper: 0.82 },
+          significant_after_fdr: true,
+          points: [],
         },
         {
           x_variable: 'fertilizer_npk_n',
@@ -1274,6 +1278,8 @@ export const mockApi = {
           p_value: 0.21,
           sample_size: 14,
           confidence_band: { lower: -0.18, upper: 0.71 },
+          significant_after_fdr: false,
+          points: [],
         },
         {
           x_variable: 'pot_size',
@@ -1282,6 +1288,8 @@ export const mockApi = {
           p_value: 0.44,
           sample_size: 11,
           confidence_band: { lower: -0.34, upper: 0.61 },
+          significant_after_fdr: false,
+          points: [],
         },
       ],
     })
