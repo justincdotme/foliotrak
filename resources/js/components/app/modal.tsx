@@ -37,9 +37,14 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
             wide ? 'w-[680px] max-w-[92vw]' : 'w-[460px] max-w-[92vw]'
           )}
         >
-          <div className="relative flex shrink-0 items-start gap-3 border-b border-border p-4">
+          <div
+            className={cn(
+              'relative flex shrink-0 items-start gap-3 border-b border-border p-4',
+              mobile && 'pt-6'
+            )}
+          >
             {mobile && (
-              <div className="absolute -top-2.5 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-border-strong" />
+              <div className="absolute top-2 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-border-strong" />
             )}
             <div className="min-w-0">
               <Dialog.Title className="font-semibold text-text">{title}</Dialog.Title>

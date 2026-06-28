@@ -54,7 +54,7 @@ RUN git config --system core.hooksPath /var/www/html/.githooks
 
 RUN echo "opcache.enable_cli=1" >> /usr/local/etc/php/conf.d/opcache.ini
 
-RUN printf 'upload_max_filesize = 10M\npost_max_size = 12M\n' > /usr/local/etc/php/conf.d/uploads.ini
+RUN printf 'upload_max_filesize = 25M\npost_max_size = 30M\n' > /usr/local/etc/php/conf.d/uploads.ini
 
 RUN addgroup -g 1000 laravel && \
     adduser -D -u 1000 -G laravel laravel
