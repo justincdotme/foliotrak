@@ -72,11 +72,11 @@ function PlantCard({ p, onClick }: PlantCardProps) {
         )}
       </div>
       <div className="mt-3">
-        <div className="flex items-center gap-2">
-          <div className="font-medium truncate">{p.common_name}</div>
+        <div className="font-medium">{p.common_name}</div>
+        <div className="text-[12px] text-text-subtle italic truncate">{p.scientific_name}</div>
+        <div className="mt-1">
           <ConditionChip cond={cond} />
         </div>
-        <div className="text-[12px] text-text-subtle italic truncate">{p.scientific_name}</div>
         <div className="flex items-center gap-1 text-[12px] text-text-muted mt-1.5">
           <MapPin size={12} />
           {p.location?.name || 'No location'}
