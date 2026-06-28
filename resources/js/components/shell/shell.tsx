@@ -102,7 +102,7 @@ export function Shell() {
 
   return (
     <AppContext.Provider value={{ mobile }}>
-      <div className="relative flex h-full flex-col bg-bg">
+      <div dusk="app-shell" className="relative flex h-full flex-col bg-bg">
         {mobile ? (
           <MobileHeader onAdd={() => setAddOpen(true)} onLogout={onLogout} />
         ) : (

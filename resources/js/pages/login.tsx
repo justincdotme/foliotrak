@@ -55,7 +55,7 @@ export function LoginPage() {
         <Card className="p-6">
           <h1 className="mb-1 text-lg font-semibold">Welcome back</h1>
           <p className="mb-5 text-[13px] text-text-muted">Sign in to your plant log.</p>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form dusk="login-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Field label="Email" error={errors.email?.message}>
               <Input type="email" autoComplete="username" {...register('email')} />
             </Field>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fillFromHealth } from './correlation-scatter'
+import { fillFromHealth } from './chart-utils'
 
 describe('fillFromHealth', () => {
   it.each([1, 2, 3, 4, 5])('maps integer health %s to var(--health-%s)', y => {

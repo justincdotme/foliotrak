@@ -1,4 +1,5 @@
 import type { CorrelationPair, CorrelationPoint } from '@/api/types'
+import { HEALTH_VAR } from '@/lib/domain'
 
 export const axis = {
   stroke: 'var(--border-strong)',
@@ -71,6 +72,11 @@ export function regression(
   const slope = (n * sumXY - sumX * sumY) / denom
   const intercept = (sumY - slope * sumX) / n
   return { slope, intercept }
+}
+
+export function fillFromHealth(y: number): string {
+  const key = Math.min(5, Math.max(1, Math.round(y)))
+  return HEALTH_VAR[key] ?? 'var(--primary)'
 }
 
 export interface HeatCell {

@@ -10,17 +10,11 @@ import {
   Line,
 } from 'recharts'
 import { ChartShell } from './chart-shell'
-import { axis, describeCorrelation, prettyVar, regression } from './chart-utils'
-import { HEALTH_VAR } from '@/lib/domain'
+import { axis, describeCorrelation, fillFromHealth, prettyVar, regression } from './chart-utils'
 import type { CorrelationPair } from '@/api/types'
 
 interface CorrelationScatterProps {
   pair: CorrelationPair
-}
-
-export function fillFromHealth(y: number): string {
-  const key = Math.min(5, Math.max(1, Math.round(y)))
-  return HEALTH_VAR[key] ?? 'var(--primary)'
 }
 
 export function CorrelationScatter({ pair }: CorrelationScatterProps) {
