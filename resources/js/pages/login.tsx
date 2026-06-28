@@ -63,7 +63,7 @@ export function LoginPage() {
               <Input type="password" autoComplete="current-password" {...register('password')} />
             </Field>
             {authError && (
-              <div className="flex items-center gap-1.5 text-[13px] text-overdue">
+              <div dusk="auth-error" className="flex items-center gap-1.5 text-[13px] text-overdue">
                 <AlertTriangle size={14} />
                 {authError}
               </div>

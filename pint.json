@@ -2,7 +2,8 @@
     "preset": "laravel",
     "exclude": [
         "docker",
-        "storage"
+        "storage",
+        "temp"
     ],
     "rules": {
         "@PSR12": true,
