@@ -21,8 +21,11 @@ export function MobileHeader({ onAdd, onLogout }: MobileHeaderProps) {
   const { user } = useCurrentUser()
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-surface/90 px-4 backdrop-blur">
-      <button onClick={() => navigate('/')} className="flex items-center gap-2">
+    <header
+      dusk="mobile-header"
+      className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-surface/90 px-4 backdrop-blur"
+    >
+      <button dusk="logo-link" onClick={() => navigate('/')} className="flex items-center gap-2">
         <span className="grid h-7 w-7 place-items-center rounded-[7px] bg-primary text-white">
           <Leaf size={16} />
         </span>
@@ -30,6 +33,7 @@ export function MobileHeader({ onAdd, onLogout }: MobileHeaderProps) {
       </button>
       <div className="ml-auto flex items-center gap-1.5">
         <button
+          dusk="add-plant"
           onClick={onAdd}
           aria-label="Add plant"
           title="Add plant"
@@ -39,6 +43,7 @@ export function MobileHeader({ onAdd, onLogout }: MobileHeaderProps) {
           Plant
         </button>
         <button
+          dusk="theme-toggle"
           onClick={toggle}
           aria-label="Toggle theme"
           className="grid h-9 w-9 place-items-center rounded-md text-text-muted hover:bg-surface-raised"
@@ -68,7 +73,7 @@ export function MobileHeader({ onAdd, onLogout }: MobileHeaderProps) {
                 <div className="tnum truncate text-[11px] text-text-subtle">{user?.email}</div>
               </div>
             </div>
-            <DropdownMenuItem onSelect={() => navigate('/settings')}>
+            <DropdownMenuItem dusk="settings-link" onSelect={() => navigate('/settings')}>
               <UserIcon size={15} />
               Account &amp; settings
             </DropdownMenuItem>
