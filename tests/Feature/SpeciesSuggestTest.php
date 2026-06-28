@@ -144,25 +144,47 @@ class SpeciesSuggestTest extends TestCase
     public function test_does_not_cache_empty_results(): void
     {
         $this->actAsHousehold();
-        $this->fakeGbifMatch(['matchType' => 'NONE', 'confidence' => 0, 'synonym' => false]);
+        Http::fake([
+            'api.gbif.org/v1/species/match*' => Http::response([
+                'matchType' => 'NONE',
+                'confidence' => 0,
+                'synonym' => false,
+            ]),
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0,
+                'limit' => 5,
+                'endOfRecords' => true,
+                'count' => 0,
+                'results' => [],
+            ]),
+        ]);
 
         $this->getJson('/api/species/suggest?q=notaplant')->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/api/species/suggest?q=notaplant')->assertOk()->assertJsonCount(0, 'data');
 
-        // Empty is never cached, so both requests reach GBIF (ADR-0015).
-        Http::assertSentCount(2);
+        // Each request hits match + search = 4 total.
+        Http::assertSentCount(4);
         $this->assertSame(0, SpeciesCache::query()->count());
     }
 
     public function test_low_confidence_match_is_treated_as_no_match(): void
     {
         $this->actAsHousehold();
-        $this->fakeGbifMatch([
-            'usageKey' => 99,
-            'scientificName' => 'Dubious match',
-            'rank' => 'SPECIES',
-            'confidence' => 50,
-            'matchType' => 'FUZZY',
+        Http::fake([
+            'api.gbif.org/v1/species/match*' => Http::response([
+                'usageKey' => 99,
+                'scientificName' => 'Dubious match',
+                'rank' => 'SPECIES',
+                'confidence' => 50,
+                'matchType' => 'FUZZY',
+            ]),
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0,
+                'limit' => 5,
+                'endOfRecords' => true,
+                'count' => 0,
+                'results' => [],
+            ]),
         ]);
 
         $this->getJson('/api/species/suggest?q=qwerty plant')->assertOk()->assertJsonCount(0, 'data');
@@ -324,5 +346,122 @@ class SpeciesSuggestTest extends TestCase
             'below minimum' => [0],
             'above maximum' => [21],
         ];
+    }
+
+    public function test_stale_refresh_preserves_existing_common_names(): void
+    {
+        $this->actAsHousehold();
+        SpeciesCache::factory()->create([
+            'gbif_key' => '2868241',
+            'scientific_name' => 'Monstera deliciosa Liebm.',
+            'common_name' => 'Swiss cheese plant',
+            'common_names' => ['Swiss cheese plant', 'Split-leaf philodendron'],
+            'cached_at' => now()->subDays(100),
+        ]);
+        $this->fakeGbifMatch($this->monsteraMatch());
+
+        $this->getJson('/api/species/suggest?q=monstera')->assertOk();
+
+        $refreshed = SpeciesCache::query()->where('gbif_key', '2868241')->firstOrFail();
+        $this->assertSame('Swiss cheese plant', $refreshed->common_name);
+        $this->assertSame(['Swiss cheese plant', 'Split-leaf philodendron'], $refreshed->common_names);
+    }
+
+    public function test_local_hit_includes_common_names_in_response(): void
+    {
+        $this->actAsHousehold();
+        SpeciesCache::factory()->create([
+            'gbif_key' => '2868241',
+            'scientific_name' => 'Monstera deliciosa Liebm.',
+            'common_name' => 'Swiss cheese plant',
+            'common_names' => ['Swiss cheese plant', 'Split-leaf philodendron'],
+            'cached_at' => now(),
+        ]);
+        $this->fakeGbifMatch($this->monsteraMatch());
+
+        $this->getJson('/api/species/suggest?q=monstera')
+            ->assertOk()
+            ->assertJsonPath('data.0.common_name', 'Swiss cheese plant')
+            ->assertJsonPath('data.0.common_names', ['Swiss cheese plant', 'Split-leaf philodendron']);
+    }
+
+    public function test_falls_back_to_gbif_search_for_common_name_queries(): void
+    {
+        $this->actAsHousehold();
+        Http::fake([
+            'api.gbif.org/v1/species/match*' => Http::response([
+                'matchType' => 'NONE',
+                'confidence' => 0,
+                'synonym' => false,
+            ]),
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0,
+                'limit' => 5,
+                'endOfRecords' => true,
+                'results' => [
+                    [
+                        'key' => 7911643,
+                        'scientificName' => 'Zamioculcas zamiifolia (Lodd.) Engl.',
+                        'canonicalName' => 'Zamioculcas zamiifolia',
+                        'rank' => 'SPECIES',
+                        'taxonomicStatus' => 'ACCEPTED',
+                        'family' => 'Araceae',
+                        'vernacularNames' => [
+                            ['vernacularName' => 'ZZ Plant', 'language' => 'eng'],
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $this->getJson('/api/species/suggest?q=ZZ Plant')
+            ->assertOk()
+            ->assertJsonPath('data.0.scientific_name', 'Zamioculcas zamiifolia (Lodd.) Engl.')
+            ->assertJsonPath('data.0.common_name', 'ZZ Plant')
+            ->assertJsonPath('data.0.family', 'Araceae');
+
+        Http::assertSentCount(2);
+        $this->assertDatabaseHas('species_cache', [
+            'gbif_key' => '7911643',
+            'common_name' => 'ZZ Plant',
+        ]);
+    }
+
+    public function test_does_not_cascade_to_search_when_lookup_is_blocked(): void
+    {
+        $this->actAsHousehold();
+        Http::fake(['api.gbif.org/*' => Http::failedConnection()]);
+
+        $this->getJson('/api/species/suggest?q=ZZ Plant')
+            ->assertStatus(503)
+            ->assertJsonPath('code', 'search_degraded');
+
+        // Only one call: lookup failed, breaker opened, search was skipped.
+        Http::assertSentCount(1);
+    }
+
+    public function test_common_name_search_empty_result_returns_empty(): void
+    {
+        $this->actAsHousehold();
+        Http::fake([
+            'api.gbif.org/v1/species/match*' => Http::response([
+                'matchType' => 'NONE',
+                'confidence' => 0,
+                'synonym' => false,
+            ]),
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0,
+                'limit' => 5,
+                'endOfRecords' => true,
+                'count' => 0,
+                'results' => [],
+            ]),
+        ]);
+
+        $this->getJson('/api/species/suggest?q=xyznotaplant')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        Http::assertSentCount(2);
     }
 }

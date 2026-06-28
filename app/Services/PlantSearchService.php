@@ -59,8 +59,15 @@ class PlantSearchService
         }
 
         if ($records === []) {
-            // Genuine no-match is never cached (ADR-0015).
-            return new Collection();
+            $records = $this->gbif->searchCommonName($query);
+
+            if ($records === null) {
+                throw new SearchDegradedException();
+            }
+
+            if ($records === []) {
+                return new Collection();
+            }
         }
 
         $this->backfill($records);
@@ -137,17 +144,26 @@ class PlantSearchService
     private function backfill(array $records): void
     {
         foreach ($records as $record) {
+            $attributes = [
+                'scientific_name' => $record['scientific_name'],
+                'canonical_name' => $record['canonical_name'],
+                'rank' => $record['rank'],
+                'family' => $record['family'],
+                'payload' => $record['payload'],
+                'cached_at' => now(),
+            ];
+
+            if (($record['common_name'] ?? null) !== null) {
+                $attributes['common_name'] = $record['common_name'];
+            }
+
+            if (($record['common_names'] ?? null) !== null) {
+                $attributes['common_names'] = $record['common_names'];
+            }
+
             SpeciesCache::updateOrCreate(
                 ['gbif_key' => $record['gbif_key']],
-                [
-                    'scientific_name' => $record['scientific_name'],
-                    'canonical_name' => $record['canonical_name'],
-                    'common_name' => $record['common_name'],
-                    'rank' => $record['rank'],
-                    'family' => $record['family'],
-                    'payload' => $record['payload'],
-                    'cached_at' => now(),
-                ],
+                $attributes,
             );
         }
     }
