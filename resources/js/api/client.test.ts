@@ -9,6 +9,7 @@ import api from '@/lib/api'
 import {
   getDashboard,
   getGroupInsights,
+  getLocationSummary,
   getRecommendations,
   listPlants,
   suggestSpecies,
@@ -71,8 +72,11 @@ describe('api client', () => {
     expect(api.get).toHaveBeenCalledWith('/api/dashboard')
   })
 
-  it('requests group insights with the tag query param', async () => {
+  it('requests group insights with the tag query param in the URL', async () => {
     const payload = {
+      group_type: 'tag',
+      group_id: 3,
+      group_name: 'Office',
       tag_id: 3,
       tag_name: 'Office',
       plants: [],
@@ -81,8 +85,40 @@ describe('api client', () => {
     }
     vi.mocked(api.get).mockResolvedValue(envelope(payload))
 
-    await expect(getGroupInsights(3)).resolves.toEqual(payload)
-    expect(api.get).toHaveBeenCalledWith('/api/insights/group', { params: { tag: 3 } })
+    await expect(getGroupInsights({ tag: 3 })).resolves.toEqual(payload)
+    expect(api.get).toHaveBeenCalledWith('/api/insights/group?tag=3')
+  })
+
+  it('requests group insights with the location query param in the URL', async () => {
+    const payload = {
+      group_type: 'location',
+      group_id: 7,
+      group_name: 'Shelf',
+      plants: [],
+      comparison: [],
+      correlation_pairs: [],
+    }
+    vi.mocked(api.get).mockResolvedValue(envelope(payload))
+
+    await expect(getGroupInsights({ location: 7 })).resolves.toEqual(payload)
+    expect(api.get).toHaveBeenCalledWith('/api/insights/group?location=7')
+  })
+
+  it('fetches location summaries from /api/insights/locations', async () => {
+    const payload = [
+      {
+        location_id: 1,
+        location_name: 'Shelf',
+        plant_count: 3,
+        mean_health: 3.5,
+        health_readings: [3, 4],
+        sample_size: 2,
+      },
+    ]
+    vi.mocked(api.get).mockResolvedValue(envelope(payload))
+
+    await expect(getLocationSummary()).resolves.toEqual(payload)
+    expect(api.get).toHaveBeenCalledWith('/api/insights/locations')
   })
 
   it('unwraps the recommendations envelope for a plant', async () => {

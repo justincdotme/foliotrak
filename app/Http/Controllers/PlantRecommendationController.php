@@ -20,7 +20,7 @@ class PlantRecommendationController extends Controller
             'careEvents',
             'location',
             'wateringEvents.watering',
-            'observationEvents.observation',
+            'observationEvents.observation.symptoms',
             'relocationEvents.relocation.fromLocation',
             'relocationEvents.relocation.toLocation',
         ]);

@@ -141,4 +141,50 @@ class PlantTimelineApiTest extends TestCase
             ->assertJsonPath('data.health_trend.0.date', '2026-06-22')
             ->assertJsonPath('data.health_trend.0.value', null);
     }
+
+    public function test_timeline_includes_light_trend_and_leaf_size_trend(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create();
+        $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(3)]);
+        Observation::factory()->create([
+            'care_event_id' => $event->id,
+            'light_level' => 8,
+            'leaf_size_mm' => 32.5,
+        ]);
+
+        $response = $this->getJson("/api/plants/{$plant->id}/timeline")->assertOk();
+
+        $response
+            ->assertJsonCount(1, 'data.light_trend')
+            ->assertJsonPath('data.light_trend.0.date', '2026-06-23')
+            ->assertJsonPath('data.light_trend.0.value', 8)
+            ->assertJsonCount(1, 'data.leaf_size_trend')
+            ->assertJsonPath('data.leaf_size_trend.0.date', '2026-06-23')
+            ->assertJsonPath('data.leaf_size_trend.0.value', 32.5);
+    }
+
+    public function test_timeline_includes_due_for_care_for_the_plant(): void
+    {
+        $this->actAsHousehold();
+
+        // Watered 9 days ago on a 7-day override -> overdue by 2 days.
+        $plant = Plant::factory()->create([
+            'common_name' => 'Thirsty',
+            'watering_interval_days_override' => 7,
+        ]);
+        CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(9)]);
+
+        $response = $this->getJson("/api/plants/{$plant->id}/timeline")->assertOk();
+
+        $response
+            ->assertJsonCount(1, 'data.due_for_care')
+            ->assertJsonPath('data.due_for_care.0.plant_id', $plant->id)
+            ->assertJsonPath('data.due_for_care.0.type', 'watering')
+            ->assertJsonPath('data.due_for_care.0.status', 'overdue')
+            ->assertJsonPath('data.due_for_care.0.daysLeft', -2)
+            ->assertJsonPath('data.due_for_care.0.interval', 7)
+            ->assertJsonPath('data.due_for_care.0.due_date', '2026-06-24');
+    }
 }

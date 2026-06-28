@@ -6,6 +6,10 @@ namespace App\Support;
 
 use App\Models\Plant;
 use App\Support\Correlation\Factor;
+use App\Support\Correlation\HumidityFactor;
+use App\Support\Correlation\LightLevelFactor;
+use App\Support\Correlation\PestResolutionFactor;
+use App\Support\Correlation\SoilMoistureFactor;
 use App\Support\Correlation\WateringIntervalFactor;
 use Illuminate\Support\Collection;
 
@@ -86,6 +90,12 @@ final class CorrelationEngine
      */
     private static function defaultFactors(): array
     {
-        return [new WateringIntervalFactor()];
+        return [
+            new WateringIntervalFactor(),
+            new HumidityFactor(),
+            new LightLevelFactor(),
+            new SoilMoistureFactor(),
+            new PestResolutionFactor(),
+        ];
     }
 }

@@ -40,6 +40,8 @@ import { ActivityHeatmap } from '@/components/charts/activity-heatmap'
 import { GrowthTrend } from '@/components/charts/growth-trend'
 import { HealthByLocation } from '@/components/charts/health-by-location'
 import { HealthTrend } from '@/components/charts/health-trend'
+import { LeafSizeTrend } from '@/components/charts/leaf-size-trend'
+import { LightTrend } from '@/components/charts/light-trend'
 import { TimelineOverlay } from '@/components/charts/timeline-overlay'
 import { WeightTrend } from '@/components/charts/weight-trend'
 import { fmtDate, fmtDateY } from '@/lib/format'
@@ -86,11 +88,11 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
       </Card>
     )
 
-  // The timeline bundle carries the trend series; the watering-due signal arrives with a later
-  // per-plant due feature, so it stays null here.
   const healthTrend = timeline?.health_trend ?? []
   const weightTrend = timeline?.weight_trend ?? []
   const growthTrend = timeline?.growth_trend ?? []
+  const lightTrend = timeline?.light_trend ?? []
+  const leafSizeTrend = timeline?.leaf_size_trend ?? []
   const photoList = photos ?? []
 
   // Health-by-location reads as a comparison only with two or more spots; a single spot adds
@@ -102,8 +104,22 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
   const hasHealth = healthTrend.some(p => p.value != null)
   const hasWeight = weightTrend.some(p => p.value != null)
   const hasGrowth = growthTrend.some(p => p.value != null)
+  const hasLight = lightTrend.some(p => p.value != null)
+  const hasLeafSize = leafSizeTrend.some(p => p.value != null)
 
-  const due = null
+  const due = (() => {
+    const entry = timeline?.due_for_care?.find(d => d.type === 'watering')
+    if (!entry) return null
+    return {
+      due_date: entry.due_date,
+      daysLeft: entry.daysLeft,
+      status: entry.status,
+      type: entry.type as 'watering',
+      interval: entry.interval,
+      last_watered: entry.due_date,
+    }
+  })()
+
   const cond = plant.condition
 
   return (
@@ -275,6 +291,8 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
             {hasHealth && <HealthTrend data={healthTrend} />}
             {hasWeight && <WeightTrend data={weightTrend} />}
             {hasGrowth && <GrowthTrend data={growthTrend} />}
+            {hasLight && <LightTrend data={lightTrend} />}
+            {hasLeafSize && <LeafSizeTrend data={leafSizeTrend} />}
             <ActivityHeatmap events={events} />
           </div>
         </div>

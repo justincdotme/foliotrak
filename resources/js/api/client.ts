@@ -8,6 +8,7 @@ import type {
   FertilizerFormOption,
   GroupInsights,
   Location,
+  LocationSummary,
   NutrientOption,
   Photo,
   PlantRecommendations,
@@ -211,8 +212,18 @@ export const getRecommendations = async (plantId: number): Promise<PlantRecommen
 export const getDashboard = async (): Promise<DashboardData> =>
   unwrap(await api.get<{ data: DashboardData }>('/api/dashboard'))
 
-export const getGroupInsights = async (tagId: number): Promise<GroupInsights> =>
-  unwrap(await api.get<{ data: GroupInsights }>('/api/insights/group', { params: { tag: tagId } }))
+export const getGroupInsights = async (params: {
+  tag?: number
+  location?: number
+}): Promise<GroupInsights> => {
+  const query = new URLSearchParams()
+  if (params.tag) query.set('tag', String(params.tag))
+  if (params.location) query.set('location', String(params.location))
+  return unwrap(await api.get<{ data: GroupInsights }>(`/api/insights/group?${query}`))
+}
+
+export const getLocationSummary = async (): Promise<LocationSummary[]> =>
+  unwrap(await api.get<{ data: LocationSummary[] }>('/api/insights/locations'))
 
 export const listSymptoms = async (): Promise<Symptom[]> =>
   unwrap(await api.get<{ data: Symptom[] }>('/api/symptoms'))

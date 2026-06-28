@@ -30,7 +30,7 @@ class ObservationFactory extends Factory
             'ambient_humidity_pct' => fake()->numberBetween(30, 80),
             'ambient_temp_c' => fake()->randomFloat(1, 15, 30),
             'soil_moisture_relative' => null,
-            'soil_moisture_precise' => fake()->numberBetween(1, 10),
+            'soil_moisture_precise' => null,
         ];
     }
 }

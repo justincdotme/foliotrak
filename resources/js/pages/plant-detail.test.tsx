@@ -33,8 +33,18 @@ vi.mock('@/components/charts/health-by-location', () => ({
 // isolates the chart-gating logic (repo convention: mock at the boundary).
 vi.mock('@/components/plant/edit-plant-modal', () => ({ EditPlantModal: () => null }))
 vi.mock('@/components/plant/primary-photo-modal', () => ({ PrimaryPhotoModal: () => null }))
-vi.mock('@/components/plant/schedule-section', () => ({ ScheduleSection: () => null }))
+vi.mock('@/components/plant/schedule-section', () => ({
+  ScheduleSection: ({ due }: { due: unknown }) => (
+    <div data-testid={due != null ? 'schedule-with-due' : 'schedule-without-due'} />
+  ),
+}))
 vi.mock('@/components/plant/timeline-item', () => ({ TimelineItem: () => null }))
+vi.mock('@/components/charts/light-trend', () => ({
+  LightTrend: () => <div data-testid="light" />,
+}))
+vi.mock('@/components/charts/leaf-size-trend', () => ({
+  LeafSizeTrend: () => <div data-testid="leaf-size" />,
+}))
 
 import { usePlant } from '@/hooks/usePlant'
 import { usePlantPhotos } from '@/hooks/usePlantPhotos'
@@ -216,5 +226,82 @@ describe('PlantDetailPage health by location', () => {
     renderPage()
 
     expect(screen.queryByTestId('locations')).not.toBeInTheDocument()
+  })
+})
+
+describe('PlantDetailPage light and leaf-size trend gating', () => {
+  it('shows LightTrend when light_trend has a real value', () => {
+    setTimeline({ events: [wateringEvent], light_trend: [{ date: '2026-06-20', value: 7 }] })
+
+    renderPage()
+
+    expect(screen.getByTestId('light')).toBeInTheDocument()
+  })
+
+  it('suppresses LightTrend when light_trend values are all null', () => {
+    setTimeline({ events: [wateringEvent], light_trend: [{ date: '2026-06-20', value: null }] })
+
+    renderPage()
+
+    expect(screen.queryByTestId('light')).not.toBeInTheDocument()
+  })
+
+  it('shows LeafSizeTrend when leaf_size_trend has a real value', () => {
+    setTimeline({ events: [wateringEvent], leaf_size_trend: [{ date: '2026-06-20', value: 45 }] })
+
+    renderPage()
+
+    expect(screen.getByTestId('leaf-size')).toBeInTheDocument()
+  })
+
+  it('suppresses LeafSizeTrend when leaf_size_trend values are all null', () => {
+    setTimeline({
+      events: [wateringEvent],
+      leaf_size_trend: [{ date: '2026-06-20', value: null }],
+    })
+
+    renderPage()
+
+    expect(screen.queryByTestId('leaf-size')).not.toBeInTheDocument()
+  })
+})
+
+describe('PlantDetailPage due signal wiring', () => {
+  const wateringDue = {
+    plant_id: 1,
+    common_name: 'Pothos',
+    scientific_name: 'Epipremnum',
+    status: 'overdue' as const,
+    due_date: '2026-06-15',
+    type: 'watering' as const,
+    daysLeft: -3,
+    interval: 7,
+  }
+
+  it('passes the watering due entry to ScheduleSection when due_for_care has one', () => {
+    setTimeline({ events: [wateringEvent], due_for_care: [wateringDue] })
+
+    renderPage()
+
+    expect(screen.getByTestId('schedule-with-due')).toBeInTheDocument()
+  })
+
+  it('passes null due to ScheduleSection when due_for_care is empty', () => {
+    setTimeline({ events: [wateringEvent], due_for_care: [] })
+
+    renderPage()
+
+    expect(screen.getByTestId('schedule-without-due')).toBeInTheDocument()
+  })
+
+  it('passes null due when due_for_care contains only a fertilizing entry', () => {
+    setTimeline({
+      events: [wateringEvent],
+      due_for_care: [{ ...wateringDue, type: 'fertilizing' as const }],
+    })
+
+    renderPage()
+
+    expect(screen.getByTestId('schedule-without-due')).toBeInTheDocument()
   })
 })

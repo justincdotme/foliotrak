@@ -20,7 +20,8 @@ class InsightsGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tag' => ['required', 'integer', Rule::exists('plant_tags', 'id')],
+            'tag' => ['nullable', 'integer', Rule::exists('plant_tags', 'id')],
+            'location' => ['nullable', 'integer', Rule::exists('locations', 'id')],
         ];
     }
 }
