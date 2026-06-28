@@ -128,6 +128,28 @@ services:
     networks:
       - app-network
 
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: 2gb
+    networks:
+      - app-network
+
+  test-mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: foliotrak_dusk
+      MYSQL_USER: foliotrak
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge

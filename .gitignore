@@ -58,3 +58,8 @@ Thumbs.db
 
 # Linked git worktrees
 .worktrees/
+
+# Dusk test artifacts (screenshots, console logs, page source on failure)
+/tests/Browser/screenshots
+/tests/Browser/console
+/tests/Browser/source

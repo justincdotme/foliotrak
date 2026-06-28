@@ -1,0 +1,18 @@
+<?php
+
+namespace Tests\Browser\Pages;
+
+use Laravel\Dusk\Page as BasePage;
+
+abstract class Page extends BasePage
+{
+    /**
+     * @return array<string, string>
+     */
+    public static function siteElements(): array
+    {
+        return [
+            '@element' => '#selector',
+        ];
+    }
+}

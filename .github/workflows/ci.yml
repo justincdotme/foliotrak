@@ -47,3 +47,78 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run build
+
+  dusk:
+    runs-on: ubuntu-latest
+    services:
+      selenium:
+        image: selenium/standalone-chrome
+        options: >-
+          --add-host=host.docker.internal:host-gateway
+          --shm-size=2g
+        ports:
+          - 4444:4444
+      test-mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: foliotrak_dusk
+          MYSQL_USER: foliotrak
+          MYSQL_PASSWORD: secret
+          MYSQL_ROOT_PASSWORD: secret
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psecret --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+          --health-start-period=20s
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: bcmath, ctype, fileinfo, intl, json, mbstring, openssl, pdo, pdo_mysql, pdo_sqlite, tokenizer, xml
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-
+      - run: composer install --no-progress --prefer-dist
+      - run: npm ci
+      - run: npm run build
+      - run: cp .env.example .env
+      - run: php artisan key:generate
+      - name: Start dev server
+        run: php artisan serve --host=0.0.0.0 --port=8000 &
+      - name: Run Dusk
+        run: php artisan dusk
+        env:
+          APP_URL: http://host.docker.internal:8000
+          DUSK_DRIVER_URL: http://localhost:4444
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3307
+          DB_DATABASE: foliotrak_dusk
+          DB_USERNAME: foliotrak
+          DB_PASSWORD: secret
+          SESSION_DRIVER: file
+          SESSION_DOMAIN: host.docker.internal
+          SESSION_SECURE_COOKIE: "false"
+          SANCTUM_STATEFUL_DOMAINS: host.docker.internal
+          SCOUT_DRIVER: collection
+          QUEUE_CONNECTION: sync
+          CACHE_STORE: array
+          BCRYPT_ROUNDS: 4
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dusk-screenshots
+          path: tests/Browser/screenshots
