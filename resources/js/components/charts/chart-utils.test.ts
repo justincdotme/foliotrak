@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { describeCorrelation, pairsToHeatmapSeries, prettyVar } from './chart-utils'
+import { describeCorrelation, pairsToHeatmapSeries, prettyVar, regression } from './chart-utils'
 import type { CorrelationPair } from '@/api/types'
 
 const pair = (over: Partial<CorrelationPair> = {}): CorrelationPair => ({
@@ -25,16 +25,21 @@ describe('describeCorrelation', () => {
     expect(describeCorrelation(pair({ correlation: 0.1 }))).toContain('No clear link')
   })
 
+  // These three use an unknown factor (pot_size) to exercise the generic strength grading
+  // path; known factors route to factor-specific copy that skips the strength label.
   it.each([
     [0.3, 'a weak'],
     [0.55, 'a moderate'],
     [0.85, 'a strong'],
-  ])('grades strength %s as %s for a significant pair', (correlation, label) => {
-    expect(describeCorrelation(pair({ correlation }))).toContain(label)
-  })
+  ])(
+    'grades strength %s as %s for a significant pair on an unknown factor',
+    (correlation, label) => {
+      expect(describeCorrelation(pair({ x_variable: 'pot_size', correlation }))).toContain(label)
+    }
+  )
 
   it('reads a negative coefficient as coinciding with lower outcomes, never causally', () => {
-    const text = describeCorrelation(pair({ correlation: -0.6 }))
+    const text = describeCorrelation(pair({ x_variable: 'pot_size', correlation: -0.6 }))
     expect(text).toContain('lower')
     expect(text).toContain('coincided with')
     expect(text).toContain('not a proven cause')
@@ -42,7 +47,33 @@ describe('describeCorrelation', () => {
   })
 
   it('reads a positive coefficient as coinciding with higher outcomes', () => {
-    expect(describeCorrelation(pair({ correlation: 0.6 }))).toContain('higher')
+    expect(describeCorrelation(pair({ x_variable: 'pot_size', correlation: 0.6 }))).toContain(
+      'higher'
+    )
+  })
+
+  it.each<[string, number, string, string]>([
+    ['watering_interval_days', 0.6, 'watered at this frequency', 'higher health readings'],
+    ['watering_interval_days', -0.6, 'watered at this frequency', 'lower health readings'],
+    ['ambient_humidity_pct', 0.6, 'humid', 'higher health readings'],
+    ['ambient_humidity_pct', -0.6, 'humid', 'lower health readings'],
+    ['light_level', 0.6, 'brighter', 'higher health readings'],
+    ['light_level', -0.6, 'dimmer', 'lower health readings'],
+    ['soil_moisture', 0.6, 'wetter', 'higher health readings'],
+    ['soil_moisture', -0.6, 'drier', 'lower health readings'],
+  ])(
+    'returns factor-specific copy for %s (r=%s): includes "%s" and "%s"',
+    (x_variable, correlation, phrase, direction) => {
+      const text = describeCorrelation(pair({ x_variable, correlation }))
+      expect(text).toContain(phrase)
+      expect(text).toContain(direction)
+    }
+  )
+
+  it('falls back to generic copy for an unknown factor', () => {
+    const text = describeCorrelation(pair({ x_variable: 'pot_size', correlation: 0.6 }))
+    expect(text).toContain('coincided with')
+    expect(text).not.toMatch(/watered at|humid|brighter|dimmer|wetter|drier/i)
   })
 })
 
@@ -76,5 +107,47 @@ describe('pairsToHeatmapSeries', () => {
     const missing = healthRow?.data.find(c => c.x === prettyVar('light_level'))
     expect(missing?.y).toBeNull()
     expect(missing?.n).toBeNull()
+  })
+})
+
+describe('regression', () => {
+  it('returns null for fewer than 2 points', () => {
+    expect(regression([])).toBeNull()
+    expect(regression([{ x: 1, y: 2 }])).toBeNull()
+  })
+
+  it('returns null when all x values are equal', () => {
+    expect(
+      regression([
+        { x: 3, y: 1 },
+        { x: 3, y: 4 },
+        { x: 3, y: 2 },
+      ])
+    ).toBeNull()
+  })
+
+  it('computes correct slope and intercept for a known dataset', () => {
+    // (0,0), (1,2), (2,4) -> slope=2, intercept=0
+    const result = regression([
+      { x: 0, y: 0 },
+      { x: 1, y: 2 },
+      { x: 2, y: 4 },
+    ])
+    expect(result).not.toBeNull()
+    if (!result) return
+    expect(result.slope).toBeCloseTo(2)
+    expect(result.intercept).toBeCloseTo(0)
+  })
+
+  it('handles a two-point line with a non-zero intercept', () => {
+    // (1,1), (2,3) -> slope=2, intercept=-1
+    const result = regression([
+      { x: 1, y: 1 },
+      { x: 2, y: 3 },
+    ])
+    expect(result).not.toBeNull()
+    if (!result) return
+    expect(result.slope).toBeCloseTo(2)
+    expect(result.intercept).toBeCloseTo(-1)
   })
 })

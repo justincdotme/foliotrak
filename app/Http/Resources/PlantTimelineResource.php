@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use App\Models\CareEvent;
 use App\Models\Plant;
+use App\Support\CareDueResolver;
 use App\Support\Trends;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -30,6 +31,9 @@ class PlantTimelineResource extends JsonResource
             'health_trend' => Trends::health($observations),
             'weight_trend' => Trends::weight($observations),
             'growth_trend' => Trends::growth($observations),
+            'light_trend' => Trends::light($observations),
+            'leaf_size_trend' => Trends::leafSize($observations),
+            'due_for_care' => CareDueResolver::forPlant($this->resource),
             // This endpoint does not compute schedule recommendations; the contract keeps the key present.
             'recommendations' => [],
             'photos' => PhotoResource::collection($this->photos),

@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { InsightsPage } from './insights'
 
 vi.mock('@/hooks/useTags', () => ({ useTags: vi.fn() }))
+vi.mock('@/hooks/useLocations', () => ({ useLocations: vi.fn() }))
 vi.mock('@/hooks/useGroupInsights', () => ({ useGroupInsights: vi.fn() }))
 vi.mock('@/components/charts/group-comparison', () => ({
   GroupComparison: () => <div data-testid="group-comparison" />,
@@ -14,14 +16,16 @@ vi.mock('@/components/charts/correlation-heatmap', () => ({
   CorrelationHeatmap: () => <div data-testid="corr-heatmap" />,
 }))
 import { useTags } from '@/hooks/useTags'
+import { useLocations } from '@/hooks/useLocations'
 import { useGroupInsights } from '@/hooks/useGroupInsights'
 
-// First live tag id is deliberately not 1, to pin "default to the first tag".
 const tags = [{ id: 5, name: 'Tropical', color: null }]
+const locations = [{ id: 7, name: 'Shelf' }]
 
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(useTags).mockReturnValue({ data: tags, loading: false, error: null })
+  vi.mocked(useLocations).mockReturnValue({ data: locations, loading: false, error: null })
 })
 
 const trend = [{ date: '2026-06-01', value: 4 }]
@@ -49,15 +53,18 @@ const groupData = (
   comparison: ReturnType<typeof cmp>[],
   correlation_pairs: ReturnType<typeof pair>[] = []
 ) => ({
-  tag_id: 5,
-  tag_name: 'Tropical',
+  group_name: 'All plants',
+  tag_id: null,
+  tag_name: null,
+  location_id: null,
+  location_name: null,
   plants,
   comparison,
   correlation_pairs,
 })
 
 describe('InsightsPage', () => {
-  it('defaults to the first live tag, not a hardcoded id', () => {
+  it('loads insights immediately with no filters selected', () => {
     vi.mocked(useGroupInsights).mockReturnValue({
       data: groupData([1, 2], [cmp(1, 'A'), cmp(2, 'B')]),
       loading: false,
@@ -66,7 +73,8 @@ describe('InsightsPage', () => {
 
     render(<InsightsPage />)
 
-    expect(useGroupInsights).toHaveBeenCalledWith(5)
+    expect(useGroupInsights).toHaveBeenCalledWith({})
+    expect(screen.getByTestId('group-comparison')).toBeInTheDocument()
   })
 
   it('renders the group comparison and the correlation pre-gate panel for >= 2 plants', () => {
@@ -93,7 +101,6 @@ describe('InsightsPage', () => {
 
     expect(screen.getByTestId('corr-scatter')).toBeInTheDocument()
     expect(screen.queryByTestId('corr-heatmap')).not.toBeInTheDocument()
-    expect(screen.queryByText('Correlation analysis is coming')).not.toBeInTheDocument()
   })
 
   it('adds the matrix once two or more factors are present', () => {
@@ -113,7 +120,7 @@ describe('InsightsPage', () => {
     expect(screen.getAllByTestId('corr-scatter')).toHaveLength(2)
   })
 
-  it('shows the at-least-2-plants empty state for a single-plant tag', () => {
+  it('shows the at-least-2-plants empty state for a single-plant group', () => {
     vi.mocked(useGroupInsights).mockReturnValue({
       data: groupData([1], [cmp(1, 'A')]),
       loading: false,
@@ -138,12 +145,60 @@ describe('InsightsPage', () => {
     expect(screen.getByText('Unable to load insights')).toBeInTheDocument()
   })
 
-  it('shows a no-tags state when no tags exist', () => {
-    vi.mocked(useTags).mockReturnValue({ data: [], loading: false, error: null })
-    vi.mocked(useGroupInsights).mockReturnValue({ data: null, loading: true, error: null })
+  it('shows both tag and location filter rows simultaneously', () => {
+    vi.mocked(useGroupInsights).mockReturnValue({
+      data: groupData([1, 2], [cmp(1, 'A'), cmp(2, 'B')]),
+      loading: false,
+      error: null,
+    })
 
     render(<InsightsPage />)
 
-    expect(screen.getByText('No tags yet')).toBeInTheDocument()
+    expect(screen.getByText('Tropical')).toBeInTheDocument()
+    expect(screen.getByText('Shelf')).toBeInTheDocument()
+  })
+
+  it('clicking a tag chip adds it as a filter', async () => {
+    vi.mocked(useGroupInsights).mockReturnValue({
+      data: groupData([1, 2], [cmp(1, 'A'), cmp(2, 'B')]),
+      loading: false,
+      error: null,
+    })
+
+    render(<InsightsPage />)
+
+    await userEvent.click(screen.getByText('Tropical'))
+
+    expect(useGroupInsights).toHaveBeenLastCalledWith({ tag: 5 })
+  })
+
+  it('clicking a location chip adds it as a filter alongside the tag', async () => {
+    vi.mocked(useGroupInsights).mockReturnValue({
+      data: groupData([1, 2], [cmp(1, 'A'), cmp(2, 'B')]),
+      loading: false,
+      error: null,
+    })
+
+    render(<InsightsPage />)
+
+    await userEvent.click(screen.getByText('Tropical'))
+    await userEvent.click(screen.getByText('Shelf'))
+
+    expect(useGroupInsights).toHaveBeenLastCalledWith({ tag: 5, location: 7 })
+  })
+
+  it('clicking an active chip deselects it', async () => {
+    vi.mocked(useGroupInsights).mockReturnValue({
+      data: groupData([1, 2], [cmp(1, 'A'), cmp(2, 'B')]),
+      loading: false,
+      error: null,
+    })
+
+    render(<InsightsPage />)
+
+    await userEvent.click(screen.getByText('Tropical'))
+    await userEvent.click(screen.getByText('Tropical'))
+
+    expect(useGroupInsights).toHaveBeenLastCalledWith({})
   })
 })

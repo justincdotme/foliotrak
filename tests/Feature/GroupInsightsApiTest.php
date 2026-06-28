@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Enums\PlantStatus;
 use App\Models\CareEvent;
+use App\Models\Location;
 use App\Models\Observation;
 use App\Models\Plant;
 use App\Models\Tag;
@@ -41,12 +42,24 @@ class GroupInsightsApiTest extends TestCase
         $this->getJson('/api/insights/group?tag=1')->assertUnauthorized();
     }
 
-    public function test_group_insights_validates_the_tag(): void
+    public function test_group_insights_validates_nonexistent_ids(): void
     {
         $this->actAsHousehold();
 
-        $this->getJson('/api/insights/group')->assertUnprocessable();
         $this->getJson('/api/insights/group?tag=9999')->assertUnprocessable();
+    }
+
+    public function test_group_insights_with_no_filters_returns_all_active_plants(): void
+    {
+        $this->actAsHousehold();
+
+        $active = Plant::factory()->create();
+        Plant::factory()->create(['status' => 'archived']);
+
+        $this->getJson('/api/insights/group')
+            ->assertOk()
+            ->assertJsonPath('data.group_name', 'All plants')
+            ->assertJsonPath('data.plants', [$active->id]);
     }
 
     public function test_group_insights_compares_the_tagged_plants(): void
@@ -161,7 +174,6 @@ class GroupInsightsApiTest extends TestCase
 
         $this->getJson("/api/insights/group?tag={$tag->id}")
             ->assertOk()
-            ->assertJsonCount(1, 'data.correlation_pairs')
             ->assertJsonStructure([
                 'data' => [
                     'correlation_pairs' => [
@@ -194,9 +206,217 @@ class GroupInsightsApiTest extends TestCase
         // rather than dividing by zero and 500ing.
         $this->getJson("/api/insights/group?tag={$tag->id}")
             ->assertOk()
-            ->assertJsonCount(1, 'data.correlation_pairs')
+            ->assertJsonPath('data.correlation_pairs.0.x_variable', 'watering_interval_days')
             ->assertJsonPath('data.correlation_pairs.0.sample_size', 6)
             ->assertJsonPath('data.correlation_pairs.0.significant_after_fdr', false);
+    }
+
+    public function test_group_insights_intersects_tag_and_location_when_both_provided(): void
+    {
+        $this->actAsHousehold();
+
+        $tag = Tag::factory()->create();
+        $location = Location::factory()->create();
+        $plant = Plant::factory()->create(['location_id' => $location->id]);
+        $plant->tags()->attach($tag);
+
+        $other = Plant::factory()->create(['location_id' => $location->id]);
+
+        $this->getJson("/api/insights/group?tag={$tag->id}&location={$location->id}")
+            ->assertOk()
+            ->assertJsonPath('data.plants', [$plant->id]);
+    }
+
+    public function test_group_insights_fails_for_nonexistent_location(): void
+    {
+        $this->actAsHousehold();
+
+        $this->getJson('/api/insights/group?location=9999')->assertUnprocessable();
+    }
+
+    public function test_group_insights_by_tag_includes_tag_fields(): void
+    {
+        $this->actAsHousehold();
+
+        $tag = Tag::factory()->create(['name' => 'Tropicals']);
+
+        $this->getJson("/api/insights/group?tag={$tag->id}")
+            ->assertOk()
+            ->assertJsonPath('data.group_name', 'Tropicals')
+            ->assertJsonPath('data.tag_id', $tag->id)
+            ->assertJsonPath('data.tag_name', 'Tropicals')
+            ->assertJsonPath('data.location_id', null)
+            ->assertJsonPath('data.location_name', null);
+    }
+
+    public function test_group_insights_by_location_compares_the_plants_at_that_location(): void
+    {
+        $this->actAsHousehold();
+
+        $location = Location::factory()->create(['name' => 'Living Room']);
+
+        $fern = Plant::factory()->create([
+            'common_name' => 'Fern',
+            'location_id' => $location->id,
+            'watering_interval_days_override' => 5,
+            'fertilizing_interval_days_override' => null,
+        ]);
+        $this->observe($fern, overallHealth: 4, daysAgo: 8);
+        $this->observe($fern, overallHealth: 3, daysAgo: 1);
+
+        $palm = Plant::factory()->create([
+            'common_name' => 'Palm',
+            'location_id' => $location->id,
+        ]);
+        $this->observe($palm, overallHealth: 5, daysAgo: 3);
+
+        // Plant at a different location stays out.
+        $outsider = Plant::factory()->create(['common_name' => 'Outsider']);
+        $this->observe($outsider, overallHealth: 2, daysAgo: 2);
+
+        $response = $this->getJson("/api/insights/group?location={$location->id}")->assertOk();
+
+        $response
+            ->assertJsonPath('data.location_id', $location->id)
+            ->assertJsonPath('data.location_name', 'Living Room')
+            ->assertJsonPath('data.plants', [$fern->id, $palm->id])
+            ->assertJsonPath('data.correlation_pairs', [])
+            ->assertJsonCount(2, 'data.comparison');
+
+        $response
+            ->assertJsonPath('data.comparison.0.plant_id', $fern->id)
+            ->assertJsonPath('data.comparison.0.common_name', 'Fern')
+            ->assertJsonPath('data.comparison.0.watering_interval_days', 5)
+            ->assertJsonPath('data.comparison.0.fertilizer_interval_days', null)
+            ->assertJsonPath('data.comparison.0.health_trend.0.value', 4)
+            ->assertJsonPath('data.comparison.0.health_trend.1.value', 3)
+            ->assertJsonPath('data.comparison.1.plant_id', $palm->id)
+            ->assertJsonPath('data.comparison.1.health_trend.0.value', 5);
+    }
+
+    public function test_group_insights_by_location_excludes_archived_and_dead_plants(): void
+    {
+        $this->actAsHousehold();
+
+        $location = Location::factory()->create(['name' => 'Shelf']);
+
+        $active = Plant::factory()->create([
+            'common_name' => 'Active',
+            'location_id' => $location->id,
+        ]);
+        $this->observe($active, overallHealth: 4, daysAgo: 3);
+
+        Plant::factory()->create([
+            'common_name' => 'Archived',
+            'location_id' => $location->id,
+            'status' => PlantStatus::Archived,
+        ]);
+
+        Plant::factory()->create([
+            'common_name' => 'Dead',
+            'location_id' => $location->id,
+            'status' => PlantStatus::Dead,
+        ]);
+
+        $response = $this->getJson("/api/insights/group?location={$location->id}")->assertOk();
+
+        $response
+            ->assertJsonPath('data.plants', [$active->id])
+            ->assertJsonCount(1, 'data.comparison')
+            ->assertJsonPath('data.comparison.0.plant_id', $active->id);
+    }
+
+    public function test_group_insights_by_location_with_no_active_plants_returns_empty_arrays(): void
+    {
+        $this->actAsHousehold();
+
+        $location = Location::factory()->create(['name' => 'Empty Room']);
+
+        $this->getJson("/api/insights/group?location={$location->id}")
+            ->assertOk()
+            ->assertJsonPath('data.location_id', $location->id)
+            ->assertJsonPath('data.location_name', 'Empty Room')
+            ->assertJsonPath('data.plants', [])
+            ->assertJsonPath('data.comparison', [])
+            ->assertJsonPath('data.correlation_pairs', []);
+    }
+
+    public function test_location_summary_requires_authentication(): void
+    {
+        $this->getJson('/api/insights/locations')->assertUnauthorized();
+    }
+
+    public function test_location_summary_returns_per_location_mean_health(): void
+    {
+        $this->actAsHousehold();
+
+        $living = Location::factory()->create(['name' => 'Living Room']);
+        $kitchen = Location::factory()->create(['name' => 'Kitchen']);
+
+        $plant1 = Plant::factory()->create(['location_id' => $living->id]);
+        $this->observe($plant1, overallHealth: 4, daysAgo: 3);
+
+        $plant2 = Plant::factory()->create(['location_id' => $living->id]);
+        $this->observe($plant2, overallHealth: 2, daysAgo: 5);
+
+        $plant3 = Plant::factory()->create(['location_id' => $kitchen->id]);
+        $this->observe($plant3, overallHealth: 5, daysAgo: 1);
+
+        $response = $this->getJson('/api/insights/locations')->assertOk();
+        $byLocation = collect($response->json())->keyBy('location_id');
+
+        $livingData = $byLocation[$living->id];
+        $this->assertEquals('Living Room', $livingData['location_name']);
+        $this->assertEquals(2, $livingData['plant_count']);
+        $this->assertEquals(3.0, $livingData['mean_health']); // (4 + 2) / 2
+        $this->assertEquals(2, $livingData['sample_size']);
+        $this->assertEqualsCanonicalizing([4, 2], $livingData['health_readings']);
+
+        $kitchenData = $byLocation[$kitchen->id];
+        $this->assertEquals('Kitchen', $kitchenData['location_name']);
+        $this->assertEquals(1, $kitchenData['plant_count']);
+        $this->assertEquals(5.0, $kitchenData['mean_health']);
+        $this->assertEquals(1, $kitchenData['sample_size']);
+    }
+
+    public function test_location_summary_excludes_archived_and_dead_plants(): void
+    {
+        $this->actAsHousehold();
+
+        $location = Location::factory()->create(['name' => 'Greenhouse']);
+
+        $active = Plant::factory()->create(['location_id' => $location->id]);
+        $this->observe($active, overallHealth: 4, daysAgo: 2);
+
+        $archived = Plant::factory()->create([
+            'location_id' => $location->id,
+            'status' => PlantStatus::Archived,
+        ]);
+        $this->observe($archived, overallHealth: 1, daysAgo: 1);
+
+        $response = $this->getJson('/api/insights/locations')->assertOk();
+        $locationData = collect($response->json())->firstWhere('location_id', $location->id);
+
+        $this->assertEquals(1, $locationData['plant_count']);
+        $this->assertEquals(4.0, $locationData['mean_health']);
+        $this->assertEquals([4], $locationData['health_readings']);
+        $this->assertEquals(1, $locationData['sample_size']);
+    }
+
+    public function test_location_summary_returns_null_mean_for_location_with_no_observations(): void
+    {
+        $this->actAsHousehold();
+
+        $location = Location::factory()->create(['name' => 'Garage']);
+        Plant::factory()->create(['location_id' => $location->id]);
+
+        $response = $this->getJson('/api/insights/locations')->assertOk();
+        $locationData = collect($response->json())->firstWhere('location_id', $location->id);
+
+        $this->assertEquals(1, $locationData['plant_count']);
+        $this->assertNull($locationData['mean_health']);
+        $this->assertEquals([], $locationData['health_readings']);
+        $this->assertEquals(0, $locationData['sample_size']);
     }
 
     /**
@@ -217,9 +437,15 @@ class GroupInsightsApiTest extends TestCase
         $event = CareEvent::factory()->ofType('observation')->for($plant)->create([
             'occurred_at' => now()->subDays($daysAgo),
         ]);
+        // Null out fields read by humidity, light, and soil-moisture factors so factory defaults
+        // don't produce spurious correlation pairs in tests that only intend to test watering.
         Observation::factory()->create([
             'care_event_id' => $event->id,
             'overall_health' => $overallHealth,
+            'ambient_humidity_pct' => null,
+            'light_level' => null,
+            'soil_moisture_precise' => null,
+            'soil_moisture_relative' => null,
         ]);
     }
 }

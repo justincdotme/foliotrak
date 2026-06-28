@@ -988,6 +988,9 @@ export const mockApi = {
       health_trend: healthTrend,
       weight_trend: weightTrend,
       growth_trend: growthTrend,
+      light_trend: [],
+      leaf_size_trend: [],
+      due_for_care: [],
       recommendations: STORE.recs.filter(r => r.plant_id === plantId),
       photos: STORE.photos.filter(p => p.plant_id === plantId),
     })
@@ -1270,8 +1273,11 @@ export const mockApi = {
     }))
 
     return clone({
+      group_name: tag?.name ?? '',
       tag_id: _tagId,
       tag_name: tag?.name ?? '',
+      location_id: null,
+      location_name: null,
       plants: inGroup.map(p => p.id),
       comparison,
       correlation_pairs: [

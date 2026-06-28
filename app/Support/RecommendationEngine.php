@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Enums\SoilMoistureLevel;
 use App\Models\CareEvent;
 use App\Models\Plant;
 use Illuminate\Support\Carbon;
@@ -18,7 +19,7 @@ final class RecommendationEngine
     public const GATE_DAYS = 28;
 
     /**
-     * @return array{plant_id: int, gate: array{state: string, history_days: int, required_days: int, days_to_go: int}, watering: array<string, mixed>|null, position_insights: list<array<string, mixed>>, health_by_location: list<array{location: array{id: int, name: string}|null, median_health: float|null, sample_size: int, healths: list<int>}>}
+     * @return array{plant_id: int, gate: array{state: string, history_days: int, required_days: int, days_to_go: int}, watering: array<string, mixed>|null, position_insights: list<array<string, mixed>>, health_by_location: list<array{location: array{id: int, name: string}|null, median_health: float|null, sample_size: int, healths: list<int>}>, symptom_episodes: list<array{symptom_key: string, symptom_label: string, category: string, appeared_at: string, cleared_at: string|null, duration_days: int|null, health_at_appear: int|null, health_at_clear: int|null}>}
      */
     public static function forPlant(Plant $plant): array
     {
@@ -57,6 +58,7 @@ final class RecommendationEngine
                 $healthObservations,
                 $plant->location ? ['id' => $plant->location->id, 'name' => $plant->location->name] : null,
             ),
+            'symptom_episodes' => SymptomEpisodeResolver::forPlant($plant),
         ];
     }
 
@@ -95,12 +97,45 @@ final class RecommendationEngine
             }
         }
 
-        $recommendation = WateringScheduleRecommender::recommend($waterings, $healthObservations, $amounts, $earliest, $now);
+        $soilReadings = self::recentSoilReadings($plant, 3);
+
+        $recommendation = WateringScheduleRecommender::recommend($waterings, $healthObservations, $amounts, $earliest, $now, $soilReadings);
         if ($recommendation === null) {
             return null;
         }
 
         return $recommendation + ['computed_at' => $now->toIso8601String()];
+    }
+
+    /**
+     * @return list<array{precise: int|null, relative: SoilMoistureLevel|null}>
+     */
+    private static function recentSoilReadings(Plant $plant, int $limit): array
+    {
+        $readings = [];
+        $events = $plant->observationEvents->sortByDesc('occurred_at')->values();
+
+        foreach ($events as $event) {
+            $obs = $event->observation;
+            if ($obs === null) {
+                continue;
+            }
+
+            $precise = $obs->soil_moisture_precise;
+            $relative = $obs->soil_moisture_relative;
+
+            if ($precise === null && $relative === null) {
+                continue;
+            }
+
+            $readings[] = ['precise' => $precise, 'relative' => $relative];
+
+            if (count($readings) >= $limit) {
+                break;
+            }
+        }
+
+        return $readings;
     }
 
     /**

@@ -38,6 +38,7 @@ const recs = (over: Partial<PlantRecommendations> = {}): PlantRecommendations =>
   watering: null,
   position_insights: [],
   health_by_location: [],
+  symptom_episodes: [],
   ...over,
 })
 

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -7,6 +8,7 @@ import {
   Tooltip,
   Line,
   Scatter,
+  ReferenceArea,
 } from 'recharts'
 import { HealthBadge } from '@/components/app/health-badge'
 import { fmtDate, fmtDateY } from '@/lib/format'
@@ -19,7 +21,32 @@ interface TimelineOverlayProps {
   events: CareEvent[]
 }
 
+const BAND_FILLS = [
+  'color-mix(in srgb,var(--primary) 5%,transparent)',
+  'color-mix(in srgb,var(--info) 5%,transparent)',
+]
+
 export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
+  // Reconstruct location intervals from relocation events so each stint can be
+  // shaded as a background band, making it easy to see if a move changed health.
+  const locationBands = useMemo(() => {
+    const relocations = events
+      .filter(e => e.type === 'relocation' && e.relocation)
+      .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime())
+
+    const bands: Array<{ start: number; end: number; location: string }> = []
+    for (let i = 0; i < relocations.length; i++) {
+      const reloc = relocations[i]
+      const next = relocations[i + 1]
+      if (!reloc) continue
+      const loc = reloc.relocation?.to_location?.name ?? 'Unknown'
+      const start = new Date(reloc.occurred_at).getTime()
+      const end = next ? new Date(next.occurred_at).getTime() : Date.now()
+      bands.push({ start, end, location: loc })
+    }
+    return bands
+  }, [events])
+
   // An empty health series would make the X domain [Infinity, -Infinity].
   if (health.length === 0) return null
 
@@ -31,7 +58,7 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
 
   const markers: Record<string, Array<{ x: number; y: number; t: string }>> = {}
 
-  ;['watering', 'fertilizing', 'repotting'].forEach((t: string) => {
+  ;['watering', 'fertilizing', 'repotting', 'relocation'].forEach((t: string) => {
     markers[t] = events
       .filter((e: CareEvent) => e.type === (t as CareEvent['type']))
       .map((e: CareEvent) => ({ x: new Date(e.occurred_at).getTime(), y: 0.7, t }))
@@ -80,6 +107,15 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
               )
             }}
           />
+          {locationBands.map((band, i) => (
+            <ReferenceArea
+              key={band.start}
+              x1={band.start}
+              x2={band.end}
+              fill={BAND_FILLS[i % BAND_FILLS.length] ?? 'transparent'}
+              strokeOpacity={0}
+            />
+          ))}
           <Line
             data={d}
             dataKey="value"
@@ -110,6 +146,13 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
             shape="square"
             isAnimationActive={false}
           />
+          <Scatter
+            data={markers.relocation}
+            dataKey="y"
+            fill="var(--text-muted)"
+            shape="triangle"
+            isAnimationActive={false}
+          />
         </ComposedChart>
       </ResponsiveContainer>
 
@@ -129,6 +172,16 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
         <span className="flex items-center gap-1">
           <span className="w-2 h-2" style={{ background: 'var(--series-4)' }} />
           Repotting
+        </span>
+        <span className="flex items-center gap-1">
+          <span
+            className="w-2 h-2"
+            style={{
+              background: 'var(--text-muted)',
+              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+            }}
+          />
+          Relocation
         </span>
       </div>
     </ChartShell>

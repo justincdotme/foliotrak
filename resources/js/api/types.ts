@@ -216,12 +216,24 @@ export interface LocationHealth {
   healths: number[]
 }
 
+export interface SymptomEpisode {
+  symptom_key: string
+  symptom_label: string
+  category: SymptomCategory
+  appeared_at: string
+  cleared_at: string | null
+  duration_days: number | null
+  health_at_appear: number | null
+  health_at_clear: number | null
+}
+
 export interface PlantRecommendations {
   plant_id: number
   gate: RecommendationGate
   watering: WateringRecommendation | null
   position_insights: PositionInsight[]
   health_by_location: LocationHealth[]
+  symptom_episodes: SymptomEpisode[]
 }
 
 export type ConditionKey =
@@ -336,11 +348,23 @@ export interface GroupComparison {
 }
 
 export interface GroupInsights {
-  tag_id: number
-  tag_name: string
+  group_name: string
+  tag_id: number | null
+  tag_name: string | null
+  location_id: number | null
+  location_name: string | null
   plants: number[]
   comparison: GroupComparison[]
   correlation_pairs: CorrelationPair[]
+}
+
+export interface LocationSummary {
+  location_id: number
+  location_name: string
+  plant_count: number
+  mean_health: number | null
+  health_readings: number[]
+  sample_size: number
 }
 
 export interface PlantTimeline {
@@ -349,6 +373,9 @@ export interface PlantTimeline {
   health_trend: TrendPoint[]
   weight_trend: TrendPoint[]
   growth_trend: GrowthTrendPoint[]
+  light_trend: TrendPoint[]
+  leaf_size_trend: TrendPoint[]
+  due_for_care: DueForCare[]
   recommendations: Recommendation[]
   photos: Photo[]
 }

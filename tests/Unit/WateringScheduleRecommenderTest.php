@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use App\Enums\SoilMoistureLevel;
 use App\Support\WateringScheduleRecommender;
 use Illuminate\Support\Carbon;
 use PHPUnit\Framework\TestCase;
@@ -216,6 +217,240 @@ class WateringScheduleRecommenderTest extends TestCase
     private function obs(int $daysFromEarliest, int $health): array
     {
         return ['date' => $this->earliest->copy()->addDays($daysFromEarliest), 'health' => $health];
+    }
+
+    public function test_dry_soil_shortens_the_interval(): void
+    {
+        $waterings = [];
+        for ($day = 0; $day <= 119; $day += 10) {
+            $waterings[] = $this->earliest->copy()->addDays($day);
+        }
+
+        $base = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+        );
+
+        $withDrySoil = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [['precise' => 2, 'relative' => null], ['precise' => 2, 'relative' => null], ['precise' => 2, 'relative' => null]],
+        );
+
+        $this->assertNotNull($base);
+        $this->assertNotNull($withDrySoil);
+        $this->assertLessThan($base['interval_days'], $withDrySoil['interval_days']);
+        $this->assertStringContainsString('dries out faster', $withDrySoil['rationale']);
+    }
+
+    public function test_wet_soil_lengthens_the_interval(): void
+    {
+        $waterings = [];
+        for ($day = 0; $day <= 119; $day += 10) {
+            $waterings[] = $this->earliest->copy()->addDays($day);
+        }
+
+        $base = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+        );
+
+        $withWetSoil = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [['precise' => 8, 'relative' => null], ['precise' => 8, 'relative' => null], ['precise' => 8, 'relative' => null]],
+        );
+
+        $this->assertNotNull($base);
+        $this->assertNotNull($withWetSoil);
+        $this->assertGreaterThan($base['interval_days'], $withWetSoil['interval_days']);
+        $this->assertStringContainsString('retains moisture', $withWetSoil['rationale']);
+    }
+
+    public function test_soil_adjustment_is_capped_at_twenty_percent(): void
+    {
+        $waterings = [];
+        for ($day = 0; $day <= 119; $day += 10) {
+            $waterings[] = $this->earliest->copy()->addDays($day);
+        }
+
+        $base = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+        );
+
+        $extreme = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [['precise' => 10, 'relative' => null], ['precise' => 10, 'relative' => null], ['precise' => 10, 'relative' => null]],
+        );
+
+        $this->assertNotNull($base);
+        $this->assertNotNull($extreme);
+        $maxExtension = (int) round($base['interval_days'] * 1.20);
+        $this->assertLessThanOrEqual($maxExtension, $extreme['interval_days']);
+    }
+
+    public function test_normal_soil_does_not_adjust_the_interval(): void
+    {
+        $waterings = [];
+        for ($day = 0; $day <= 119; $day += 10) {
+            $waterings[] = $this->earliest->copy()->addDays($day);
+        }
+
+        $base = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+        );
+
+        $neutral = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [['precise' => 5, 'relative' => null], ['precise' => 5, 'relative' => null], ['precise' => 5, 'relative' => null]],
+        );
+
+        $this->assertNotNull($base);
+        $this->assertNotNull($neutral);
+        $this->assertSame($base['interval_days'], $neutral['interval_days']);
+    }
+
+    public function test_soil_relative_enum_falls_back_when_precise_is_null(): void
+    {
+        $waterings = [];
+        for ($day = 0; $day <= 119; $day += 10) {
+            $waterings[] = $this->earliest->copy()->addDays($day);
+        }
+
+        $withDryRelative = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [['precise' => null, 'relative' => SoilMoistureLevel::Dry], ['precise' => null, 'relative' => SoilMoistureLevel::Dry], ['precise' => null, 'relative' => SoilMoistureLevel::Dry]],
+        );
+
+        $this->assertNotNull($withDryRelative);
+        $this->assertStringContainsString('dries out faster', $withDryRelative['rationale']);
+    }
+
+    public function test_precise_overrides_relative_when_both_are_set(): void
+    {
+        $waterings = [];
+        for ($day = 0; $day <= 119; $day += 10) {
+            $waterings[] = $this->earliest->copy()->addDays($day);
+        }
+
+        $base = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+        );
+
+        $preciseWins = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [['precise' => 5, 'relative' => SoilMoistureLevel::Dry], ['precise' => 5, 'relative' => SoilMoistureLevel::Dry], ['precise' => 5, 'relative' => SoilMoistureLevel::Dry]],
+        );
+
+        $this->assertNotNull($base);
+        $this->assertNotNull($preciseWins);
+        $this->assertSame($base['interval_days'], $preciseWins['interval_days']);
+    }
+
+    public function test_empty_soil_readings_leave_interval_unchanged(): void
+    {
+        $waterings = [];
+        for ($day = 0; $day <= 119; $day += 10) {
+            $waterings[] = $this->earliest->copy()->addDays($day);
+        }
+
+        $base = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+        );
+
+        $withEmpty = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [],
+        );
+
+        $this->assertNotNull($base);
+        $this->assertNotNull($withEmpty);
+        $this->assertSame($base['interval_days'], $withEmpty['interval_days']);
+    }
+
+    public function test_soil_rationale_uses_no_causal_language(): void
+    {
+        $forbidden = ['caused', 'causes', 'leads to', 'because', 'due to', 'results in'];
+
+        $waterings = [];
+        for ($day = 0; $day <= 119; $day += 10) {
+            $waterings[] = $this->earliest->copy()->addDays($day);
+        }
+
+        $dry = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [['precise' => 2, 'relative' => null], ['precise' => 2, 'relative' => null], ['precise' => 2, 'relative' => null]],
+        );
+
+        $wet = WateringScheduleRecommender::recommend(
+            $waterings,
+            [$this->obs(10, 4), $this->obs(110, 4)],
+            [],
+            $this->earliest,
+            $this->now,
+            [['precise' => 8, 'relative' => null], ['precise' => 8, 'relative' => null], ['precise' => 8, 'relative' => null]],
+        );
+
+        $this->assertNotNull($dry);
+        $this->assertNotNull($wet);
+
+        foreach ([$dry['rationale'], $wet['rationale']] as $rationale) {
+            foreach ($forbidden as $word) {
+                $this->assertStringNotContainsStringIgnoringCase($word, $rationale);
+            }
+        }
     }
 
     /**

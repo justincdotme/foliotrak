@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('dashboard', [DashboardController::class, 'index']);
     Route::get('insights/group', [GroupInsightsController::class, 'index']);
+    Route::get('insights/locations', [GroupInsightsController::class, 'locationSummary']);
 
     Route::get('settings', [SettingsController::class, 'show']);
     Route::patch('settings', [SettingsController::class, 'update']);
