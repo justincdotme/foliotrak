@@ -8,8 +8,12 @@ use Database\Factories\SpeciesCacheFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Laravel\Scout\Searchable;
 
+/**
+ * @property ?Carbon $cached_at
+ */
 #[Fillable([
     'gbif_key',
     'scientific_name',

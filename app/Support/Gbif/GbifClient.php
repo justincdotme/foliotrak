@@ -13,8 +13,8 @@ use Throwable;
 /**
  * Keeps the household's shared IP off GBIF's throttle list by capping and backing
  * off outbound calls locally rather than reacting after a block (ADR-0011). Uses
- * GBIF's fuzzy name matcher (`/species/match`), the only endpoint that corrects
- * misspellings (ADR-0013).
+ * `/species/match` for scientific name correction (ADR-0013) and `/species/search`
+ * for common name resolution when match returns nothing.
  */
 class GbifClient
 {
@@ -98,6 +98,70 @@ class GbifClient
     }
 
     /**
+     * Search GBIF by vernacular (common) name. Called as a fallback when
+     * `/species/match` returns nothing, since match is a scientific name endpoint
+     * that cannot resolve common names.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    public function searchCommonName(string $query): ?array
+    {
+        if ($this->breakerIsOpen()) {
+            return null;
+        }
+
+        if (RateLimiter::tooManyAttempts($this->throttleKey(), $this->throttleMaxAttempts)) {
+            return null;
+        }
+
+        RateLimiter::increment($this->throttleKey(), $this->throttleDecaySeconds);
+
+        try {
+            $response = Http::withHeaders(['User-Agent' => $this->userAgent])
+                ->timeout($this->timeout)
+                ->get($this->baseUrl.'/species/search', [
+                    'q' => $query,
+                    'rank' => 'SPECIES',
+                    'limit' => 5,
+                ])
+                ->throw();
+        } catch (Throwable $e) {
+            // Record the root cause so a degraded search is diagnosable.
+            Log::warning('GBIF search failed; serving cache.', [
+                'query' => $query,
+                'error' => $e->getMessage(),
+            ]);
+            $this->recordFailure();
+
+            return null;
+        }
+
+        $this->recordSuccess();
+
+        $body = $response->json();
+        $results = is_array($body) ? ($body['results'] ?? []) : [];
+
+        if (! is_array($results)) {
+            return [];
+        }
+
+        $seen = [];
+        $records = [];
+        foreach ($results as $result) {
+            if (! is_array($result)) {
+                continue;
+            }
+            $record = $this->normalizeSearchResult($result);
+            if ($record !== null && ! isset($seen[$record['gbif_key']])) {
+                $seen[$record['gbif_key']] = true;
+                $records[] = $record;
+            }
+        }
+
+        return $records;
+    }
+
+    /**
      * @param  array<string, mixed>  $body
      * @return list<array<string, mixed>>
      */
@@ -165,6 +229,56 @@ class GbifClient
             'rank' => $match['rank'] ?? null,
             'family' => $match['family'] ?? null,
             'payload' => $match,
+        ];
+    }
+
+    /**
+     * The `/species/search` response uses `key` not `usageKey`, `taxonomicStatus`
+     * not `status`, and includes vernacular names inline.
+     *
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>|null
+     */
+    private function normalizeSearchResult(array $result): ?array
+    {
+        if (($result['rank'] ?? null) !== 'SPECIES') {
+            return null;
+        }
+
+        $isSynonym = ($result['taxonomicStatus'] ?? null) === 'SYNONYM';
+
+        $key = $isSynonym && isset($result['acceptedKey'])
+            ? $result['acceptedKey']
+            : ($result['key'] ?? null);
+
+        if ($key === null) {
+            return null;
+        }
+
+        $scientificName = $isSynonym && isset($result['accepted'])
+            ? $result['accepted']
+            : ($result['scientificName'] ?? '');
+
+        $englishNames = [];
+        foreach ($result['vernacularNames'] ?? [] as $entry) {
+            if (is_array($entry) && in_array($entry['language'] ?? '', ['eng', 'en'], true)) {
+                $name = $entry['vernacularName'] ?? null;
+                if ($name !== null && $name !== '') {
+                    $englishNames[] = $name;
+                }
+            }
+        }
+        $englishNames = array_values(array_unique($englishNames));
+
+        return [
+            'gbif_key' => (string) $key,
+            'scientific_name' => (string) $scientificName,
+            'canonical_name' => $result['canonicalName'] ?? null,
+            'common_name' => $englishNames[0] ?? null,
+            'common_names' => $englishNames !== [] ? $englishNames : null,
+            'rank' => $result['rank'],
+            'family' => $result['family'] ?? null,
+            'payload' => $result,
         ];
     }
 

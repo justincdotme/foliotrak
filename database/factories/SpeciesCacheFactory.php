@@ -21,6 +21,7 @@ class SpeciesCacheFactory extends Factory
             'scientific_name' => fake()->words(2, true),
             'canonical_name' => fake()->optional()->words(2, true),
             'common_name' => null,
+            'common_names' => null,
             'rank' => 'SPECIES',
             'family' => fake()->word(),
             'payload' => null,

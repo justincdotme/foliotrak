@@ -128,3 +128,11 @@ Index all plant names offline for complete typo-tolerant coverage.
 ## Review Date
 
 Condition-based: revisit if the full GBIF seed dump lands (the GBIF fallback may become vestigial), if Meilisearch's operational cost proves unjustified at this scale (reconsider Option B), or if GBIF publishes formal rate limits.
+
+---
+
+### Addendum (FOL-54): Common name search via `/species/search`
+
+The original decision rejected `/species/search` because it cannot correct misspellings (validated against typo queries in `docs/project/gbif-endpoint-validation.md`). That remains true for its stated purpose.
+
+FOL-54 adds `/species/search` as a third-tier fallback for a different use case: resolving common (vernacular) names like "ZZ Plant" or "Snake Plant" to their species. The cascade is: Meilisearch (local) -> `/species/match` (scientific name correction) -> `/species/search` (vernacular name search). The search endpoint fires only when both prior tiers return zero results. It shares the same throttle and breaker as `/species/match`.

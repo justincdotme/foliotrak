@@ -76,12 +76,18 @@ class BackboneExtractorTest extends TestCase
         $this->assertSame('Swiss cheese plant', $monstera['common_name']);
         $this->assertSame('SPECIES', $monstera['rank']);
         $this->assertSame('Araceae', $monstera['family']);
+        $this->assertSame(
+            ['Swiss cheese plant', 'Split-leaf philodendron'],
+            $monstera['common_names'],
+        );
     }
 
     public function test_omits_common_name_when_no_english_name_exists(): void
     {
         $this->assertArrayNotHasKey('common_name', $this->byKey[2769648]);
         $this->assertArrayNotHasKey('common_name', $this->byKey[7777777]);
+        $this->assertArrayNotHasKey('common_names', $this->byKey[2769648]);
+        $this->assertArrayNotHasKey('common_names', $this->byKey[7777777]);
     }
 
     public function test_normalizes_rank_to_uppercase_across_offered_ranks(): void
