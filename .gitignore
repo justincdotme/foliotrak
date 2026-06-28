@@ -38,6 +38,9 @@ auth.json
 /docs/project
 /CLAUDE.md
 /temp
+AGENTS.md
+/codex
+
 
 # Laravel default .gitignore (latest), duplicates of the above omitted
 *.log

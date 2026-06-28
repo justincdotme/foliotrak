@@ -1,15 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { getGroupInsights } from '@/api/client'
 
-export function useGroupInsights(tagId: number | null) {
+type GroupInsightsParams = { tag?: number; location?: number }
+
+export function useGroupInsights(params: GroupInsightsParams) {
   const query = useQuery({
-    queryKey: ['insights', 'group', tagId],
-    queryFn: () => getGroupInsights(tagId as number),
-    enabled: tagId != null,
+    queryKey: ['insights', 'group', params],
+    queryFn: () => getGroupInsights(params),
   })
   return {
     data: query.data ?? null,
-    loading: tagId == null || query.isPending,
+    loading: query.isPending,
     error: query.error,
   }
 }

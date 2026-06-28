@@ -26,6 +26,7 @@ const linkedPhoto: Photo = {
   plant_id: 1,
   care_event_id: 9,
   path: '/storage/photos/move.jpg',
+  thumb_path: null,
   original_filename: 'move.jpg',
   taken_on: '2026-06-20',
   caption: 'after the move',

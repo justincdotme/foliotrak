@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
     'care_event_id',
     'disk',
     'path',
+    'thumb_path',
     'original_filename',
     'taken_on',
     'caption',

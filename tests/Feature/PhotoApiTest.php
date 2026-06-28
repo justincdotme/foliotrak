@@ -73,7 +73,7 @@ class PhotoApiTest extends TestCase
         $plant = Plant::factory()->create();
 
         $this->postJson("/api/plants/{$plant->id}/photos", [
-            'photo' => UploadedFile::fake()->image('huge.jpg')->size(13 * 1024),
+            'photo' => UploadedFile::fake()->image('huge.jpg')->size(26 * 1024),
         ])->assertUnprocessable()->assertJsonValidationErrorFor('photo');
     }
 
@@ -137,6 +137,67 @@ class PhotoApiTest extends TestCase
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrorFor('care_event_id');
+    }
+
+    public function test_cropped_upload_stores_hero_and_thumb_variants(): void
+    {
+        Storage::fake('photos');
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create(['cover_photo_id' => null]);
+
+        $response = $this->postJson("/api/plants/{$plant->id}/photos", [
+            'photo' => UploadedFile::fake()->image('plant.jpg', 1200, 1800),
+            'hero_crop' => json_encode(['x' => 0, 'y' => 0, 'width' => 1200, 'height' => 1800]),
+            'thumb_crop' => json_encode(['x' => 100, 'y' => 100, 'width' => 800, 'height' => 800]),
+            'set_as_cover' => true,
+        ]);
+
+        $response->assertCreated();
+
+        $path = $response->json('data.path');
+        $thumbPath = $response->json('data.thumb_path');
+
+        $this->assertNotNull($path);
+        $this->assertNotNull($thumbPath);
+        $this->assertStringEndsWith('_hero.webp', $path);
+        $this->assertStringEndsWith('_thumb.webp', $thumbPath);
+        Storage::disk('photos')->assertExists($path);
+        Storage::disk('photos')->assertExists($thumbPath);
+        $this->assertSame($response->json('data.id'), $plant->fresh()->cover_photo_id);
+    }
+
+    public function test_hero_crop_requires_thumb_crop(): void
+    {
+        Storage::fake('photos');
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+
+        $this->postJson("/api/plants/{$plant->id}/photos", [
+            'photo' => UploadedFile::fake()->image('plant.jpg'),
+            'hero_crop' => json_encode(['x' => 0, 'y' => 0, 'width' => 100, 'height' => 150]),
+        ])->assertUnprocessable()->assertJsonValidationErrorFor('thumb_crop');
+    }
+
+    public function test_deleting_a_cropped_photo_removes_both_files(): void
+    {
+        Storage::fake('photos');
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+
+        $heroPath = 'test_hero.webp';
+        $thumbPath = 'test_thumb.webp';
+        Storage::disk('photos')->put($heroPath, 'hero');
+        Storage::disk('photos')->put($thumbPath, 'thumb');
+
+        $photo = Photo::factory()->for($plant)->create([
+            'path' => $heroPath,
+            'thumb_path' => $thumbPath,
+        ]);
+
+        $this->deleteJson("/api/photos/{$photo->id}")->assertNoContent();
+
+        Storage::disk('photos')->assertMissing($heroPath);
+        Storage::disk('photos')->assertMissing($thumbPath);
     }
 
     public function test_lists_a_plants_photos(): void

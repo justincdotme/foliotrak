@@ -8,6 +8,7 @@ use App\Models\CareEvent;
 use App\Models\Location;
 use App\Models\Observation;
 use App\Models\Plant;
+use App\Models\Symptom;
 use App\Models\User;
 use Database\Seeders\CareLookupSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -151,6 +152,32 @@ class PlantRecommendationApiTest extends TestCase
             ->assertJsonPath('data.health_by_location.1.location.name', 'shelf')
             ->assertJsonPath('data.health_by_location.1.sample_size', 2)
             ->assertJsonPath('data.health_by_location.1.median_health', 4.5);
+    }
+
+    public function test_symptom_episodes_are_included_in_the_response(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create();
+        $symptom = Symptom::where('key', 'spider_mites')->firstOrFail();
+
+        $event1 = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(10)]);
+        $obs1 = Observation::factory()->create(['care_event_id' => $event1->id, 'overall_health' => 3]);
+        $obs1->symptoms()->attach($symptom->id);
+
+        $event2 = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(3)]);
+        Observation::factory()->create(['care_event_id' => $event2->id, 'overall_health' => 5]);
+
+        $this->getJson("/api/plants/{$plant->id}/recommendations")
+            ->assertOk()
+            ->assertJsonStructure(['data' => ['symptom_episodes']])
+            ->assertJsonCount(1, 'data.symptom_episodes')
+            ->assertJsonPath('data.symptom_episodes.0.symptom_key', 'spider_mites')
+            ->assertJsonPath('data.symptom_episodes.0.category', 'pest')
+            ->assertJsonPath('data.symptom_episodes.0.cleared_at', now()->subDays(3)->toDateString())
+            ->assertJsonPath('data.symptom_episodes.0.duration_days', 7)
+            ->assertJsonPath('data.symptom_episodes.0.health_at_appear', 3)
+            ->assertJsonPath('data.symptom_episodes.0.health_at_clear', 5);
     }
 
     /**

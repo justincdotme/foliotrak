@@ -792,6 +792,7 @@ const buildSeed = (): StoreData => {
       plant_id,
       care_event_id: null,
       path: `/storage/photos/${name}.jpg`,
+      thumb_path: null,
       original_filename: `${name}.jpg`,
       taken_on: dateOnly(iso(daysAgo)),
       caption,
@@ -988,6 +989,9 @@ export const mockApi = {
       health_trend: healthTrend,
       weight_trend: weightTrend,
       growth_trend: growthTrend,
+      light_trend: [],
+      leaf_size_trend: [],
+      due_for_care: [],
       recommendations: STORE.recs.filter(r => r.plant_id === plantId),
       photos: STORE.photos.filter(p => p.plant_id === plantId),
     })
@@ -1130,6 +1134,7 @@ export const mockApi = {
       plant_id: plantId,
       care_event_id: null,
       path: `/storage/photos/upload-${id}.jpg`,
+      thumb_path: null,
       original_filename: file?.name ?? 'upload.jpg',
       taken_on: dateOnly(iso(0)),
       caption: caption ?? null,
@@ -1270,8 +1275,11 @@ export const mockApi = {
     }))
 
     return clone({
+      group_name: tag?.name ?? '',
       tag_id: _tagId,
       tag_name: tag?.name ?? '',
+      location_id: null,
+      location_name: null,
       plants: inGroup.map(p => p.id),
       comparison,
       correlation_pairs: [

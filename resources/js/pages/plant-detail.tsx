@@ -9,7 +9,6 @@ import {
   ExternalLink,
   FlaskConical,
   ImageIcon,
-  Leaf,
   MapPin,
   Pencil,
   Plus,
@@ -41,9 +40,12 @@ import { ActivityHeatmap } from '@/components/charts/activity-heatmap'
 import { GrowthTrend } from '@/components/charts/growth-trend'
 import { HealthByLocation } from '@/components/charts/health-by-location'
 import { HealthTrend } from '@/components/charts/health-trend'
+import { LeafSizeTrend } from '@/components/charts/leaf-size-trend'
+import { LightTrend } from '@/components/charts/light-trend'
 import { TimelineOverlay } from '@/components/charts/timeline-overlay'
 import { WeightTrend } from '@/components/charts/weight-trend'
 import { fmtDate, fmtDateY } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { groupPhotosByCareEvent, photoUrl } from '@/lib/photos'
 import { EditPlantModal } from '@/components/plant/edit-plant-modal'
 import { PrimaryPhotoModal } from '@/components/plant/primary-photo-modal'
@@ -86,11 +88,11 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
       </Card>
     )
 
-  // The timeline bundle carries the trend series; the watering-due signal arrives with a later
-  // per-plant due feature, so it stays null here.
   const healthTrend = timeline?.health_trend ?? []
   const weightTrend = timeline?.weight_trend ?? []
   const growthTrend = timeline?.growth_trend ?? []
+  const lightTrend = timeline?.light_trend ?? []
+  const leafSizeTrend = timeline?.leaf_size_trend ?? []
   const photoList = photos ?? []
 
   // Health-by-location reads as a comparison only with two or more spots; a single spot adds
@@ -102,8 +104,22 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
   const hasHealth = healthTrend.some(p => p.value != null)
   const hasWeight = weightTrend.some(p => p.value != null)
   const hasGrowth = growthTrend.some(p => p.value != null)
+  const hasLight = lightTrend.some(p => p.value != null)
+  const hasLeafSize = leafSizeTrend.some(p => p.value != null)
 
-  const due = null
+  const due = (() => {
+    const entry = timeline?.due_for_care?.find(d => d.type === 'watering')
+    if (!entry) return null
+    return {
+      due_date: entry.due_date,
+      daysLeft: entry.daysLeft,
+      status: entry.status,
+      type: entry.type as 'watering',
+      interval: entry.interval,
+      last_watered: entry.due_date,
+    }
+  })()
+
   const cond = plant.condition
 
   return (
@@ -119,26 +135,16 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
       {/* Header */}
       <div className="flex gap-4 items-start">
         <div className="relative shrink-0">
-          <div
-            className="w-20 h-20 rounded-[10px] grid place-items-center text-text-subtle border border-border overflow-hidden"
-            style={
-              plant.cover_photo
-                ? undefined
-                : {
-                    backgroundImage:
-                      'repeating-linear-gradient(135deg, color-mix(in srgb,var(--primary) 9%,transparent) 0 10px, transparent 10px 20px)',
-                  }
-            }
-          >
-            {plant.cover_photo ? (
-              <img
-                src={photoUrl(plant.cover_photo.path)}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <Leaf size={26} />
-            )}
+          <div className="w-[120px] h-[180px] rounded-[10px] border border-border overflow-hidden bg-surface-raised">
+            <img
+              src={
+                plant.cover_photo
+                  ? photoUrl(plant.cover_photo.path)
+                  : '/images/plant-silhouette-hero.png'
+              }
+              alt=""
+              className={cn('h-full w-full object-cover', !plant.cover_photo && 'opacity-20')}
+            />
           </div>
           <button
             onClick={() => setPhotoOpen(true)}
@@ -285,6 +291,8 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
             {hasHealth && <HealthTrend data={healthTrend} />}
             {hasWeight && <WeightTrend data={weightTrend} />}
             {hasGrowth && <GrowthTrend data={growthTrend} />}
+            {hasLight && <LightTrend data={lightTrend} />}
+            {hasLeafSize && <LeafSizeTrend data={leafSizeTrend} />}
             <ActivityHeatmap events={events} />
           </div>
         </div>

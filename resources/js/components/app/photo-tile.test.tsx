@@ -12,10 +12,11 @@ describe('PhotoTile', () => {
     )
   })
 
-  it('falls back to the placeholder icon, not a broken image, when there is no path', () => {
-    const { container } = render(<PhotoTile photo={{ caption: null }} />)
+  it('renders the silhouette placeholder when there is no path', () => {
+    render(<PhotoTile photo={{ caption: null }} />)
 
-    expect(container.querySelector('img')).toBeNull()
-    expect(container.querySelector('svg')).not.toBeNull()
+    const img = screen.getByRole('img')
+    expect(img).toHaveAttribute('src', '/images/plant-silhouette-thumb.png')
+    expect(img.className).toContain('opacity-20')
   })
 })

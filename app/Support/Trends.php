@@ -39,9 +39,32 @@ class Trends
     }
 
     /**
+     * @param  Collection<int, CareEvent>  $observationEvents
+     * @return list<array{date: string, value: int|null}>
+     */
+    public static function light(Collection $observationEvents): array
+    {
+        return self::series($observationEvents, fn (Observation $observation) => $observation->light_level);
+    }
+
+    /**
+     * @param  Collection<int, CareEvent>  $observationEvents
+     * @return list<array{date: string, value: float|null}>
+     */
+    public static function leafSize(Collection $observationEvents): array
+    {
+        return self::series(
+            $observationEvents,
+            fn (Observation $observation) => $observation->leaf_size_mm !== null
+                ? (float) $observation->leaf_size_mm
+                : null,
+        );
+    }
+
+    /**
      * @param  Collection<int, CareEvent>  $events
-     * @param  Closure(Observation): (int|string|null)  $value
-     * @return list<array{date: string, value: int|string|null}>
+     * @param  Closure(Observation): (int|float|string|null)  $value
+     * @return list<array{date: string, value: int|float|string|null}>
      */
     private static function series(Collection $events, Closure $value): array
     {

@@ -1,14 +1,16 @@
 import {
   ResponsiveContainer,
-  ScatterChart,
+  ComposedChart,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
   Scatter,
+  Cell,
+  Line,
 } from 'recharts'
 import { ChartShell } from './chart-shell'
-import { axis, describeCorrelation, prettyVar } from './chart-utils'
+import { axis, describeCorrelation, fillFromHealth, prettyVar, regression } from './chart-utils'
 import type { CorrelationPair } from '@/api/types'
 
 interface CorrelationScatterProps {
@@ -20,6 +22,17 @@ export function CorrelationScatter({ pair }: CorrelationScatterProps) {
   const band = `${pair.confidence_band.lower.toFixed(2)} to ${pair.confidence_band.upper.toFixed(2)}`
   const stats = `Correlation ${pair.correlation.toFixed(2)}, 95% range ${band}${pair.significant_after_fdr ? '' : ', not significant after adjusting for the other factors tested'}.`
 
+  const reg = pair.significant_after_fdr && points.length >= 2 ? regression(pair.points) : null
+  const xValues = points.map(p => p.x)
+  const xMin = xValues.length > 0 ? Math.min(...xValues) : 0
+  const xMax = xValues.length > 0 ? Math.max(...xValues) : 0
+  const regLine = reg
+    ? [
+        { x: xMin, y: reg.slope * xMin + reg.intercept },
+        { x: xMax, y: reg.slope * xMax + reg.intercept },
+      ]
+    : null
+
   return (
     <ChartShell
       title={`${prettyVar(pair.x_variable)} vs ${prettyVar(pair.y_variable)}`}
@@ -28,7 +41,7 @@ export function CorrelationScatter({ pair }: CorrelationScatterProps) {
       note={`${describeCorrelation(pair)} ${stats}`}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 6, right: 10, bottom: 4, left: -22 }}>
+        <ComposedChart margin={{ top: 6, right: 10, bottom: 4, left: -22 }}>
           <CartesianGrid stroke="var(--border)" />
           <XAxis
             type="number"
@@ -48,13 +61,23 @@ export function CorrelationScatter({ pair }: CorrelationScatterProps) {
               fontSize: 12,
             }}
           />
-          <Scatter
-            data={points}
-            fill="var(--primary)"
-            fillOpacity={0.7}
-            isAnimationActive={false}
-          />
-        </ScatterChart>
+          <Scatter data={points} fillOpacity={0.75} isAnimationActive={false}>
+            {points.map((p, i) => (
+              <Cell key={i} fill={fillFromHealth(p.y)} />
+            ))}
+          </Scatter>
+          {regLine && (
+            <Line
+              data={regLine}
+              dataKey="y"
+              dot={false}
+              stroke="var(--text-subtle)"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+              isAnimationActive={false}
+            />
+          )}
+        </ComposedChart>
       </ResponsiveContainer>
     </ChartShell>
   )
