@@ -67,7 +67,10 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
           </IconButton>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="grid h-9 w-9 place-items-center rounded-full bg-primary/15 text-[13px] font-semibold text-primary">
+              <button
+                dusk="user-menu"
+                className="grid h-9 w-9 place-items-center rounded-full bg-primary/15 text-[13px] font-semibold text-primary"
+              >
                 {initials(user?.name ?? '')}
               </button>
             </DropdownMenuTrigger>
@@ -80,7 +83,7 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
                 <Settings size={15} />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onLogout} className="text-overdue">
+              <DropdownMenuItem dusk="logout-button" onSelect={onLogout} className="text-overdue">
                 <LogOut size={15} />
                 Log out
               </DropdownMenuItem>

@@ -48,6 +48,7 @@ export function MobileHeader({ onAdd, onLogout }: MobileHeaderProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
+              dusk="user-menu"
               aria-label="Account"
               className="inline-flex h-9 items-center gap-1 rounded-full border border-border bg-surface-raised pl-0.5 pr-1.5"
             >
@@ -71,7 +72,7 @@ export function MobileHeader({ onAdd, onLogout }: MobileHeaderProps) {
               <UserIcon size={15} />
               Account &amp; settings
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onLogout} className="text-overdue">
+            <DropdownMenuItem dusk="logout-button" onSelect={onLogout} className="text-overdue">
               <LogOut size={15} />
               Log out
             </DropdownMenuItem>
