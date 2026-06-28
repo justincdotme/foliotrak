@@ -25,9 +25,16 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
   const { user } = useCurrentUser()
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface/90 backdrop-blur">
+    <header
+      dusk="top-bar"
+      className="sticky top-0 z-30 border-b border-border bg-surface/90 backdrop-blur"
+    >
       <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-2 px-5">
-        <button onClick={() => navigate('/')} className="mr-4 flex items-center gap-2">
+        <button
+          dusk="logo-link"
+          onClick={() => navigate('/')}
+          className="mr-4 flex items-center gap-2"
+        >
           <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-white">
             <Leaf size={18} />
           </span>
@@ -40,6 +47,7 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
             return (
               <button
                 key={item.to}
+                dusk={`nav-${item.label.toLowerCase()}`}
                 onClick={() => navigate(item.to)}
                 className={cn(
                   'flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium',
@@ -57,12 +65,13 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
             variant="outline"
             size="sm"
             onClick={onAdd}
+            dusk="add-plant"
             className="border-accent/40 text-accent hover:bg-accent/10"
           >
             <Plus size={16} />
             Add plant
           </Button>
-          <IconButton label="Toggle theme" onClick={toggle} className="h-9 w-9">
+          <IconButton dusk="theme-toggle" label="Toggle theme" onClick={toggle} className="h-9 w-9">
             {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </IconButton>
           <DropdownMenu>
@@ -79,7 +88,7 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
                 <div className="text-[13px] font-medium">{user?.name}</div>
                 <div className="tnum text-[11px] text-text-subtle">{user?.email}</div>
               </div>
-              <DropdownMenuItem onSelect={() => navigate('/settings')}>
+              <DropdownMenuItem dusk="settings-link" onSelect={() => navigate('/settings')}>
                 <Settings size={15} />
                 Settings
               </DropdownMenuItem>
