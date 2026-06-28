@@ -40,16 +40,15 @@ class PlantSearchService
                 $refreshed = $this->gbif->lookup($query);
 
                 if (is_array($refreshed) && $refreshed !== []) {
-                    // Write the fresh data back (and reindex it) and return it
-                    // directly, so the read path never reads the database.
                     $this->backfill($refreshed);
 
                     return collect($refreshed)->take($limit)->values();
                 }
-                // GBIF unavailable or no current match: serve the rows we have.
             }
 
-            return $hits;
+            if ($this->hasRelevantMatch($hits, $query)) {
+                return $hits;
+            }
         }
 
         $records = $this->gbif->lookup($query);
@@ -166,6 +165,33 @@ class PlantSearchService
                 $attributes,
             );
         }
+    }
+
+    /**
+     * Local results from Meilisearch can be fuzzy noise (e.g. "Z.Z.Zhou" for
+     * "ZZ Plant"). Only trust them when at least one result matches the query
+     * on a name field; otherwise fall through to the GBIF cascade.
+     *
+     * @param  Collection<int, SpeciesRow>  $hits
+     */
+    private function hasRelevantMatch(Collection $hits, string $query): bool
+    {
+        return $hits->contains(function (array $hit) use ($query): bool {
+            foreach (['canonical_name', 'scientific_name', 'common_name'] as $field) {
+                $value = $hit[$field] ?? null;
+                if (is_string($value) && str_contains(Str::lower($value), $query)) {
+                    return true;
+                }
+            }
+
+            foreach ($hit['common_names'] ?? [] as $name) {
+                if (is_string($name) && str_contains(Str::lower($name), $query)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 
     private function ttlDays(): int

@@ -440,6 +440,51 @@ class SpeciesSuggestTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_tries_gbif_search_when_local_results_have_no_relevant_match(): void
+    {
+        $this->actAsHousehold();
+        SpeciesCache::factory()->create([
+            'gbif_key' => '999',
+            'scientific_name' => 'Bobgunnia madagascariensis (Desv.) J.H.Kirkbr. & Wiersema',
+            'canonical_name' => 'Bobgunnia madagascariensis',
+            'common_name' => 'Snake Bean Plant',
+            'common_names' => ['Snake Bean Plant'],
+            'cached_at' => now(),
+        ]);
+        Http::fake([
+            'api.gbif.org/v1/species/match*' => Http::response([
+                'matchType' => 'NONE',
+                'confidence' => 0,
+                'synonym' => false,
+            ]),
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0,
+                'limit' => 5,
+                'endOfRecords' => true,
+                'results' => [
+                    [
+                        'key' => 222,
+                        'scientificName' => 'Dracaena trifasciata (Prain) Mabb.',
+                        'canonicalName' => 'Dracaena trifasciata',
+                        'rank' => 'SPECIES',
+                        'taxonomicStatus' => 'ACCEPTED',
+                        'family' => 'Asparagaceae',
+                        'vernacularNames' => [
+                            ['vernacularName' => 'Snake Plant', 'language' => 'eng'],
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $this->getJson('/api/species/suggest?q=Snake Plant')
+            ->assertOk()
+            ->assertJsonPath('data.0.scientific_name', 'Dracaena trifasciata (Prain) Mabb.')
+            ->assertJsonPath('data.0.common_name', 'Snake Plant');
+
+        Http::assertSentCount(2);
+    }
+
     public function test_common_name_search_empty_result_returns_empty(): void
     {
         $this->actAsHousehold();
