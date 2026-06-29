@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { PlantWithTags } from '@/api/types'
 import type { PhotoUpload, PlantPayload } from '@/api/client'
 import { createPlant, deletePhoto, setCoverPhoto, updatePlant, uploadPhoto } from '@/api/client'
 
@@ -38,11 +39,12 @@ export function useUpdatePlant(plantId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: PlantPayload) => updatePlant(plantId, payload),
-    onSuccess: () => {
-      // The ['plant', id] prefix also covers the plant's photos query.
+    onSuccess: updatedPlant => {
+      queryClient.setQueryData<PlantWithTags[]>(['plants'], old =>
+        old?.map(p => (p.id === updatedPlant.id ? updatedPlant : p))
+      )
       queryClient.invalidateQueries({ queryKey: ['plant', plantId] })
       queryClient.invalidateQueries({ queryKey: ['plants'] })
-      // A location change is logged server-side as a relocation care event.
       queryClient.invalidateQueries({ queryKey: ['timeline', plantId] })
     },
   })
