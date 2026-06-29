@@ -94,15 +94,16 @@ if [ "$seed_ready" = true ]; then
   # import-seed upserts, so re-running init.sh is cheap. A failure here is not
   # fatal: search falls back to live GBIF until the seed lands.
   if $COMPOSE exec -T app php artisan species:refresh-seed \
+    && $COMPOSE exec -T app php artisan scout:sync-index-settings \
     && $COMPOSE exec -T app php artisan species:import-seed; then
     :
   else
     echo "    species seed did not finish; the app runs and falls back to live GBIF." >&2
-    echo "    retry: $COMPOSE exec app php artisan species:refresh-seed && $COMPOSE exec app php artisan species:import-seed" >&2
+    echo "    retry: $COMPOSE exec app php artisan species:refresh-seed && $COMPOSE exec app php artisan scout:sync-index-settings && $COMPOSE exec app php artisan species:import-seed" >&2
   fi
 else
   echo "    app or Meilisearch not ready in time; skipped seeding." >&2
-  echo "    seed later: $COMPOSE exec app php artisan species:refresh-seed && $COMPOSE exec app php artisan species:import-seed" >&2
+  echo "    seed later: $COMPOSE exec app php artisan species:refresh-seed && $COMPOSE exec app php artisan scout:sync-index-settings && $COMPOSE exec app php artisan species:import-seed" >&2
 fi
 
 echo

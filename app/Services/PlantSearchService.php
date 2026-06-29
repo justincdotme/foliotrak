@@ -40,16 +40,15 @@ class PlantSearchService
                 $refreshed = $this->gbif->lookup($query);
 
                 if (is_array($refreshed) && $refreshed !== []) {
-                    // Write the fresh data back (and reindex it) and return it
-                    // directly, so the read path never reads the database.
                     $this->backfill($refreshed);
 
                     return collect($refreshed)->take($limit)->values();
                 }
-                // GBIF unavailable or no current match: serve the rows we have.
             }
 
-            return $hits;
+            if ($this->hasRelevantMatch($hits, $query)) {
+                return $hits;
+            }
         }
 
         $records = $this->gbif->lookup($query);
@@ -59,8 +58,15 @@ class PlantSearchService
         }
 
         if ($records === []) {
-            // Genuine no-match is never cached (ADR-0015).
-            return new Collection();
+            $records = $this->gbif->searchCommonName($query);
+
+            if ($records === null) {
+                throw new SearchDegradedException();
+            }
+
+            if ($records === []) {
+                return new Collection();
+            }
         }
 
         $this->backfill($records);
@@ -137,19 +143,55 @@ class PlantSearchService
     private function backfill(array $records): void
     {
         foreach ($records as $record) {
+            $attributes = [
+                'scientific_name' => $record['scientific_name'],
+                'canonical_name' => $record['canonical_name'],
+                'rank' => $record['rank'],
+                'family' => $record['family'],
+                'payload' => $record['payload'],
+                'cached_at' => now(),
+            ];
+
+            if (($record['common_name'] ?? null) !== null) {
+                $attributes['common_name'] = $record['common_name'];
+            }
+
+            if (($record['common_names'] ?? null) !== null) {
+                $attributes['common_names'] = $record['common_names'];
+            }
+
             SpeciesCache::updateOrCreate(
                 ['gbif_key' => $record['gbif_key']],
-                [
-                    'scientific_name' => $record['scientific_name'],
-                    'canonical_name' => $record['canonical_name'],
-                    'common_name' => $record['common_name'],
-                    'rank' => $record['rank'],
-                    'family' => $record['family'],
-                    'payload' => $record['payload'],
-                    'cached_at' => now(),
-                ],
+                $attributes,
             );
         }
+    }
+
+    /**
+     * Local results from Meilisearch can be fuzzy noise (e.g. "Z.Z.Zhou" for
+     * "ZZ Plant"). Only trust them when at least one result matches the query
+     * on a name field; otherwise fall through to the GBIF cascade.
+     *
+     * @param  Collection<int, SpeciesRow>  $hits
+     */
+    private function hasRelevantMatch(Collection $hits, string $query): bool
+    {
+        return $hits->contains(function (array $hit) use ($query): bool {
+            foreach (['canonical_name', 'scientific_name', 'common_name'] as $field) {
+                $value = $hit[$field] ?? null;
+                if (is_string($value) && str_contains(Str::lower($value), $query)) {
+                    return true;
+                }
+            }
+
+            foreach ($hit['common_names'] ?? [] as $name) {
+                if (is_string($name) && str_contains(Str::lower($name), $query)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 
     private function ttlDays(): int

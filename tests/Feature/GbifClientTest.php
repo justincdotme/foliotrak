@@ -198,4 +198,127 @@ class GbifClientTest extends TestCase
         $this->assertNotNull($this->client()->lookup('d'));
         Http::assertSentCount(4);
     }
+
+    public function test_searches_common_name_via_species_search_endpoint(): void
+    {
+        Http::fake([
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0,
+                'limit' => 5,
+                'endOfRecords' => true,
+                'count' => 1,
+                'results' => [
+                    [
+                        'key' => 7911643,
+                        'scientificName' => 'Zamioculcas zamiifolia (Lodd.) Engl.',
+                        'canonicalName' => 'Zamioculcas zamiifolia',
+                        'rank' => 'SPECIES',
+                        'taxonomicStatus' => 'ACCEPTED',
+                        'family' => 'Araceae',
+                        'vernacularNames' => [
+                            ['vernacularName' => 'ZZ Plant', 'language' => 'eng'],
+                            ['vernacularName' => 'Zanzibar gem', 'language' => 'eng'],
+                            ['vernacularName' => 'Planta ZZ', 'language' => 'spa'],
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $records = $this->client()->searchCommonName('zz plant');
+
+        $this->assertCount(1, $records);
+        $this->assertSame('7911643', $records[0]['gbif_key']);
+        $this->assertSame('Zamioculcas zamiifolia (Lodd.) Engl.', $records[0]['scientific_name']);
+        $this->assertSame('ZZ Plant', $records[0]['common_name']);
+        $this->assertSame(['ZZ Plant', 'Zanzibar gem'], $records[0]['common_names']);
+        $this->assertSame('Araceae', $records[0]['family']);
+    }
+
+    public function test_search_resolves_synonym_to_accepted_name(): void
+    {
+        Http::fake([
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0,
+                'limit' => 5,
+                'endOfRecords' => true,
+                'results' => [
+                    [
+                        'key' => 111,
+                        'scientificName' => 'Sansevieria trifasciata Prain',
+                        'canonicalName' => 'Sansevieria trifasciata',
+                        'rank' => 'SPECIES',
+                        'taxonomicStatus' => 'SYNONYM',
+                        'acceptedKey' => 222,
+                        'accepted' => 'Dracaena trifasciata (Prain) Mabb.',
+                        'family' => 'Asparagaceae',
+                        'vernacularNames' => [
+                            ['vernacularName' => 'Snake Plant', 'language' => 'eng'],
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $records = $this->client()->searchCommonName('snake plant');
+
+        $this->assertSame('222', $records[0]['gbif_key']);
+        $this->assertSame('Dracaena trifasciata (Prain) Mabb.', $records[0]['scientific_name']);
+        $this->assertSame('Snake Plant', $records[0]['common_name']);
+    }
+
+    public function test_search_deduplicates_by_resolved_key(): void
+    {
+        Http::fake([
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0,
+                'limit' => 5,
+                'endOfRecords' => true,
+                'results' => [
+                    [
+                        'key' => 222,
+                        'scientificName' => 'Dracaena trifasciata (Prain) Mabb.',
+                        'canonicalName' => 'Dracaena trifasciata',
+                        'rank' => 'SPECIES',
+                        'taxonomicStatus' => 'ACCEPTED',
+                        'family' => 'Asparagaceae',
+                        'vernacularNames' => [['vernacularName' => 'Snake Plant', 'language' => 'eng']],
+                    ],
+                    [
+                        'key' => 111,
+                        'scientificName' => 'Sansevieria trifasciata Prain',
+                        'rank' => 'SPECIES',
+                        'taxonomicStatus' => 'SYNONYM',
+                        'acceptedKey' => 222,
+                        'accepted' => 'Dracaena trifasciata (Prain) Mabb.',
+                        'family' => 'Asparagaceae',
+                        'vernacularNames' => [['vernacularName' => 'Snake Plant', 'language' => 'eng']],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $records = $this->client()->searchCommonName('snake plant');
+
+        $this->assertCount(1, $records);
+        $this->assertSame('222', $records[0]['gbif_key']);
+    }
+
+    public function test_search_shares_throttle_and_breaker_with_lookup(): void
+    {
+        config()->set('services.gbif.throttle.max_attempts', 1);
+        Http::fake([
+            'api.gbif.org/v1/species/match*' => Http::response([
+                'usageKey' => 1, 'scientificName' => 'X', 'rank' => 'SPECIES',
+                'confidence' => 95, 'matchType' => 'EXACT',
+            ]),
+            'api.gbif.org/v1/species/search*' => Http::response([
+                'offset' => 0, 'limit' => 5, 'endOfRecords' => true, 'results' => [],
+            ]),
+        ]);
+
+        $this->assertNotNull($this->client()->lookup('alpha'));
+        $this->assertNull($this->client()->searchCommonName('beta'));
+        Http::assertSentCount(1);
+    }
 }
