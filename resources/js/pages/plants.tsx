@@ -74,14 +74,12 @@ function PlantCard({ p, onClick }: PlantCardProps) {
       <div className="mt-3">
         <div className="font-medium">{p.common_name}</div>
         <div className="text-[12px] text-text-subtle italic truncate">{p.scientific_name}</div>
-        <div className="mt-1">
-          <ConditionChip cond={cond} />
-        </div>
         <div className="flex items-center gap-1 text-[12px] text-text-muted mt-1.5">
           <MapPin size={12} />
           {p.location?.name || 'No location'}
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
+          <ConditionChip cond={cond} />
           {p.tags.map(t => (
             <Chip key={t.id} color={t.color || undefined}>
               {t.name}
