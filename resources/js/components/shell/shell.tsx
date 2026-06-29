@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import type { CareEvent, CareType, Photo } from '@/api/types'
 import { AppContext } from '@/components/app/app-context'
+import { ErrorBanner } from '@/components/app/error-banner'
 import { Modal } from '@/components/app/modal'
 import { PhotoTile } from '@/components/app/photo-tile'
 import { AddPlantForm } from '@/components/forms/add-plant-form'
@@ -108,6 +109,7 @@ export function Shell() {
         ) : (
           <TopBar onAdd={() => setAddOpen(true)} onLogout={onLogout} />
         )}
+        <ErrorBanner />
         <main
           className={cn(
             'flex-1 overflow-x-hidden overflow-y-auto',

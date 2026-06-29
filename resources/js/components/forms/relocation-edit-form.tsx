@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Move } from 'lucide-react'
+import { AlertTriangle, Move } from 'lucide-react'
 import type { CareEvent } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { isoToLocal, toIso } from '@/lib/datetime'
+import { handleApiError } from '@/lib/handle-api-error'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { LocationCombobox } from '@/components/app/location-combobox'
@@ -28,9 +29,11 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
   const [toLocationId, setToLocationId] = useState<number | null>(
     event.relocation?.to_location?.id ?? null
   )
+  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
@@ -41,15 +44,21 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
   })
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
-    await updateEvent.mutateAsync({
-      eventId: event.id,
-      payload: {
-        occurred_at: toIso(v.occurred_at),
-        to_location_id: toLocationId,
-        note: v.note || null,
-      },
-    })
-    onDone()
+    setFormError(null)
+    try {
+      await updateEvent.mutateAsync({
+        eventId: event.id,
+        payload: {
+          occurred_at: toIso(v.occurred_at),
+          to_location_id: toLocationId,
+          note: v.note || null,
+        },
+      })
+      onDone()
+    } catch (err) {
+      const msg = handleApiError(err, setError)
+      if (msg) setFormError(msg)
+    }
   }
 
   return (
@@ -68,6 +77,12 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
       <Field label="Note" hint="optional">
         <Textarea {...register('note')} />
       </Field>
+      {formError && (
+        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
+          <AlertTriangle size={14} />
+          {formError}
+        </div>
+      )}
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting || toLocationId == null}>
           <Move size={16} />

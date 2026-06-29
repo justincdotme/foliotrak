@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
-import { Check, Plus, X } from 'lucide-react'
+import { AlertTriangle, Check, Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { inputClass } from '@/components/ui/input'
 import { Chip } from '@/components/app/chip'
@@ -16,6 +16,7 @@ export function TagInlineCreate({ allTags, selectedTags, onToggle }: TagInlineCr
   const createTag = useCreateTag()
   const [adding, setAdding] = useState(false)
   const [query, setQuery] = useState('')
+  const [createError, setCreateError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -50,6 +51,7 @@ export function TagInlineCreate({ allTags, selectedTags, onToggle }: TagInlineCr
     onToggle(tag)
     setAdding(false)
     setQuery('')
+    setCreateError(null)
   }
 
   const create = async (name: string) => {
@@ -58,10 +60,15 @@ export function TagInlineCreate({ allTags, selectedTags, onToggle }: TagInlineCr
       selectExisting(existing)
       return
     }
-    const created = await createTag.mutateAsync(name)
-    onToggle(created)
-    setAdding(false)
-    setQuery('')
+    setCreateError(null)
+    try {
+      const created = await createTag.mutateAsync(name)
+      onToggle(created)
+      setAdding(false)
+      setQuery('')
+    } catch {
+      setCreateError('Could not create tag.')
+    }
   }
 
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -115,6 +122,7 @@ export function TagInlineCreate({ allTags, selectedTags, onToggle }: TagInlineCr
               onClick={() => {
                 setAdding(false)
                 setQuery('')
+                setCreateError(null)
               }}
               className="shrink-0 p-1 text-text-muted hover:text-text"
             >
@@ -148,6 +156,12 @@ export function TagInlineCreate({ allTags, selectedTags, onToggle }: TagInlineCr
                   Create &quot;{trimmed}&quot;
                 </button>
               )}
+            </div>
+          )}
+          {createError && (
+            <div className="mt-1 flex items-center gap-1 text-[12px] text-overdue">
+              <AlertTriangle size={12} />
+              {createError}
             </div>
           )}
         </div>

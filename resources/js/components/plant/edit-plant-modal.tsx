@@ -1,4 +1,4 @@
-import { Info } from 'lucide-react'
+import { AlertTriangle, Info } from 'lucide-react'
 import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { PlantWithTags, Tag } from '@/api/types'
@@ -12,6 +12,7 @@ import { TagInlineCreate } from '@/components/app/tag-inline-create'
 import { Textarea } from '@/components/ui/textarea'
 import { useTags } from '@/hooks/useTags'
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
+import { handleApiError } from '@/lib/handle-api-error'
 
 interface EditPlantModalProps {
   plant: PlantWithTags
@@ -33,6 +34,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const [status, setStatus] = useState(plant.status)
   const [tags, setTags] = useState<Tag[]>(plant.tags)
   const [nickname, setNickname] = useState(plant.nickname || '')
+  const [formError, setFormError] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -41,6 +43,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       setStatus(plant.status)
       setTags(plant.tags)
       setNickname(plant.nickname || '')
+      setFormError(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, plant.id])
@@ -49,14 +52,19 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
     setTags(ts => (ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]))
 
   const save = async () => {
-    await update.mutateAsync({
-      nickname: nickname.trim() || null,
-      location_id: locationId,
-      notes: notes.trim() || null,
-      status,
-      tag_ids: tags.map(t => t.id),
-    })
-    onClose()
+    setFormError(null)
+    try {
+      await update.mutateAsync({
+        nickname: nickname.trim() || null,
+        location_id: locationId,
+        notes: notes.trim() || null,
+        status,
+        tag_ids: tags.map(t => t.id),
+      })
+      onClose()
+    } catch (err) {
+      setFormError(handleApiError(err))
+    }
   }
 
   return (
@@ -115,6 +123,12 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
             {STATUS_HELP[status]}
           </div>
         </Field>
+        {formError && (
+          <div className="flex items-center gap-1.5 text-[12px] text-overdue">
+            <AlertTriangle size={14} />
+            {formError}
+          </div>
+        )}
       </div>
     </Modal>
   )

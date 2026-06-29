@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Droplets } from 'lucide-react'
+import { AlertTriangle, Droplets } from 'lucide-react'
 import type { CareEvent } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
+import { handleApiError } from '@/lib/handle-api-error'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
@@ -25,9 +27,11 @@ interface LogWateringFormProps {
 
 export function LogWateringForm({ plantId, onDone, event }: LogWateringFormProps) {
   const { createWatering, updateEvent } = useCareEventMutations(plantId)
+  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
@@ -39,14 +43,20 @@ export function LogWateringForm({ plantId, onDone, event }: LogWateringFormProps
   })
 
   const onSubmit = async (v: { occurred_at: string; amount_ml: string; note: string }) => {
-    const payload = {
-      occurred_at: toIso(v.occurred_at),
-      amount_ml: v.amount_ml ? Number(v.amount_ml) : null,
-      note: v.note || null,
+    setFormError(null)
+    try {
+      const payload = {
+        occurred_at: toIso(v.occurred_at),
+        amount_ml: v.amount_ml ? Number(v.amount_ml) : null,
+        note: v.note || null,
+      }
+      if (event) await updateEvent.mutateAsync({ eventId: event.id, payload })
+      else await createWatering.mutateAsync(payload)
+      onDone()
+    } catch (err) {
+      const msg = handleApiError(err, setError)
+      if (msg) setFormError(msg)
     }
-    if (event) await updateEvent.mutateAsync({ eventId: event.id, payload })
-    else await createWatering.mutateAsync(payload)
-    onDone()
   }
 
   return (
@@ -61,6 +71,12 @@ export function LogWateringForm({ plantId, onDone, event }: LogWateringFormProps
           {...register('note')}
         />
       </Field>
+      {formError && (
+        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
+          <AlertTriangle size={14} />
+          {formError}
+        </div>
+      )}
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting}>
           <Droplets size={16} />

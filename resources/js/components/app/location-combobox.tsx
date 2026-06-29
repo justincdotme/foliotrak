@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
-import { MapPin, Plus } from 'lucide-react'
+import { AlertTriangle, MapPin, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { inputClass } from '@/components/ui/input'
 import { useLocations, useCreateLocation } from '@/hooks/useLocations'
@@ -20,6 +20,7 @@ export function LocationCombobox({
   const createLocation = useCreateLocation()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const [active, setActive] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -27,7 +28,10 @@ export function LocationCombobox({
   const selected = value != null ? locations.find(l => l.id === value) : null
 
   useEffect(() => {
-    if (!open) setQuery(selected?.name ?? '')
+    if (!open) {
+      setQuery(selected?.name ?? '')
+      setCreateError(null)
+    }
   }, [open, selected])
 
   useEffect(() => {
@@ -62,8 +66,13 @@ export function LocationCombobox({
   }
 
   const create = async (name: string) => {
-    const loc = await createLocation.mutateAsync(name)
-    pick(loc)
+    setCreateError(null)
+    try {
+      const loc = await createLocation.mutateAsync(name)
+      pick(loc)
+    } catch {
+      setCreateError('Could not create location.')
+    }
   }
 
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -161,6 +170,12 @@ export function LocationCombobox({
               </button>
             )
           )}
+        </div>
+      )}
+      {createError && (
+        <div className="mt-1 flex items-center gap-1 text-[12px] text-overdue">
+          <AlertTriangle size={12} />
+          {createError}
         </div>
       )}
     </div>

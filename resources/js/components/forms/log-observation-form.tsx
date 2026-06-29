@@ -21,6 +21,7 @@ import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { useSymptoms } from '@/hooks/useCareLookups'
 import { useSettings } from '@/hooks/useSettings'
 import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
+import { handleApiError } from '@/lib/handle-api-error'
 import { HEALTH_LABELS, HEALTH_VAR } from '@/lib/domain'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
@@ -69,9 +70,11 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
   const tempUnit = settings?.temperature_unit ?? 'F'
 
   const detail = event?.observation
+  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
+    setError,
     setValue,
     watch,
     formState: { isSubmitting },
@@ -150,36 +153,42 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
     })
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
-    const payload = {
-      occurred_at: toIso(v.occurred_at),
-      overall_health: v.overall_health ? Number(v.overall_health) : null,
-      health_note: v.health_note || null,
-      light_level: Number(v.light_level),
-      growth_rate: (v.growth_rate || null) as GrowthRate | null,
-      growth_note: v.growth_note || null,
-      leaf_size_mm: v.leaf_size_mm ? Number(v.leaf_size_mm) : null,
-      weight: grams > 0 ? { lb, oz, g } : null,
-      ambient_humidity_pct: v.ambient_humidity_pct ? Number(v.ambient_humidity_pct) : null,
-      ambient_temp: v.ambient_temp !== '' ? Number(v.ambient_temp) : null,
-      soil_moisture_relative: moistureMode === 'relative' ? moistureRelative : null,
-      soil_moisture_precise: moistureMode === 'precise' ? moisturePrecise : null,
-      symptom_ids: symptoms,
-      custom_symptoms: customs,
-      note: v.note || null,
-    }
-
-    const saved = event
-      ? await updateEvent.mutateAsync({ eventId: event.id, payload })
-      : await createObservation.mutateAsync(payload)
-
-    if (photoFile) {
-      try {
-        await uploadEventPhoto.mutateAsync({ file: photoFile, careEventId: saved.id })
-      } catch {
-        // The observation is saved; a failed photo can be re-added from the gallery.
+    setFormError(null)
+    try {
+      const payload = {
+        occurred_at: toIso(v.occurred_at),
+        overall_health: v.overall_health ? Number(v.overall_health) : null,
+        health_note: v.health_note || null,
+        light_level: Number(v.light_level),
+        growth_rate: (v.growth_rate || null) as GrowthRate | null,
+        growth_note: v.growth_note || null,
+        leaf_size_mm: v.leaf_size_mm ? Number(v.leaf_size_mm) : null,
+        weight: grams > 0 ? { lb, oz, g } : null,
+        ambient_humidity_pct: v.ambient_humidity_pct ? Number(v.ambient_humidity_pct) : null,
+        ambient_temp: v.ambient_temp !== '' ? Number(v.ambient_temp) : null,
+        soil_moisture_relative: moistureMode === 'relative' ? moistureRelative : null,
+        soil_moisture_precise: moistureMode === 'precise' ? moisturePrecise : null,
+        symptom_ids: symptoms,
+        custom_symptoms: customs,
+        note: v.note || null,
       }
+
+      const saved = event
+        ? await updateEvent.mutateAsync({ eventId: event.id, payload })
+        : await createObservation.mutateAsync(payload)
+
+      if (photoFile) {
+        try {
+          await uploadEventPhoto.mutateAsync({ file: photoFile, careEventId: saved.id })
+        } catch {
+          // The observation is saved; a failed photo can be re-added from the gallery.
+        }
+      }
+      onDone()
+    } catch (err) {
+      const msg = handleApiError(err, setError)
+      if (msg) setFormError(msg)
     }
-    onDone()
   }
 
   return (
@@ -469,6 +478,12 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
           />
         </label>
       </Field>
+      {formError && (
+        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
+          <AlertTriangle size={14} />
+          {formError}
+        </div>
+      )}
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting}>
           <ClipboardList size={16} />

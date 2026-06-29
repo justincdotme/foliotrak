@@ -20,6 +20,8 @@ import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { CareEvent, CareType, Photo } from '@/api/types'
 import { updatePlant } from '@/api/client'
+import { useNotification } from '@/components/app/notification-context'
+import { handleApiError } from '@/lib/handle-api-error'
 import { useEquipment } from '@/hooks/useEquipment'
 import { usePlant } from '@/hooks/usePlant'
 import { usePlantPhotos } from '@/hooks/usePlantPhotos'
@@ -73,6 +75,7 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
   const queryClient = useQueryClient()
   const [editOpen, setEditOpen] = useState(false)
   const [photoOpen, setPhotoOpen] = useState(false)
+  const { showError } = useNotification()
 
   const events = timeline?.events ?? []
   const photosByEvent = useMemo(() => groupPhotosByCareEvent(photos ?? []), [photos])
@@ -245,9 +248,13 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
                 onClick={async () => {
                   const current = plant.equipment?.map(e => e.id) ?? []
                   const next = active ? current.filter(x => x !== eq.id) : [...current, eq.id]
-                  await updatePlant(id, { equipment_ids: next })
-                  queryClient.invalidateQueries({ queryKey: ['plant', id] })
-                  queryClient.invalidateQueries({ queryKey: ['plants'] })
+                  try {
+                    await updatePlant(id, { equipment_ids: next })
+                    queryClient.invalidateQueries({ queryKey: ['plant', id] })
+                    queryClient.invalidateQueries({ queryKey: ['plants'] })
+                  } catch (err) {
+                    showError(handleApiError(err))
+                  }
                 }}
               >
                 {eq.label}
@@ -353,7 +360,13 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
                 photos={photosByEvent[e.id] ?? []}
                 onEdit={() => openLog(e.type, e)}
                 onViewPhoto={viewPhoto}
-                onDelete={() => deleteEvent.mutateAsync(e.id)}
+                onDelete={async () => {
+                  try {
+                    await deleteEvent.mutateAsync(e.id)
+                  } catch (err) {
+                    showError(handleApiError(err))
+                  }
+                }}
               />
             ))}
           </div>
