@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property PlantStatus $status
  * @property Carbon|null $acquired_on
+ * @property Carbon|null $watering_schedule_start_date
  */
 #[Fillable([
     'common_name',
@@ -32,6 +33,7 @@ use Illuminate\Support\Carbon;
     'status',
     'notes',
     'watering_interval_days_override',
+    'watering_schedule_start_date',
     'fertilizing_interval_days_override',
     'cover_photo_id',
 ])]
@@ -53,6 +55,7 @@ class Plant extends Model
             'status' => PlantStatus::class,
             'acquired_on' => 'date',
             'watering_interval_days_override' => 'integer',
+            'watering_schedule_start_date' => 'date',
             'fertilizing_interval_days_override' => 'integer',
             'cover_photo_id' => 'integer',
             'location_id' => 'integer',
@@ -196,7 +199,7 @@ class Plant extends Model
             return false;
         }
 
-        $lastWatered = $waterings->last()?->occurred_at;
+        $lastWatered = $waterings->isEmpty() ? $this->watering_schedule_start_date : $waterings->last()->occurred_at;
         if ($lastWatered === null) {
             return false;
         }

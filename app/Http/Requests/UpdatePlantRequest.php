@@ -33,6 +33,7 @@ class UpdatePlantRequest extends FormRequest
             'status' => ['sometimes', Rule::enum(PlantStatus::class)],
             'notes' => ['sometimes', 'nullable', 'string'],
             'watering_interval_days_override' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:65535'],
+            'watering_schedule_start_date' => ['sometimes', 'nullable', 'date'],
             'fertilizing_interval_days_override' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:65535'],
             // A cover must be one of this plant's own photos; null clears it.
             'cover_photo_id' => ['sometimes', 'nullable', 'integer', Rule::exists('photos', 'id')->where('plant_id', $plantId)],

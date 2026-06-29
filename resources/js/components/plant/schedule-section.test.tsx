@@ -15,6 +15,7 @@ const plant = (overrides: Partial<Plant> = {}): Plant =>
     common_name: 'Pothos',
     status: 'active',
     watering_interval_days_override: null,
+    watering_schedule_start_date: null,
     fertilizing_interval_days_override: null,
     ...overrides,
   }) as unknown as Plant
@@ -61,10 +62,12 @@ describe('ScheduleSection My schedule', () => {
     await userEvent.type(screen.getByPlaceholderText('e.g. 5'), '6')
     await userEvent.click(screen.getByRole('button', { name: /save schedule/i }))
 
-    expect(mutateAsync).toHaveBeenCalledWith({
-      watering_interval_days_override: 6,
-      fertilizing_interval_days_override: null,
-    })
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        watering_interval_days_override: 6,
+        fertilizing_interval_days_override: null,
+      })
+    )
   })
 
   it('saves both watering and fertilizing when both are filled', async () => {
@@ -76,10 +79,12 @@ describe('ScheduleSection My schedule', () => {
     await userEvent.type(inputs[1] as HTMLInputElement, '14')
     await userEvent.click(screen.getByRole('button', { name: /save schedule/i }))
 
-    expect(mutateAsync).toHaveBeenCalledWith({
-      watering_interval_days_override: 5,
-      fertilizing_interval_days_override: 14,
-    })
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        watering_interval_days_override: 5,
+        fertilizing_interval_days_override: 14,
+      })
+    )
   })
 
   it('saves fertilizing only when watering is empty', async () => {
@@ -90,10 +95,12 @@ describe('ScheduleSection My schedule', () => {
     await userEvent.type(inputs[1] as HTMLInputElement, '21')
     await userEvent.click(screen.getByRole('button', { name: /save schedule/i }))
 
-    expect(mutateAsync).toHaveBeenCalledWith({
-      watering_interval_days_override: null,
-      fertilizing_interval_days_override: 21,
-    })
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        watering_interval_days_override: null,
+        fertilizing_interval_days_override: 21,
+      })
+    )
   })
 
   it('clears both overrides when both fields are empty', async () => {
@@ -114,10 +121,44 @@ describe('ScheduleSection My schedule', () => {
     await userEvent.clear(inputs[1] as HTMLInputElement)
     await userEvent.click(screen.getByRole('button', { name: /save schedule/i }))
 
-    expect(mutateAsync).toHaveBeenCalledWith({
-      watering_interval_days_override: null,
-      fertilizing_interval_days_override: null,
-    })
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        watering_interval_days_override: null,
+        fertilizing_interval_days_override: null,
+      })
+    )
+  })
+
+  it('includes the start date in the save payload, defaulting to today', async () => {
+    render(<ScheduleSection plant={plant()} recommendations={null} due={null} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /set a schedule/i }))
+    await userEvent.type(screen.getByPlaceholderText('e.g. 5'), '7')
+    await userEvent.click(screen.getByRole('button', { name: /save schedule/i }))
+
+    const call = (mutateAsync.mock.calls[0] as unknown[])[0] as Record<string, unknown>
+    expect(call.watering_interval_days_override).toBe(7)
+    expect(call.watering_schedule_start_date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('preserves an existing start date when editing the schedule', async () => {
+    render(
+      <ScheduleSection
+        plant={plant({
+          watering_interval_days_override: 5,
+          watering_schedule_start_date: '2026-06-15',
+        })}
+        recommendations={null}
+        due={null}
+      />
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /edit schedule/i }))
+    await userEvent.click(screen.getByRole('button', { name: /save schedule/i }))
+
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ watering_schedule_start_date: '2026-06-15' })
+    )
   })
 })
 

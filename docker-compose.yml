@@ -131,11 +131,13 @@ services:
   selenium:
     image: selenium/standalone-chrome:latest
     shm_size: 2gb
+    profiles: [testing]
     networks:
       - app-network
 
   test-mysql:
     image: mysql:8.0
+    profiles: [testing]
     environment:
       MYSQL_DATABASE: foliotrak_dusk
       MYSQL_USER: foliotrak

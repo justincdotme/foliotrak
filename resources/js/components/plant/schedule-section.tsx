@@ -165,6 +165,8 @@ function FertilizerPending() {
   )
 }
 
+const today = (): string => new Date().toISOString().slice(0, 10)
+
 export function ScheduleSection({
   plant,
   recommendations,
@@ -176,11 +178,18 @@ export function ScheduleSection({
   const [editing, setEditing] = useState(false)
   const [wInt, setWInt] = useState(plant.watering_interval_days_override ?? '')
   const [fInt, setFInt] = useState(plant.fertilizing_interval_days_override ?? '')
+  const [wStart, setWStart] = useState(plant.watering_schedule_start_date ?? today())
 
   useEffect(() => {
     setWInt(plant.watering_interval_days_override ?? '')
     setFInt(plant.fertilizing_interval_days_override ?? '')
-  }, [plant.id, plant.watering_interval_days_override, plant.fertilizing_interval_days_override])
+    setWStart(plant.watering_schedule_start_date ?? today())
+  }, [
+    plant.id,
+    plant.watering_interval_days_override,
+    plant.fertilizing_interval_days_override,
+    plant.watering_schedule_start_date,
+  ])
 
   const gate = recommendations?.gate
   const watering = recommendations?.watering ?? null
@@ -194,6 +203,7 @@ export function ScheduleSection({
   const save = async () => {
     await update.mutateAsync({
       watering_interval_days_override: wInt !== '' ? Number(wInt) : null,
+      watering_schedule_start_date: wStart || null,
       fertilizing_interval_days_override: fInt !== '' ? Number(fInt) : null,
     })
     setEditing(false)
@@ -205,7 +215,7 @@ export function ScheduleSection({
   }
 
   return (
-    <Card className="p-4">
+    <Card className="p-4" dusk="schedule-section">
       <SectionTitle icon={Calendar}>Schedule</SectionTitle>
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-3">
@@ -238,6 +248,17 @@ export function ScheduleSection({
                   )}
                 </span>
               </div>
+              {plant.watering_schedule_start_date && (
+                <div
+                  dusk="schedule-start-display"
+                  className="flex items-center gap-2.5 text-[13px] pl-[26px]"
+                >
+                  <span className="text-text-muted">starting</span>
+                  <span className="ml-auto font-medium">
+                    {fmtDateY(plant.watering_schedule_start_date)}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-2.5 text-[13px]">
                 <FlaskConical size={16} className="text-accent shrink-0" />
                 <span className="text-text-muted">Fertilizing</span>
@@ -271,6 +292,14 @@ export function ScheduleSection({
                   value={wInt}
                   onChange={e => setWInt(e.target.value)}
                   placeholder="e.g. 5"
+                />
+              </Field>
+              <Field label="Starting" hint="schedule anchor date">
+                <Input
+                  dusk="schedule-start-date"
+                  type="date"
+                  value={wStart}
+                  onChange={e => setWStart(e.target.value)}
                 />
               </Field>
               <Field label="Fertilize every" hint="days, optional">

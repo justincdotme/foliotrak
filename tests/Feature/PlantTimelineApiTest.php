@@ -165,6 +165,24 @@ class PlantTimelineApiTest extends TestCase
             ->assertJsonPath('data.leaf_size_trend.0.value', 32.5);
     }
 
+    public function test_timeline_shows_due_from_start_date_when_no_watering_events_exist(): void
+    {
+        $this->actAsHousehold();
+        $this->travelTo(Carbon::parse('2026-06-29'));
+        $plant = Plant::factory()->create([
+            'watering_interval_days_override' => 7,
+            'watering_schedule_start_date' => '2026-06-29',
+        ]);
+
+        $response = $this->getJson("/api/plants/{$plant->id}/timeline");
+
+        $response->assertOk();
+        $due = collect($response->json('data.due_for_care'))->firstWhere('type', 'watering');
+        $this->assertNotNull($due, 'A due entry should exist even without watering events');
+        $this->assertSame('2026-07-06', $due['due_date']);
+        $this->assertSame(7, $due['daysLeft']);
+    }
+
     public function test_timeline_includes_due_for_care_for_the_plant(): void
     {
         $this->actAsHousehold();
