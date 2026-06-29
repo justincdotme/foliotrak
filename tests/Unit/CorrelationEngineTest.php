@@ -29,7 +29,8 @@ class CorrelationEngineTest extends TestCase
 
     public function test_a_factor_below_the_minimum_sample_size_is_omitted(): void
     {
-        $tiny = new class () implements Factor {
+        $tiny = new class implements Factor
+        {
             public function key(): string
             {
                 return 'tiny';
@@ -56,7 +57,8 @@ class CorrelationEngineTest extends TestCase
 
     public function test_false_discovery_control_separates_a_strong_pair_from_a_noisy_one(): void
     {
-        $noisy = new class () implements Factor {
+        $noisy = new class implements Factor
+        {
             public function key(): string
             {
                 return 'noisy';
@@ -93,7 +95,8 @@ class CorrelationEngineTest extends TestCase
 
     private static function monotonicFactor(string $key): Factor
     {
-        return new class ($key) implements Factor {
+        return new class($key) implements Factor
+        {
             public function __construct(private string $name) {}
 
             public function key(): string

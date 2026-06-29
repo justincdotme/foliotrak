@@ -13,7 +13,7 @@ abstract class DuskTestCase extends BaseTestCase
 {
     protected function driver(): RemoteWebDriver
     {
-        $options = (new ChromeOptions())->addArguments(array_filter([
+        $options = (new ChromeOptions)->addArguments(array_filter([
             '--disable-gpu',
             '--no-sandbox',
             '--disable-dev-shm-usage',

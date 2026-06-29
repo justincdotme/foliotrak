@@ -15,7 +15,7 @@ class GbifClientTest extends TestCase
     {
         parent::setUp();
 
-        // No test may reach the live GBIF API (ADR-0012).
+        // No test may reach the live GBIF API.
         Http::preventStrayRequests();
     }
 
@@ -29,7 +29,7 @@ class GbifClientTest extends TestCase
 
     private function client(): GbifClient
     {
-        return new GbifClient();
+        return new GbifClient;
     }
 
     public function test_normalizes_a_fuzzy_match(): void

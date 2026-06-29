@@ -62,7 +62,7 @@ class CorrelationFactorsTest extends TestCase
         ]);
 
         $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
-        $result = CorrelationEngine::forPlants(collect([$loaded]), [new HumidityFactor()]);
+        $result = CorrelationEngine::forPlants(collect([$loaded]), [new HumidityFactor]);
 
         $this->assertCount(1, $result);
         $pair = $result[0];
@@ -110,7 +110,7 @@ class CorrelationFactorsTest extends TestCase
         ]);
 
         $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
-        $result = CorrelationEngine::forPlants(collect([$loaded]), [new LightLevelFactor()]);
+        $result = CorrelationEngine::forPlants(collect([$loaded]), [new LightLevelFactor]);
 
         $this->assertCount(1, $result);
         $pair = $result[0];
@@ -144,7 +144,7 @@ class CorrelationFactorsTest extends TestCase
         }
 
         $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
-        $result = CorrelationEngine::forPlants(collect([$loaded]), [new SoilMoistureFactor()]);
+        $result = CorrelationEngine::forPlants(collect([$loaded]), [new SoilMoistureFactor]);
 
         $this->assertCount(1, $result);
         $pair = $result[0];
@@ -185,7 +185,7 @@ class CorrelationFactorsTest extends TestCase
         }
 
         $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
-        $result = CorrelationEngine::forPlants(collect([$loaded]), [new SoilMoistureFactor()]);
+        $result = CorrelationEngine::forPlants(collect([$loaded]), [new SoilMoistureFactor]);
 
         $this->assertCount(1, $result);
         $this->assertSame(5, $result[0]['sample_size']);
@@ -229,7 +229,7 @@ class CorrelationFactorsTest extends TestCase
         }
 
         $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
-        $result = CorrelationEngine::forPlants(collect([$loaded]), [new SoilMoistureFactor()]);
+        $result = CorrelationEngine::forPlants(collect([$loaded]), [new SoilMoistureFactor]);
 
         $this->assertCount(1, $result);
         $this->assertSame(5, $result[0]['sample_size']);
@@ -270,6 +270,6 @@ class CorrelationFactorsTest extends TestCase
 
         $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
 
-        $this->assertSame([], CorrelationEngine::forPlants(collect([$loaded]), [new $factorClass()]));
+        $this->assertSame([], CorrelationEngine::forPlants(collect([$loaded]), [new $factorClass]));
     }
 }
