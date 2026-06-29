@@ -29,6 +29,7 @@ const unwrap = <T>(res: AxiosResponse<{ data: T }>): T => res.data.data
 export interface PlantPayload {
   common_name?: string | null
   scientific_name?: string | null
+  nickname?: string | null
   gbif_key?: string | null
   location_id?: number | null
   acquired_on?: string | null

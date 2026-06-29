@@ -41,10 +41,31 @@ describe('AddPlantForm', () => {
         payload: expect.objectContaining({
           common_name: 'Pothos',
           scientific_name: null,
+          nickname: null,
           gbif_key: null,
+          acquired_on: null,
           tag_ids: [],
         }),
         coverFile: null,
+      })
+    )
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+  })
+
+  it('sends nickname in the payload when provided', async () => {
+    const onDone = vi.fn()
+    render(<AddPlantForm onDone={onDone} />)
+
+    await userEvent.type(screen.getByPlaceholderText(/Pothos, Monstera/), 'Pothos')
+    await userEvent.type(screen.getByPlaceholderText(/Kitchen Pothos/), 'Kitchen Pothos')
+    await userEvent.click(screen.getByRole('button', { name: /add plant/i }))
+
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          common_name: 'Pothos',
+          nickname: 'Kitchen Pothos',
+        }),
       })
     )
     await waitFor(() => expect(onDone).toHaveBeenCalled())

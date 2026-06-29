@@ -159,6 +159,9 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
           <div className="flex items-start gap-2">
             <div className="min-w-0">
               <h1 className="text-xl font-semibold truncate">{plant.common_name}</h1>
+              {plant.nickname && (
+                <div className="text-[13px] text-text-muted truncate">{plant.nickname}</div>
+              )}
               <div className="italic text-text-muted text-[13px] truncate">
                 {plant.scientific_name}
               </div>

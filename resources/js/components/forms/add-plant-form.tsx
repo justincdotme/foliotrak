@@ -12,8 +12,6 @@ import { Input } from '@/components/ui/input'
 import { LocationCombobox } from '@/components/app/location-combobox'
 import { TagInlineCreate } from '@/components/app/tag-inline-create'
 
-const today = (): string => new Date().toISOString().slice(0, 10)
-
 interface AddPlantFormProps {
   onDone: () => void
 }
@@ -23,9 +21,10 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const create = useCreatePlant()
   const [common, setCommon] = useState('')
   const [sci, setSci] = useState('')
+  const [nickname, setNickname] = useState('')
   const [gbifKey, setGbifKey] = useState<string | null>(null)
   const [locationId, setLocationId] = useState<number | null>(null)
-  const [acquired, setAcquired] = useState(today())
+  const [acquired, setAcquired] = useState('')
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [open, setOpen] = useState(false)
@@ -84,9 +83,10 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
         payload: {
           common_name: common.trim(),
           scientific_name: sci || null,
+          nickname: nickname.trim() || null,
           gbif_key: gbifKey,
           location_id: locationId,
-          acquired_on: acquired,
+          acquired_on: acquired || null,
           tag_ids: selectedTags.map(t => t.id),
         },
         coverFile: photoFile,
@@ -188,11 +188,27 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
           </div>
         )}
       </Field>
+      <Field label="Nickname" hint="optional">
+        <Input
+          value={nickname}
+          onChange={e => setNickname(e.target.value)}
+          placeholder="Kitchen Pothos, Big Fern…"
+        />
+      </Field>
       <Field label="Location" hint="optional">
         <LocationCombobox value={locationId} onChange={setLocationId} />
       </Field>
       <Field label="Acquired on" hint="optional">
         <Input type="date" value={acquired} onChange={e => setAcquired(e.target.value)} />
+        {acquired && (
+          <button
+            type="button"
+            onClick={() => setAcquired('')}
+            className="mt-1 text-[11px] text-text-muted hover:text-text"
+          >
+            Clear
+          </button>
+        )}
       </Field>
       <Field label="Tags">
         <div className="flex flex-wrap gap-1.5">

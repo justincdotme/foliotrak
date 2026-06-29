@@ -73,6 +73,9 @@ function PlantCard({ p, onClick }: PlantCardProps) {
       </div>
       <div className="mt-3">
         <div className="font-medium">{p.common_name}</div>
+        {p.nickname && (
+          <div className="text-[12px] text-text-muted truncate">{p.nickname}</div>
+        )}
         <div className="text-[12px] text-text-subtle italic truncate">{p.scientific_name}</div>
         <div className="flex items-center gap-1 text-[12px] text-text-muted mt-1.5">
           <MapPin size={12} />
@@ -112,7 +115,7 @@ export function PlantsPage({ go, onAdd }: PlantsPageProps) {
   const filtered = (plants || []).filter(
     p =>
       (!q ||
-        (p.common_name + ' ' + (p.scientific_name || ''))
+        (p.common_name + ' ' + (p.scientific_name || '') + ' ' + (p.nickname || ''))
           .toLowerCase()
           .includes(q.toLowerCase())) &&
       (!tagF || p.tags.some(t => t.id === tagF)) &&

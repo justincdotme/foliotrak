@@ -27,6 +27,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'common_name',
     'scientific_name',
+    'nickname',
     'gbif_key',
     'location_id',
     'acquired_on',

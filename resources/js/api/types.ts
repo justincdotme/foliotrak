@@ -26,6 +26,7 @@ export interface Plant {
   id: number
   common_name: string | null
   scientific_name: string | null
+  nickname: string | null
   gbif_key: string | null
   location: Location | null
   acquired_on: string | null
