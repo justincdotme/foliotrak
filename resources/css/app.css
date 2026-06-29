@@ -147,6 +147,10 @@
     height: 100%;
   }
 
+  button {
+    cursor: pointer;
+  }
+
   /* Tabular figures for measurements, ids, and stacked numbers. */
   .tnum {
     font-family: 'IBM Plex Mono', ui-monospace, monospace;

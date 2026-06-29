@@ -84,5 +84,5 @@ export default typescriptEslint.config(
       '@typescript-eslint/no-unused-vars': 'off',
     },
   },
-  prettierConfig,
+  prettierConfig
 )
