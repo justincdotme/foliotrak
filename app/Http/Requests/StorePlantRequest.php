@@ -29,6 +29,7 @@ class StorePlantRequest extends FormRequest
             'status' => ['nullable', Rule::enum(PlantStatus::class)],
             'notes' => ['nullable', 'string'],
             'watering_interval_days_override' => ['nullable', 'integer', 'min:1', 'max:65535'],
+            'watering_schedule_start_date' => ['nullable', 'date'],
             'fertilizing_interval_days_override' => ['nullable', 'integer', 'min:1', 'max:65535'],
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => ['integer', Rule::exists('plant_tags', 'id')],

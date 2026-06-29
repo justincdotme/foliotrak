@@ -227,6 +227,41 @@ class SendCareRemindersTest extends TestCase
         ]);
     }
 
+    public function test_a_plant_with_start_date_and_interval_but_no_events_sends_a_reminder_when_due(): void
+    {
+        Notification::fake();
+        $this->userWithKey();
+
+        $plant = Plant::factory()->create([
+            'watering_interval_days_override' => 5,
+            'watering_schedule_start_date' => '2026-06-20',
+        ]);
+
+        $this->artisan('app:send-care-reminders')->assertSuccessful();
+
+        Notification::assertSentTimes(PlantCareReminder::class, 1);
+        $this->assertDatabaseHas('sent_reminders', [
+            'plant_id' => $plant->id,
+            'reminder_type' => 'watering',
+            'due_on' => '2026-06-25',
+        ]);
+    }
+
+    public function test_a_plant_with_start_date_and_interval_not_yet_due_sends_nothing(): void
+    {
+        Notification::fake();
+        $this->userWithKey();
+
+        Plant::factory()->create([
+            'watering_interval_days_override' => 10,
+            'watering_schedule_start_date' => '2026-06-26',
+        ]);
+
+        $this->artisan('app:send-care-reminders')->assertSuccessful();
+
+        Notification::assertSentTimes(PlantCareReminder::class, 0);
+    }
+
     public function test_the_pushover_message_names_the_plant_and_the_action(): void
     {
         $plant = Plant::factory()->make(['common_name' => 'Fern']);

@@ -269,4 +269,40 @@ class PlantApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.cover_photo', null);
     }
+
+    public function test_store_accepts_watering_schedule_start_date(): void
+    {
+        $this->actAsHousehold();
+
+        $this->postJson('/api/plants', [
+            'common_name' => 'Fern',
+            'watering_schedule_start_date' => '2026-06-29',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.watering_schedule_start_date', '2026-06-29');
+    }
+
+    public function test_update_accepts_watering_schedule_start_date(): void
+    {
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+
+        $this->patchJson("/api/plants/{$plant->id}", [
+            'watering_schedule_start_date' => '2026-07-01',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.watering_schedule_start_date', '2026-07-01');
+    }
+
+    public function test_update_clears_watering_schedule_start_date(): void
+    {
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create(['watering_schedule_start_date' => '2026-06-29']);
+
+        $this->patchJson("/api/plants/{$plant->id}", [
+            'watering_schedule_start_date' => null,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.watering_schedule_start_date', null);
+    }
 }

@@ -35,6 +35,7 @@ export interface PlantPayload {
   status?: PlantStatus
   notes?: string | null
   watering_interval_days_override?: number | null
+  watering_schedule_start_date?: string | null
   fertilizing_interval_days_override?: number | null
   cover_photo_id?: number | null
   tag_ids?: number[]

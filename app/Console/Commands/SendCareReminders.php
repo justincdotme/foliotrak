@@ -38,7 +38,7 @@ class SendCareReminders extends Command
 
         $dispatched = 0;
         foreach ($plants as $plant) {
-            $dispatched += $this->remind($plant, 'watering', $plant->watering_interval_days_override, $plant->wateringEvents, $recipients);
+            $dispatched += $this->remind($plant, 'watering', $plant->watering_interval_days_override, $plant->wateringEvents, $recipients, $plant->watering_schedule_start_date);
             $dispatched += $this->remind($plant, 'fertilizing', $plant->fertilizing_interval_days_override, $plant->fertilizingEvents, $recipients);
         }
 
@@ -54,18 +54,24 @@ class SendCareReminders extends Command
      * @param  Collection<int, CareEvent>  $events  every logged event of the type, oldest first
      * @param  Collection<int, User>  $recipients
      */
-    private function remind(Plant $plant, string $type, ?int $override, Collection $events, Collection $recipients): int
+    private function remind(Plant $plant, string $type, ?int $override, Collection $events, Collection $recipients, ?Carbon $startDate = null): int
     {
         $interval = CareScheduleResolver::intervalForType(
             $override,
             $events->map(fn (CareEvent $event): Carbon => $event->occurred_at)->all(),
         );
-        $lastEvent = $events->last();
-        if ($interval === null || $lastEvent === null) {
+
+        if ($interval === null) {
             return 0;
         }
 
-        $due = $lastEvent->occurred_at->copy()->addDays($interval);
+        $anchor = $events->isEmpty() ? $startDate : $events->last()->occurred_at;
+
+        if ($anchor === null) {
+            return 0;
+        }
+
+        $due = $anchor->copy()->addDays($interval);
         if ($due->startOfDay()->greaterThan(Carbon::today())) {
             return 0;
         }

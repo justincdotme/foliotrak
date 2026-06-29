@@ -26,6 +26,7 @@ class PlantFactory extends Factory
             'status' => PlantStatus::Active,
             'notes' => fake()->optional()->sentence(),
             'watering_interval_days_override' => null,
+            'watering_schedule_start_date' => null,
             'fertilizing_interval_days_override' => null,
             'cover_photo_id' => null,
         ];
