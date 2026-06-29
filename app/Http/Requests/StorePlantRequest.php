@@ -23,6 +23,7 @@ class StorePlantRequest extends FormRequest
         return [
             'common_name' => ['nullable', 'string', 'max:255'],
             'scientific_name' => ['nullable', 'string', 'max:255'],
+            'nickname' => ['nullable', 'string', 'max:255'],
             'gbif_key' => ['nullable', 'string', 'max:64'],
             'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')],
             'acquired_on' => ['nullable', 'date'],

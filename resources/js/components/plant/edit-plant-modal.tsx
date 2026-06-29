@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { PlantWithTags, Tag } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
+import { Input } from '@/components/ui/input'
 import { LocationCombobox } from '@/components/app/location-combobox'
 import { Modal } from '@/components/app/modal'
 import { Segmented } from '@/components/app/segmented'
@@ -31,6 +32,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const [notes, setNotes] = useState(plant.notes || '')
   const [status, setStatus] = useState(plant.status)
   const [tags, setTags] = useState<Tag[]>(plant.tags)
+  const [nickname, setNickname] = useState(plant.nickname || '')
 
   useEffect(() => {
     if (open) {
@@ -38,6 +40,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       setNotes(plant.notes || '')
       setStatus(plant.status)
       setTags(plant.tags)
+      setNickname(plant.nickname || '')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, plant.id])
@@ -47,6 +50,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
 
   const save = async () => {
     await update.mutateAsync({
+      nickname: nickname.trim() || null,
       location_id: locationId,
       notes: notes.trim() || null,
       status,
@@ -74,6 +78,13 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       }
     >
       <div className="space-y-4">
+        <Field label="Nickname" hint="optional">
+          <Input
+            value={nickname}
+            onChange={e => setNickname(e.target.value)}
+            placeholder="Kitchen Pothos, Big Fern…"
+          />
+        </Field>
         <Field label="Location" hint="where it lives now">
           <LocationCombobox value={locationId} onChange={setLocationId} />
         </Field>
