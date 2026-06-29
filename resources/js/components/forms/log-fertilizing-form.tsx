@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { FlaskConical, Plus, X } from 'lucide-react'
+import { AlertTriangle, FlaskConical, Plus, X } from 'lucide-react'
 import type { CareEvent } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { useFertilizerForms, useNutrients } from '@/hooks/useCareLookups'
 import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
+import { handleApiError } from '@/lib/handle-api-error'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input, inputClass } from '@/components/ui/input'
@@ -57,9 +58,11 @@ export function LogFertilizingForm({
       ? isoToLocal(seedOccurredAt)
       : nowLocal()
 
+  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
+    setError,
     setValue,
     watch,
     formState: { errors, isSubmitting },
@@ -111,26 +114,32 @@ export function LogFertilizingForm({
     })
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
-    const payload = {
-      occurred_at: toIso(v.occurred_at),
-      fertilizer_form_id: Number(v.fertilizer_form_id),
-      brand: v.brand || null,
-      product: v.product || null,
-      npk_n: v.npk_n ? Number(v.npk_n) : null,
-      npk_p: v.npk_p ? Number(v.npk_p) : null,
-      npk_k: v.npk_k ? Number(v.npk_k) : null,
-      dose_pct: v.dose_pct ? Number(v.dose_pct) : null,
-      amount_ml: v.amount_ml ? Number(v.amount_ml) : null,
-      // Nutrient components belong to organic / multi-nutrient feeds; clear them
-      // when the form is anything else, including on an edit that switches forms.
-      nutrients: isOrganic
-        ? nutrients.map(n => ({ nutrient_id: Number(n.nutrient_id), note: n.note || null }))
-        : [],
-      note: v.note || null,
+    setFormError(null)
+    try {
+      const payload = {
+        occurred_at: toIso(v.occurred_at),
+        fertilizer_form_id: Number(v.fertilizer_form_id),
+        brand: v.brand || null,
+        product: v.product || null,
+        npk_n: v.npk_n ? Number(v.npk_n) : null,
+        npk_p: v.npk_p ? Number(v.npk_p) : null,
+        npk_k: v.npk_k ? Number(v.npk_k) : null,
+        dose_pct: v.dose_pct ? Number(v.dose_pct) : null,
+        amount_ml: v.amount_ml ? Number(v.amount_ml) : null,
+        // Nutrient components belong to organic / multi-nutrient feeds; clear them
+        // when the form is anything else, including on an edit that switches forms.
+        nutrients: isOrganic
+          ? nutrients.map(n => ({ nutrient_id: Number(n.nutrient_id), note: n.note || null }))
+          : [],
+        note: v.note || null,
+      }
+      if (event) await updateEvent.mutateAsync({ eventId: event.id, payload })
+      else await createFertilizing.mutateAsync(payload)
+      onDone()
+    } catch (err) {
+      const msg = handleApiError(err, setError)
+      if (msg) setFormError(msg)
     }
-    if (event) await updateEvent.mutateAsync({ eventId: event.id, payload })
-    else await createFertilizing.mutateAsync(payload)
-    onDone()
   }
 
   return (
@@ -238,6 +247,12 @@ export function LogFertilizingForm({
       <Field label="Note" hint="optional">
         <Textarea {...register('note')} />
       </Field>
+      {formError && (
+        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
+          <AlertTriangle size={14} />
+          {formError}
+        </div>
+      )}
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting}>
           <FlaskConical size={16} />

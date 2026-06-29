@@ -19,6 +19,8 @@ import { Spinner } from '@/components/app/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { WaterDrop } from '@/components/app/water-drop'
 import { fmtDateY } from '@/lib/format'
+import { useNotification } from '@/components/app/notification-context'
+import { handleApiError } from '@/lib/handle-api-error'
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
 
 type NextDue = {
@@ -174,6 +176,7 @@ export function ScheduleSection({
   recommendationsError = false,
   due,
 }: ScheduleSectionProps) {
+  const { showError } = useNotification()
   const [tab, setTab] = useState('mine')
   const [editing, setEditing] = useState(false)
   const [wInt, setWInt] = useState(plant.watering_interval_days_override ?? '')
@@ -201,17 +204,25 @@ export function ScheduleSection({
   const update = useUpdatePlant(plant.id)
 
   const save = async () => {
-    await update.mutateAsync({
-      watering_interval_days_override: wInt !== '' ? Number(wInt) : null,
-      watering_schedule_start_date: wStart || null,
-      fertilizing_interval_days_override: fInt !== '' ? Number(fInt) : null,
-    })
-    setEditing(false)
+    try {
+      await update.mutateAsync({
+        watering_interval_days_override: wInt !== '' ? Number(wInt) : null,
+        watering_schedule_start_date: wStart || null,
+        fertilizing_interval_days_override: fInt !== '' ? Number(fInt) : null,
+      })
+      setEditing(false)
+    } catch (err) {
+      showError(handleApiError(err))
+    }
   }
 
   const adoptWatering = async (days: number) => {
-    await update.mutateAsync({ watering_interval_days_override: days })
-    setTab('mine')
+    try {
+      await update.mutateAsync({ watering_interval_days_override: days })
+      setTab('mine')
+    } catch (err) {
+      showError(handleApiError(err))
+    }
   }
 
   return (

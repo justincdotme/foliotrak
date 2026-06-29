@@ -36,7 +36,7 @@ export function LoginPage() {
       navigate('/')
     } catch (err) {
       setAuthError(
-        isAxiosError(err) && err.response?.status === 422
+        isAxiosError(err) && err.response?.status === 401
           ? 'Incorrect email or password.'
           : 'Something went wrong. Please try again.'
       )

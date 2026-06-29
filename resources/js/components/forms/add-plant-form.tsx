@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type KeyboardEvent, type SyntheticEvent } from 'react'
-import { Check, ImageIcon, Plus, Search } from 'lucide-react'
+import { AlertTriangle, Check, ImageIcon, Plus, Search } from 'lucide-react'
 import type { SpeciesSuggestion, Tag } from '@/api/types'
 import { cn } from '@/lib/utils'
 import { useSpeciesSuggest } from '@/hooks/useSpeciesSuggest'
@@ -11,6 +11,7 @@ import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { LocationCombobox } from '@/components/app/location-combobox'
 import { TagInlineCreate } from '@/components/app/tag-inline-create'
+import { handleApiError } from '@/lib/handle-api-error'
 
 interface AddPlantFormProps {
   onDone: () => void
@@ -29,6 +30,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
+  const [formError, setFormError] = useState<string | null>(null)
   const { results, loading } = useSpeciesSuggest(common)
 
   const matchedAlias = (g: SpeciesSuggestion): string | null => {
@@ -78,6 +80,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault()
     if (!common.trim()) return
+    setFormError(null)
     try {
       await create.mutateAsync({
         payload: {
@@ -92,8 +95,8 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
         coverFile: photoFile,
       })
       onDone()
-    } catch {
-      // The failure line below covers the error; the form stays for a retry.
+    } catch (err) {
+      setFormError(handleApiError(err))
     }
   }
 
@@ -233,8 +236,11 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
           />
         </label>
       </Field>
-      {create.isError && (
-        <div className="text-[12px] text-overdue">Could not add the plant. Try again.</div>
+      {formError && (
+        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
+          <AlertTriangle size={14} />
+          {formError}
+        </div>
       )}
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={create.isPending || !common.trim()}>

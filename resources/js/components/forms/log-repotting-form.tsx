@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Info, Shovel } from 'lucide-react'
+import { AlertTriangle, Info, Shovel } from 'lucide-react'
 import type { CareEvent } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
+import { handleApiError } from '@/lib/handle-api-error'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
@@ -38,9 +40,11 @@ export function LogRepottingForm({
   onLogFertilizer,
 }: LogRepottingFormProps) {
   const { createRepotting, updateEvent } = useCareEventMutations(plantId)
+  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
+    setError,
     setValue,
     watch,
     formState: { errors, isSubmitting },
@@ -61,27 +65,33 @@ export function LogRepottingForm({
   const fertAdded = watch('fertilizer_added')
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
-    const occurredAt = toIso(v.occurred_at)
-    const payload = {
-      occurred_at: occurredAt,
-      soil_recipe: v.soil_recipe || null,
-      pot_size_value: v.pot_size_value ? Number(v.pot_size_value) : null,
-      pot_size_unit: v.pot_size_unit,
-      fertilizer_added: v.fertilizer_added,
-      note: v.note || null,
-    }
+    setFormError(null)
+    try {
+      const occurredAt = toIso(v.occurred_at)
+      const payload = {
+        occurred_at: occurredAt,
+        soil_recipe: v.soil_recipe || null,
+        pot_size_value: v.pot_size_value ? Number(v.pot_size_value) : null,
+        pot_size_unit: v.pot_size_unit,
+        fertilizer_added: v.fertilizer_added,
+        note: v.note || null,
+      }
 
-    if (event) {
-      await updateEvent.mutateAsync({ eventId: event.id, payload })
-      onDone()
-      return
-    }
+      if (event) {
+        await updateEvent.mutateAsync({ eventId: event.id, payload })
+        onDone()
+        return
+      }
 
-    await createRepotting.mutateAsync(payload)
-    if (v.fertilizer_added && onLogFertilizer) {
-      onLogFertilizer(occurredAt)
-    } else {
-      onDone()
+      await createRepotting.mutateAsync(payload)
+      if (v.fertilizer_added && onLogFertilizer) {
+        onLogFertilizer(occurredAt)
+      } else {
+        onDone()
+      }
+    } catch (err) {
+      const msg = handleApiError(err, setError)
+      if (msg) setFormError(msg)
     }
   }
 
@@ -131,6 +141,12 @@ export function LogRepottingForm({
       <Field label="Note" hint="optional">
         <Textarea {...register('note')} />
       </Field>
+      {formError && (
+        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
+          <AlertTriangle size={14} />
+          {formError}
+        </div>
+      )}
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting}>
           <Shovel size={16} />
