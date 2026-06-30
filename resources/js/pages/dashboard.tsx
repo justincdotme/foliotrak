@@ -74,11 +74,15 @@ export function DashboardPage({ go }: DashboardPageProps) {
   // Count plants, not care entries; a plant can be due for both watering and fertilizing.
   const attentionCount = new Set(d.due_for_care.filter(x => x.status !== 'ok').map(x => x.plant_id))
     .size
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Good morning, {d.user.name.split(' ')[0]}</h1>
+        <h1 className="text-2xl font-semibold">
+          {greeting}, {d.user.name.split(' ')[0]}
+        </h1>
         <p className="text-text-muted text-[13px] mt-0.5">
           {attentionCount} plants need attention today.
         </p>

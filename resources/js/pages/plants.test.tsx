@@ -27,6 +27,7 @@ const makePlant = (o: Partial<PlantWithTags>): PlantWithTags =>
     created_at: '',
     updated_at: '',
     tags: [],
+    due_for_care: [],
     ...o,
   }) as PlantWithTags
 
@@ -82,6 +83,30 @@ describe('PlantsPage', () => {
 
     expect(screen.getByText('Snake plant')).toBeInTheDocument()
     expect(screen.queryByText('Pothos')).toBeNull()
+  })
+
+  it('shows the watering status from due_for_care data', () => {
+    setPlants([
+      makePlant({
+        due_for_care: [
+          {
+            plant_id: 1,
+            common_name: 'Pothos',
+            scientific_name: 'Epipremnum aureum',
+            status: 'ok',
+            due_date: '2026-07-05',
+            type: 'watering',
+            daysLeft: 5,
+            interval: 7,
+          },
+        ],
+      }),
+    ])
+
+    render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+
+    expect(screen.getByText('Water in 5d')).toBeInTheDocument()
+    expect(screen.queryByText('No watering logged')).toBeNull()
   })
 
   it('hides non-active plants until their status filter is toggled on', async () => {
