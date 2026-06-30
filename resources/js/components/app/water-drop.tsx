@@ -9,14 +9,16 @@ interface WaterDropProps {
     interval: number
   } | null
   size?: number
+  dusk?: string
 }
 
-export function WaterDrop({ due, size = 26 }: WaterDropProps) {
+export function WaterDrop({ due, size = 26, dusk }: WaterDropProps) {
   const id = useId().replace(/:/g, '')
 
   if (!due) {
     return (
       <span
+        dusk={dusk}
         className="inline-grid place-items-center text-text-subtle"
         style={{ width: size, height: size }}
         title="No watering logged"
@@ -45,6 +47,7 @@ export function WaterDrop({ due, size = 26 }: WaterDropProps) {
 
   return (
     <span
+      dusk={dusk}
       className="relative inline-grid place-items-center"
       title={tip}
       style={{ width: size, height: size }}
