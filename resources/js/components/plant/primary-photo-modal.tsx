@@ -1,15 +1,13 @@
-import { Camera, Check, ChevronLeft, ChevronRight, Trash2, Upload, ZoomIn } from 'lucide-react'
+import { Camera, Check, Trash2, Upload } from 'lucide-react'
 import { type ChangeEvent, type DragEvent, useCallback, useRef, useState } from 'react'
-import Cropper from 'react-easy-crop'
-import type { Area } from 'react-easy-crop'
 import type { CropArea, Photo, Plant } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/app/modal'
 import { cn } from '@/lib/utils'
 import { photoUrl } from '@/lib/photos'
 import { useDeletePhoto, useSetCoverPhoto, useUploadPhoto } from '@/hooks/usePlantMutations'
-
-type Step = 'pick' | 'crop-hero' | 'crop-thumb'
+// Extracted to prevent accidental removal (FOL-59). Guard tests in primary-photo-modal.test.tsx.
+import { CropWorkflow } from './crop-workflow'
 
 interface PrimaryPhotoModalProps {
   plant: Plant
@@ -17,9 +15,6 @@ interface PrimaryPhotoModalProps {
   open: boolean
   onClose: () => void
 }
-
-const HERO_ASPECT = 2 / 3
-const THUMB_ASPECT = 1
 
 export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhotoModalProps) {
   const upload = useUploadPhoto(plant.id)
@@ -30,31 +25,17 @@ export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhoto
   const inputRef = useRef<HTMLInputElement>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
 
-  const [step, setStep] = useState<Step>('pick')
+  const [cropping, setCropping] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
 
-  const [heroCrop, setHeroCrop] = useState({ x: 0, y: 0 })
-  const [heroZoom, setHeroZoom] = useState(1)
-  const [heroCropArea, setHeroCropArea] = useState<CropArea | null>(null)
-
-  const [thumbCrop, setThumbCrop] = useState({ x: 0, y: 0 })
-  const [thumbZoom, setThumbZoom] = useState(1)
-  const [thumbCropArea, setThumbCropArea] = useState<CropArea | null>(null)
-
   const reset = useCallback(() => {
-    setStep('pick')
+    setCropping(false)
     setFile(null)
     if (preview) URL.revokeObjectURL(preview)
     setPreview(null)
     setDragging(false)
-    setHeroCrop({ x: 0, y: 0 })
-    setHeroZoom(1)
-    setHeroCropArea(null)
-    setThumbCrop({ x: 0, y: 0 })
-    setThumbZoom(1)
-    setThumbCropArea(null)
   }, [preview])
 
   const handleClose = useCallback(() => {
@@ -67,13 +48,7 @@ export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhoto
       if (preview) URL.revokeObjectURL(preview)
       setFile(f)
       setPreview(URL.createObjectURL(f))
-      setHeroCrop({ x: 0, y: 0 })
-      setHeroZoom(1)
-      setHeroCropArea(null)
-      setThumbCrop({ x: 0, y: 0 })
-      setThumbZoom(1)
-      setThumbCropArea(null)
-      setStep('crop-hero')
+      setCropping(true)
     },
     [preview]
   )
@@ -99,27 +74,19 @@ export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhoto
     if (f?.type.startsWith('image/')) loadFile(f)
   }
 
-  const onHeroCropComplete = useCallback((_: Area, pixels: Area) => {
-    setHeroCropArea(pixels)
-  }, [])
-
-  const onThumbCropComplete = useCallback((_: Area, pixels: Area) => {
-    setThumbCropArea(pixels)
-  }, [])
-
-  const submitCropped = async () => {
-    if (!file || !heroCropArea || !thumbCropArea) return
+  const handleCropComplete = async (heroCrop: CropArea, thumbCrop: CropArea) => {
+    if (!file) return
     try {
       await upload.mutateAsync({
         file,
         caption: 'Cover photo',
         setAsCover: true,
-        heroCrop: heroCropArea,
-        thumbCrop: thumbCropArea,
+        heroCrop,
+        thumbCrop,
       })
       handleClose()
     } catch {
-      // Error state shown in the modal
+      // Error state shown in the crop workflow
     }
   }
 
@@ -141,57 +108,19 @@ export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhoto
     }
   }
 
-  const stepTitle =
-    step === 'crop-hero'
-      ? 'Crop hero photo (2:3)'
-      : step === 'crop-thumb'
-        ? 'Crop thumbnail (1:1)'
-        : 'Cover photo'
-
-  const stepSubtitle =
-    step === 'crop-hero'
-      ? 'Drag to position, scroll or use the slider to zoom.'
-      : step === 'crop-thumb'
-        ? 'This square crop is used on cards.'
-        : 'The card image, separate from logged photos.'
-
   return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      title={stepTitle}
-      subtitle={stepSubtitle}
-      wide={step !== 'pick'}
-      footer={
-        step === 'pick' ? (
+    <>
+      <Modal
+        open={open && !cropping}
+        onClose={handleClose}
+        title="Cover photo"
+        subtitle="The card image, separate from logged photos."
+        footer={
           <Button variant="ghost" onClick={handleClose}>
             Done
           </Button>
-        ) : step === 'crop-hero' ? (
-          <div className="flex w-full items-center justify-between">
-            <Button variant="ghost" onClick={reset}>
-              <ChevronLeft size={16} />
-              Back
-            </Button>
-            <Button onClick={() => setStep('crop-thumb')} disabled={!heroCropArea}>
-              Next
-              <ChevronRight size={16} />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex w-full items-center justify-between">
-            <Button variant="ghost" onClick={() => setStep('crop-hero')}>
-              <ChevronLeft size={16} />
-              Back
-            </Button>
-            <Button onClick={submitCropped} disabled={!thumbCropArea || busy}>
-              {busy ? 'Uploading...' : 'Save cover photo'}
-            </Button>
-          </div>
-        )
-      }
-    >
-      {step === 'pick' && (
+        }
+      >
         <div className="space-y-4">
           {photos.length > 0 && (
             <div>
@@ -304,69 +233,17 @@ export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhoto
             </div>
           )}
         </div>
+      </Modal>
+      {cropping && preview && (
+        <CropWorkflow
+          preview={preview}
+          onBack={() => setCropping(false)}
+          onComplete={handleCropComplete}
+          onClose={handleClose}
+          busy={upload.isPending}
+          failed={upload.isError}
+        />
       )}
-
-      {step === 'crop-hero' && preview && (
-        <div className="space-y-3">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-black/80">
-            <Cropper
-              image={preview}
-              crop={heroCrop}
-              zoom={heroZoom}
-              aspect={HERO_ASPECT}
-              onCropChange={setHeroCrop}
-              onZoomChange={setHeroZoom}
-              onCropComplete={onHeroCropComplete}
-            />
-          </div>
-          <div className="flex items-center gap-3 text-text-muted">
-            <ZoomIn size={16} className="shrink-0" />
-            <input
-              type="range"
-              min={1}
-              max={3}
-              step={0.01}
-              value={heroZoom}
-              onChange={e => setHeroZoom(parseFloat(e.target.value))}
-              className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
-            />
-          </div>
-        </div>
-      )}
-
-      {step === 'crop-thumb' && preview && (
-        <div className="space-y-3">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-black/80">
-            <Cropper
-              image={preview}
-              crop={thumbCrop}
-              zoom={thumbZoom}
-              aspect={THUMB_ASPECT}
-              onCropChange={setThumbCrop}
-              onZoomChange={setThumbZoom}
-              onCropComplete={onThumbCropComplete}
-            />
-          </div>
-          <div className="flex items-center gap-3 text-text-muted">
-            <ZoomIn size={16} className="shrink-0" />
-            <input
-              type="range"
-              min={1}
-              max={3}
-              step={0.01}
-              value={thumbZoom}
-              onChange={e => setThumbZoom(parseFloat(e.target.value))}
-              className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
-            />
-          </div>
-
-          {failed && (
-            <div className="text-[12px] text-overdue">
-              Could not save the cover photo. Try again.
-            </div>
-          )}
-        </div>
-      )}
-    </Modal>
+    </>
   )
 }
