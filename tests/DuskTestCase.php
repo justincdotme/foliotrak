@@ -8,9 +8,18 @@ use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
+use RuntimeException;
 
 abstract class DuskTestCase extends BaseTestCase
 {
+    private const DUSK_DATABASE = 'foliotrak_dusk';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->assertDuskDatabase();
+    }
+
     protected function driver(): RemoteWebDriver
     {
         $options = (new ChromeOptions)->addArguments(array_filter([
@@ -28,5 +37,17 @@ abstract class DuskTestCase extends BaseTestCase
                 $options
             )
         );
+    }
+
+    private function assertDuskDatabase(): void
+    {
+        $current = config('database.connections.mysql.database');
+
+        if ($current !== self::DUSK_DATABASE) {
+            throw new RuntimeException(
+                'Dusk tests must run against "'.self::DUSK_DATABASE.'" '
+                .'but the connection targets "'.$current.'".'
+            );
+        }
     }
 }

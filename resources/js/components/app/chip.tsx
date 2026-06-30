@@ -8,9 +8,18 @@ interface ChipProps {
   outline?: boolean
   onClick?: () => void
   className?: string
+  dusk?: string
 }
 
-export function Chip({ children, color, active, outline, onClick, className = '' }: ChipProps) {
+export function Chip({
+  children,
+  color,
+  active,
+  outline,
+  onClick,
+  className = '',
+  dusk,
+}: ChipProps) {
   const style = color
     ? active || !outline
       ? { background: color, color: '#fff', borderColor: color }
@@ -31,14 +40,14 @@ export function Chip({ children, color, active, outline, onClick, className = ''
   // without nesting a button in a button.
   if (!onClick) {
     return (
-      <span style={style} className={classes}>
+      <span style={style} className={classes} dusk={dusk}>
         {children}
       </span>
     )
   }
 
   return (
-    <button type="button" onClick={onClick} style={style} className={classes}>
+    <button type="button" onClick={onClick} style={style} className={classes} dusk={dusk}>
       {children}
     </button>
   )

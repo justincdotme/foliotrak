@@ -47,6 +47,7 @@ function PlantCard({ p, onClick }: PlantCardProps) {
 
   return (
     <button
+      dusk="plant-card"
       onClick={onClick}
       className="group flex flex-col text-left bg-surface border border-border rounded-[10px] overflow-hidden hover:border-border-strong transition-colors p-3"
     >
@@ -79,7 +80,7 @@ function PlantCard({ p, onClick }: PlantCardProps) {
           {p.location?.name || 'No location'}
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
-          <ConditionChip cond={cond} />
+          <ConditionChip cond={cond} dusk="condition-chip" />
           {p.tags.map(t => (
             <Chip key={t.id} color={t.color || undefined}>
               {t.name}
@@ -91,7 +92,7 @@ function PlantCard({ p, onClick }: PlantCardProps) {
             className="mt-2.5 pt-2.5 border-t border-border flex items-center gap-1.5 text-[12px] font-medium"
             style={{ color: wl.color }}
           >
-            <WaterDrop due={due} size={16} />
+            <WaterDrop due={due} size={16} dusk="water-drop" />
             {wl.text}
           </div>
         )}
@@ -126,7 +127,9 @@ export function PlantsPage({ go, onAdd }: PlantsPageProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <h1 className="text-2xl font-semibold">Plants</h1>
-        <span className="text-text-subtle tnum">{filtered.length}</span>
+        <span dusk="plants-count" className="text-text-subtle tnum">
+          {filtered.length}
+        </span>
         <Button variant="accent" className="ml-auto" onClick={onAdd}>
           <Plus size={16} />
           Add plant
@@ -136,6 +139,7 @@ export function PlantsPage({ go, onAdd }: PlantsPageProps) {
         <div className="relative flex-1 min-w-[180px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
           <Input
+            dusk="plants-search"
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Search name…"
@@ -143,6 +147,7 @@ export function PlantsPage({ go, onAdd }: PlantsPageProps) {
           />
         </div>
         <select
+          dusk="plants-tag-filter"
           value={(tagF ?? '') as string}
           onChange={e => setTagF(e.target.value ? Number(e.target.value) : null)}
           className="w-auto min-w-[140px] h-11 px-3 rounded-md bg-surface-raised border border-border-strong text-text placeholder:text-text-subtle focus:border-primary outline-none transition-colors"
@@ -157,20 +162,26 @@ export function PlantsPage({ go, onAdd }: PlantsPageProps) {
       </div>
       <div className="flex flex-wrap gap-1.5">
         {['active', 'archived', 'dead'].map(s => (
-          <Chip key={s} active={statusF.includes(s)} onClick={() => toggleStatus(s)}>
+          <Chip
+            key={s}
+            dusk={`status-chip-${s}`}
+            active={statusF.includes(s)}
+            onClick={() => toggleStatus(s)}
+          >
             {statusF.includes(s) && <Check size={12} />}
             {s.charAt(0).toUpperCase() + s.slice(1)}
           </Chip>
         ))}
       </div>
       {filtered.length === 0 ? (
-        <Card>
+        <Card dusk="plants-empty">
           <EmptyState icon={Sprout} title="No plants match">
             Try clearing filters, or add your first plant to get started.
           </EmptyState>
         </Card>
       ) : (
         <div
+          dusk="plants-grid"
           className="grid gap-3"
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}
         >
