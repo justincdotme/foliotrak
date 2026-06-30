@@ -41,6 +41,7 @@ export interface Plant {
   created_at: string
   updated_at: string
   due_for_care: DueForCare[]
+  last_watered_at: string | null
 }
 
 export interface Tag {

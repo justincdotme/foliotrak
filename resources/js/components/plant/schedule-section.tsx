@@ -18,7 +18,7 @@ import { SectionTitle } from '@/components/app/section-title'
 import { Spinner } from '@/components/app/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { WaterDrop } from '@/components/app/water-drop'
-import { fmtDateY } from '@/lib/format'
+import { fmtDateY, relDay } from '@/lib/format'
 import { useNotification } from '@/components/app/notification-context'
 import { handleApiError } from '@/lib/handle-api-error'
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
@@ -40,8 +40,17 @@ interface ScheduleSectionProps {
   due: NextDue
 }
 
-function NextDueRow({ due }: { due: NextDue }) {
-  if (!due) return <div className="text-[13px] text-text-muted">No watering logged yet.</div>
+function NextDueRow({ due, lastWateredAt }: { due: NextDue; lastWateredAt?: string | null }) {
+  if (!due) {
+    if (lastWateredAt) {
+      return (
+        <div className="text-[13px] text-text-muted">
+          Last watered {relDay(lastWateredAt).toLowerCase()}.
+        </div>
+      )
+    }
+    return <div className="text-[13px] text-text-muted">No watering logged yet.</div>
+  }
 
   if (due.status === 'overdue')
     return (
@@ -242,7 +251,7 @@ export function ScheduleSection({
         </TabsList>
 
         <TabsContent value="mine" className="space-y-3">
-          <NextDueRow due={due} />
+          <NextDueRow due={due} lastWateredAt={plant.last_watered_at} />
           {!editing ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2.5 text-[13px]">

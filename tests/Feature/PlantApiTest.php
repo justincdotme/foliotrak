@@ -340,4 +340,33 @@ class PlantApiTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.0.due_for_care', []);
     }
+
+    public function test_listing_includes_last_watered_at_when_watering_exists(): void
+    {
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+
+        $wateringType = CareEventType::where('key', 'watering')->first();
+        CareEvent::create([
+            'plant_id' => $plant->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at' => now()->subDays(3),
+        ]);
+
+        $response = $this->getJson('/api/plants');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.last_watered_at', fn ($v) => str_contains($v, now()->subDays(3)->format('Y-m-d')));
+    }
+
+    public function test_listing_returns_null_last_watered_at_when_no_waterings(): void
+    {
+        $this->actAsHousehold();
+        Plant::factory()->create();
+
+        $response = $this->getJson('/api/plants');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.last_watered_at', null);
+    }
 }

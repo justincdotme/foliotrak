@@ -747,6 +747,13 @@ const buildSeed = (): StoreData => {
     },
   ]
 
+  for (const p of plants) {
+    const lastW = events
+      .filter(e => e.plant_id === p.id && e.type === 'watering')
+      .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime())
+    p.last_watered_at = lastW[0]?.occurred_at ?? null
+  }
+
   return { events, plants, photos, recs }
 
   function plant(
@@ -780,6 +787,7 @@ const buildSeed = (): StoreData => {
       tags: tagNames.map(n => TAGS.find(t => t.name === n) ?? { id: 0, name: '', color: null }),
       equipment: [],
       due_for_care: [],
+      last_watered_at: null,
     }
   }
 
@@ -949,6 +957,7 @@ export const mockApi = {
       tags: data.tags || [],
       equipment: [],
       due_for_care: [],
+      last_watered_at: null,
     }
     STORE.plants.push(p)
     return clone(p)
