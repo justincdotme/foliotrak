@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { Plant } from '@/api/types'
 import { PrimaryPhotoModal } from './primary-photo-modal'
 
 vi.mock('@/components/app/app-context', () => ({
@@ -55,24 +56,24 @@ beforeEach(() => {
     mutateAsync: uploadMutateAsync,
     isPending: false,
     isError: false,
-  } as ReturnType<typeof useUploadPhoto>)
+  } as unknown as ReturnType<typeof useUploadPhoto>)
   vi.mocked(useSetCoverPhoto).mockReturnValue({
     mutateAsync: setCoverMutateAsync,
     isPending: false,
     isError: false,
-  } as ReturnType<typeof useSetCoverPhoto>)
+  } as unknown as ReturnType<typeof useSetCoverPhoto>)
   vi.mocked(useDeletePhoto).mockReturnValue({
     mutateAsync: deleteMutateAsync,
     isPending: false,
     isError: false,
-  } as ReturnType<typeof useDeletePhoto>)
+  } as unknown as ReturnType<typeof useDeletePhoto>)
 })
 
 const plant = {
   id: 1,
   common_name: 'Pothos',
   cover_photo_id: null,
-} as Record<string, unknown>
+} as unknown as Plant
 
 describe('PrimaryPhotoModal', () => {
   it('enters the crop workflow when a photo is uploaded', async () => {
