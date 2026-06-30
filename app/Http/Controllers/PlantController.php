@@ -33,6 +33,7 @@ class PlantController extends Controller
         'location',
         'latestObservationEvent.observation.symptoms',
         'wateringEvents',
+        'fertilizingEvents',
     ];
 
     public function index(Request $request): AnonymousResourceCollection

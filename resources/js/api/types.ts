@@ -40,6 +40,7 @@ export interface Plant {
   condition: Condition
   created_at: string
   updated_at: string
+  due_for_care: DueForCare[]
 }
 
 export interface Tag {

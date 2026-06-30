@@ -779,6 +779,7 @@ const buildSeed = (): StoreData => {
       updated_at: iso(1),
       tags: tagNames.map(n => TAGS.find(t => t.name === n) ?? { id: 0, name: '', color: null }),
       equipment: [],
+      due_for_care: [],
     }
   }
 
@@ -947,6 +948,7 @@ export const mockApi = {
       updated_at: iso(0),
       tags: data.tags || [],
       equipment: [],
+      due_for_care: [],
     }
     STORE.plants.push(p)
     return clone(p)

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\PlantStatus;
+use App\Models\CareEvent;
+use App\Models\CareEventType;
 use App\Models\Location;
 use App\Models\Photo;
 use App\Models\Plant;
@@ -304,5 +306,38 @@ class PlantApiTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.watering_schedule_start_date', null);
+    }
+
+    public function test_listing_includes_due_for_care_from_logged_waterings(): void
+    {
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create(['watering_interval_days_override' => 7]);
+
+        $wateringType = CareEventType::where('key', 'watering')->first();
+        CareEvent::create([
+            'plant_id' => $plant->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at' => now()->subDays(3),
+        ]);
+
+        $response = $this->getJson('/api/plants');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.due_for_care.0.type', 'watering')
+            ->assertJsonPath('data.0.due_for_care.0.status', 'ok')
+            ->assertJsonStructure([
+                'data' => [['due_for_care' => [['plant_id', 'status', 'due_date', 'type', 'daysLeft', 'interval']]]],
+            ]);
+    }
+
+    public function test_listing_returns_empty_due_for_care_when_no_schedule(): void
+    {
+        $this->actAsHousehold();
+        Plant::factory()->create();
+
+        $response = $this->getJson('/api/plants');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.due_for_care', []);
     }
 }

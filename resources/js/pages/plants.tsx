@@ -20,8 +20,6 @@ interface PlantsPageProps {
   onAdd: () => void
 }
 
-// Water need is derived from logged waterings; until care logging exists the card
-// shows the no-reading droplet.
 type WaterNeed = { status: CareStatus; daysLeft: number; interval: number } | null
 
 function waterLabel(due: WaterNeed) {
@@ -42,7 +40,8 @@ interface PlantCardProps {
 }
 
 function PlantCard({ p, onClick }: PlantCardProps) {
-  const due: WaterNeed = null
+  const w = p.due_for_care?.find(d => d.type === 'watering')
+  const due: WaterNeed = w ? { status: w.status, daysLeft: w.daysLeft, interval: w.interval } : null
   const cond = p.condition
   const wl = waterLabel(due)
 
