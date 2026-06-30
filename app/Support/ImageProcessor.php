@@ -25,25 +25,28 @@ class ImageProcessor
         $uuid = Str::uuid()->toString();
         $quality = (int) config('foliotrak.photos.webp_quality', 85);
 
+        $source = $this->manager->decodePath($sourcePath);
+        $source->orient();
+
         $heroPath = $uuid.'_hero.webp';
-        $hero = $this->manager->decodePath($sourcePath);
-        $hero->orient();
+        $hero = clone $source;
         $hero->crop($heroCrop['width'], $heroCrop['height'], x: $heroCrop['x'], y: $heroCrop['y']);
         $hero->scaleDown(
             width: (int) config('foliotrak.photos.hero_width', 600),
             height: (int) config('foliotrak.photos.hero_height', 900),
         );
         Storage::disk('photos')->put($heroPath, (string) $hero->encodeUsingFormat(Format::WEBP, quality: $quality));
+        unset($hero);
 
         $thumbPath = $uuid.'_thumb.webp';
-        $thumb = $this->manager->decodePath($sourcePath);
-        $thumb->orient();
+        $thumb = clone $source;
         $thumb->crop($thumbCrop['width'], $thumbCrop['height'], x: $thumbCrop['x'], y: $thumbCrop['y']);
         $thumb->scaleDown(
             width: (int) config('foliotrak.photos.thumb_width', 540),
             height: (int) config('foliotrak.photos.thumb_height', 540),
         );
         Storage::disk('photos')->put($thumbPath, (string) $thumb->encodeUsingFormat(Format::WEBP, quality: $quality));
+        unset($thumb, $source);
 
         return ['hero_path' => $heroPath, 'thumb_path' => $thumbPath];
     }
