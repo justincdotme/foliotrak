@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { Droplets } from 'lucide-react'
 import type { CareStatus } from '@/api/types'
+import { relDay } from '@/lib/format'
 
 interface WaterDropProps {
   due: {
@@ -8,11 +9,12 @@ interface WaterDropProps {
     daysLeft: number
     interval: number
   } | null
+  lastWateredAt?: string | null
   size?: number
   dusk?: string
 }
 
-export function WaterDrop({ due, size = 26, dusk }: WaterDropProps) {
+export function WaterDrop({ due, lastWateredAt, size = 26, dusk }: WaterDropProps) {
   const id = useId().replace(/:/g, '')
 
   if (!due) {
@@ -21,7 +23,11 @@ export function WaterDrop({ due, size = 26, dusk }: WaterDropProps) {
         dusk={dusk}
         className="inline-grid place-items-center text-text-subtle"
         style={{ width: size, height: size }}
-        title="No watering logged"
+        title={
+          lastWateredAt
+            ? `Last watered ${relDay(lastWateredAt).toLowerCase()}`
+            : 'No watering logged'
+        }
       >
         <Droplets size={size * 0.7} />
       </span>

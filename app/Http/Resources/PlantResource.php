@@ -40,6 +40,7 @@ class PlantResource extends JsonResource
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'equipment' => EquipmentResource::collection($this->whenLoaded('equipment')),
             'due_for_care' => CareDueResolver::forPlant($this->resource),
+            'last_watered_at' => $this->wateringEvents->last()?->occurred_at?->toISOString(),
         ];
     }
 }

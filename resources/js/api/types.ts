@@ -41,6 +41,7 @@ export interface Plant {
   created_at: string
   updated_at: string
   due_for_care: DueForCare[]
+  last_watered_at: string | null
 }
 
 export interface Tag {
@@ -248,7 +249,15 @@ export interface PlantRecommendations {
 }
 
 export type ConditionKey =
-  'healthy' | 'fair' | 'struggling' | 'diseased' | 'infested' | 'dry' | 'burnt' | 'unknown' | 'dead'
+  | 'healthy'
+  | 'fair'
+  | 'struggling'
+  | 'diseased'
+  | 'infested'
+  | 'dry'
+  | 'burnt'
+  | 'unknown'
+  | 'dead'
 
 // Computed from the latest observation and watering status, not stored.
 export interface Condition {

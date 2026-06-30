@@ -28,6 +28,7 @@ const makePlant = (o: Partial<PlantWithTags>): PlantWithTags =>
     updated_at: '',
     tags: [],
     due_for_care: [],
+    last_watered_at: null,
     ...o,
   }) as PlantWithTags
 
@@ -107,6 +108,21 @@ describe('PlantsPage', () => {
 
     expect(screen.getByText('Water in 5d')).toBeInTheDocument()
     expect(screen.queryByText('No watering logged')).toBeNull()
+  })
+
+  it('shows watered-ago text when last_watered_at exists but due_for_care is empty', () => {
+    const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString()
+    setPlants([
+      makePlant({
+        due_for_care: [],
+        last_watered_at: twoDaysAgo,
+      }),
+    ])
+
+    render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+
+    expect(screen.queryByText('No watering logged')).toBeNull()
+    expect(screen.getByText(/watered/i)).toBeInTheDocument()
   })
 
   it('hides non-active plants until their status filter is toggled on', async () => {

@@ -10,6 +10,7 @@ import { Spinner } from '@/components/app/spinner'
 import { StatusPill } from '@/components/app/status-pill'
 import { WaterDrop } from '@/components/app/water-drop'
 import type { CareStatus, PlantWithTags } from '@/api/types'
+import { ageDays } from '@/lib/format'
 import { photoUrl } from '@/lib/photos'
 import { cn } from '@/lib/utils'
 import { usePlants } from '@/hooks/usePlants'
@@ -22,8 +23,16 @@ interface PlantsPageProps {
 
 type WaterNeed = { status: CareStatus; daysLeft: number; interval: number } | null
 
-function waterLabel(due: WaterNeed) {
-  if (!due) return { text: 'No watering logged', color: 'var(--text-subtle)' }
+function waterLabel(due: WaterNeed, lastWateredAt?: string | null) {
+  if (!due) {
+    if (lastWateredAt) {
+      const days = ageDays(lastWateredAt)
+      if (days === 0) return { text: 'Watered today', color: 'var(--text-muted)' }
+      if (days === 1) return { text: 'Watered yesterday', color: 'var(--text-muted)' }
+      return { text: `Watered ${days}d ago`, color: 'var(--text-muted)' }
+    }
+    return { text: 'No watering logged', color: 'var(--text-subtle)' }
+  }
   if (due.status === 'overdue')
     return { text: `Water ${Math.abs(due.daysLeft)}d overdue`, color: 'var(--overdue)' }
   if (due.status === 'due-soon')
@@ -43,7 +52,7 @@ function PlantCard({ p, onClick }: PlantCardProps) {
   const w = p.due_for_care?.find(d => d.type === 'watering')
   const due: WaterNeed = w ? { status: w.status, daysLeft: w.daysLeft, interval: w.interval } : null
   const cond = p.condition
-  const wl = waterLabel(due)
+  const wl = waterLabel(due, p.last_watered_at)
 
   return (
     <button
@@ -92,7 +101,7 @@ function PlantCard({ p, onClick }: PlantCardProps) {
             className="mt-2.5 pt-2.5 border-t border-border flex items-center gap-1.5 text-[12px] font-medium"
             style={{ color: wl.color }}
           >
-            <WaterDrop due={due} size={16} dusk="water-drop" />
+            <WaterDrop due={due} lastWateredAt={p.last_watered_at} size={16} dusk="water-drop" />
             {wl.text}
           </div>
         )}
