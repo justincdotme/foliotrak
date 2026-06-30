@@ -87,7 +87,7 @@ class RefreshSpeciesSeedTest extends TestCase
         XML;
 
         $archive = $this->workdir.'/backbone.zip';
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($archive, ZipArchive::CREATE);
         $zip->addFromString('meta.xml', $meta);
         $zip->addFromString('Taxon.tsv', "2868241\taccepted\tPlantae\tMonstera deliciosa Liebm.\tspecies\n");

@@ -8,8 +8,8 @@ use App\Models\CareEvent;
 use App\Models\Observation;
 use App\Models\Plant;
 use App\Models\Symptom;
-use App\Support\CorrelationEngine;
 use App\Support\Correlation\PestResolutionFactor;
+use App\Support\CorrelationEngine;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,7 +19,7 @@ class PestResolutionFactorTest extends TestCase
 
     public function test_factor_key_and_outcome_key(): void
     {
-        $factor = new PestResolutionFactor();
+        $factor = new PestResolutionFactor;
 
         $this->assertSame('resolution_time_days', $factor->key());
         $this->assertSame('health_at_clear', $factor->outcomeKey());
@@ -27,7 +27,7 @@ class PestResolutionFactorTest extends TestCase
 
     public function test_relations_include_the_symptoms_chain(): void
     {
-        $this->assertContains('observationEvents.observation.symptoms', (new PestResolutionFactor())->relations());
+        $this->assertContains('observationEvents.observation.symptoms', (new PestResolutionFactor)->relations());
     }
 
     public function test_resolved_episode_with_health_at_clear_produces_a_pair(): void
@@ -39,7 +39,7 @@ class PestResolutionFactorTest extends TestCase
         $this->observe($plant, '2026-01-08', [], health: 5);
         $plant->load('observationEvents.observation.symptoms');
 
-        $pairs = (new PestResolutionFactor())->pairs(collect([$plant]));
+        $pairs = (new PestResolutionFactor)->pairs(collect([$plant]));
 
         $this->assertCount(1, $pairs);
         $this->assertSame(7.0, $pairs[0]['x']); // duration_days
@@ -55,7 +55,7 @@ class PestResolutionFactorTest extends TestCase
         $this->observe($plant, '2026-01-08', [$symptom->id], health: 2);
         $plant->load('observationEvents.observation.symptoms');
 
-        $this->assertSame([], (new PestResolutionFactor())->pairs(collect([$plant])));
+        $this->assertSame([], (new PestResolutionFactor)->pairs(collect([$plant])));
     }
 
     public function test_resolved_episodes_without_health_at_clear_are_excluded(): void
@@ -67,7 +67,7 @@ class PestResolutionFactorTest extends TestCase
         $this->observe($plant, '2026-01-08', [], health: null);
         $plant->load('observationEvents.observation.symptoms');
 
-        $this->assertSame([], (new PestResolutionFactor())->pairs(collect([$plant])));
+        $this->assertSame([], (new PestResolutionFactor)->pairs(collect([$plant])));
     }
 
     public function test_pairs_are_pooled_across_multiple_plants(): void
@@ -84,7 +84,7 @@ class PestResolutionFactorTest extends TestCase
         $this->observe($plant2, '2026-01-19', [], health: 4);
         $plant2->load('observationEvents.observation.symptoms');
 
-        $pairs = (new PestResolutionFactor())->pairs(collect([$plant1, $plant2]));
+        $pairs = (new PestResolutionFactor)->pairs(collect([$plant1, $plant2]));
 
         $this->assertCount(2, $pairs);
         $xValues = array_column($pairs, 'x');
@@ -104,7 +104,7 @@ class PestResolutionFactorTest extends TestCase
         $this->observe($plant, '2026-01-08', [], health: 5);
         $plant->load('observationEvents.observation.symptoms');
 
-        $result = CorrelationEngine::forPlants(collect([$plant]), [new PestResolutionFactor()]);
+        $result = CorrelationEngine::forPlants(collect([$plant]), [new PestResolutionFactor]);
 
         $this->assertSame([], $result);
     }

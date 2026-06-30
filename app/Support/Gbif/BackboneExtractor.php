@@ -11,17 +11,7 @@ use Normalizer;
 use RuntimeException;
 use ZipArchive;
 
-/**
- * Turns a GBIF Backbone Taxonomy Darwin Core Archive into the species seed:
- * gzipped NDJSON of accepted plant taxa with English common names, in the field
- * contract species:import-seed expects (ADR-0013).
- *
- * Column order and file names drift between backbone releases, so the archive's
- * meta.xml descriptor is parsed at runtime and fields are matched by their
- * Darwin Core term rather than by position. The Taxon core is streamed twice and
- * the vernacular file once, so nothing larger than the set of plant keys is ever
- * held in memory.
- */
+/** Fields matched by Darwin Core term, not position, because column order drifts between releases. */
 class BackboneExtractor
 {
     private const ACCEPTED_RANKS = ['SPECIES', 'SUBSPECIES', 'VARIETY', 'FORM', 'GENUS'];
@@ -62,7 +52,7 @@ class BackboneExtractor
             throw new RuntimeException('meta.xml carries a DOCTYPE declaration; refusing to parse it');
         }
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         if (! @$dom->loadXML($xml, LIBXML_NONET) || $dom->documentElement === null) {
             throw new RuntimeException('could not parse meta.xml');
         }
@@ -380,7 +370,7 @@ class BackboneExtractor
 
     private function readEntry(string $archivePath, string $name): string
     {
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         if ($zip->open($archivePath) !== true) {
             throw new RuntimeException("could not open archive: {$archivePath}");
         }

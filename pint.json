@@ -6,7 +6,6 @@
         "temp"
     ],
     "rules": {
-        "@PSR12": true,
         "no_trailing_comma_in_singleline": false
     }
 }

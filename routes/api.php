@@ -2,12 +2,12 @@
 
 use App\Http\Controllers\CareEventController;
 use App\Http\Controllers\CareEventTypeController;
-use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\LocationController;
+use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\FertilizerFormController;
 use App\Http\Controllers\FertilizingController;
 use App\Http\Controllers\GroupInsightsController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NutrientController;
 use App\Http\Controllers\ObservationController;
 use App\Http\Controllers\PhotoController;

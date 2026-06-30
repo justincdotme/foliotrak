@@ -12,14 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Normalizer;
 
-/**
- * Typo-tolerant species search: Meilisearch first, GBIF's fuzzy matcher on a miss
- * (ADR-0013). Reads are served from the search index, so a typeahead keystroke is
- * one Meilisearch call with no database round-trip; MySQL is written on a backfill
- * and stays the rebuildable source of truth.
- *
- * @phpstan-type SpeciesRow array<string, mixed>
- */
+/** @phpstan-type SpeciesRow array<string, mixed> */
 class PlantSearchService
 {
     public function __construct(private readonly GbifClient $gbif) {}
@@ -54,18 +47,18 @@ class PlantSearchService
         $records = $this->gbif->lookup($query);
 
         if ($records === null) {
-            throw new SearchDegradedException();
+            throw new SearchDegradedException;
         }
 
         if ($records === []) {
             $records = $this->gbif->searchCommonName($query);
 
             if ($records === null) {
-                throw new SearchDegradedException();
+                throw new SearchDegradedException;
             }
 
             if ($records === []) {
-                return new Collection();
+                return new Collection;
             }
         }
 

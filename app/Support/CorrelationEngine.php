@@ -13,12 +13,6 @@ use App\Support\Correlation\SoilMoistureFactor;
 use App\Support\Correlation\WateringIntervalFactor;
 use Illuminate\Support\Collection;
 
-/**
- * Pools each registered numeric factor across a set of plants and reports it as a correlation
- * pair: Spearman rho, a t-test p-value, a Fisher-z band, the raw points, and a Benjamini-Hochberg
- * significance flag applied across every tested pair (ADR-0020). A factor with too few pooled
- * samples to be meaningful is omitted rather than shown with a misleading coefficient.
- */
 final class CorrelationEngine
 {
     private const MIN_SAMPLES = 5;
@@ -67,12 +61,7 @@ final class CorrelationEngine
         return $pairs;
     }
 
-    /**
-     * The eager-load paths (relative to a plant) the default factors read, so the caller loads
-     * them up front and no factor lazy-loads per plant.
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     public static function plantRelations(): array
     {
         $relations = [];
@@ -91,11 +80,11 @@ final class CorrelationEngine
     private static function defaultFactors(): array
     {
         return [
-            new WateringIntervalFactor(),
-            new HumidityFactor(),
-            new LightLevelFactor(),
-            new SoilMoistureFactor(),
-            new PestResolutionFactor(),
+            new WateringIntervalFactor,
+            new HumidityFactor,
+            new LightLevelFactor,
+            new SoilMoistureFactor,
+            new PestResolutionFactor,
         ];
     }
 }

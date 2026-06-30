@@ -30,7 +30,7 @@ class BackboneExtractorTest extends TestCase
         $this->output = $this->workdir.'/species.ndjson.gz';
 
         $this->buildArchive();
-        (new BackboneExtractor())->extract($this->archive, $this->output);
+        (new BackboneExtractor)->extract($this->archive, $this->output);
         $this->byKey = $this->readOutput();
     }
 
@@ -108,7 +108,7 @@ class BackboneExtractorTest extends TestCase
     public function test_refuses_a_meta_xml_carrying_a_doctype(): void
     {
         $hostile = $this->workdir.'/doctype.zip';
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($hostile, ZipArchive::CREATE);
         $zip->addFromString('meta.xml', '<?xml version="1.0"?><!DOCTYPE a [<!ENTITY x "y">]><archive/>');
         $zip->addFromString('Taxon.tsv', "x\n");
@@ -116,7 +116,7 @@ class BackboneExtractorTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('DOCTYPE');
-        (new BackboneExtractor())->extract($hostile, $this->workdir.'/out.ndjson.gz');
+        (new BackboneExtractor)->extract($hostile, $this->workdir.'/out.ndjson.gz');
     }
 
     private function buildArchive(): void
@@ -173,7 +173,7 @@ class BackboneExtractorTest extends TestCase
             ['2222222', 'eng', 'Lion'],
         ];
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $zip->open($this->archive, ZipArchive::CREATE);
         $zip->addFromString('meta.xml', $meta);
         $zip->addFromString('Taxon.tsv', $this->toTsv($taxa));

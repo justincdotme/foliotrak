@@ -247,15 +247,7 @@ export interface PlantRecommendations {
 }
 
 export type ConditionKey =
-  | 'healthy'
-  | 'fair'
-  | 'struggling'
-  | 'diseased'
-  | 'infested'
-  | 'dry'
-  | 'burnt'
-  | 'unknown'
-  | 'dead'
+  'healthy' | 'fair' | 'struggling' | 'diseased' | 'infested' | 'dry' | 'burnt' | 'unknown' | 'dead'
 
 // Computed from the latest observation and watering status, not stored.
 export interface Condition {
