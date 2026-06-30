@@ -111,7 +111,8 @@ describe('PlantsPage', () => {
   })
 
   it('shows watered-ago text when last_watered_at exists but due_for_care is empty', () => {
-    const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString()
+    vi.useFakeTimers({ now: new Date(2026, 5, 30, 14, 0, 0) })
+    const twoDaysAgo = new Date(2026, 5, 28, 10, 0, 0).toISOString()
     setPlants([
       makePlant({
         due_for_care: [],
@@ -122,7 +123,8 @@ describe('PlantsPage', () => {
     render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
 
     expect(screen.queryByText('No watering logged')).toBeNull()
-    expect(screen.getByText(/watered/i)).toBeInTheDocument()
+    expect(screen.getByText('Watered 2d ago')).toBeInTheDocument()
+    vi.useRealTimers()
   })
 
   it('hides non-active plants until their status filter is toggled on', async () => {
