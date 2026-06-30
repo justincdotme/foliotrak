@@ -19,8 +19,16 @@ export function fmtTime(value: string): string {
   return new Date(value).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
+function calendarDaysAgo(isoStr: string): number {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const then = new Date(isoStr)
+  then.setHours(0, 0, 0, 0)
+  return Math.round((today.getTime() - then.getTime()) / DAY)
+}
+
 export function relDay(value: string): string {
-  const days = Math.floor((NOW.getTime() - new Date(value).getTime()) / DAY)
+  const days = calendarDaysAgo(value)
   if (days <= 0) return 'Today'
   if (days === 1) return 'Yesterday'
   if (days < 7) return `${days} days ago`
@@ -29,5 +37,5 @@ export function relDay(value: string): string {
 }
 
 export function ageDays(isoStr: string): number {
-  return Math.floor((NOW.getTime() - new Date(isoStr).getTime()) / DAY)
+  return calendarDaysAgo(isoStr)
 }
