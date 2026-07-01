@@ -1,0 +1,168 @@
+{
+  "data": {
+    "plant": {
+      "id": 3,
+      "common_name": "Tradescantia sillamontana",
+      "scientific_name": "Tradescantia sillamontana",
+      "nickname": null,
+      "gbif_key": "2765120",
+      "location": {
+        "id": 2,
+        "name": "Guest Bedroom"
+      },
+      "acquired_on": "2026-06-27",
+      "status": "dead",
+      "notes": null,
+      "watering_interval_days_override": null,
+      "watering_schedule_start_date": null,
+      "fertilizing_interval_days_override": null,
+      "cover_photo_id": 4,
+      "cover_photo": {
+        "id": 4,
+        "plant_id": 3,
+        "care_event_id": null,
+        "path": "ec50c7d1-9909-4464-a2a9-60614ede25c9_hero.webp",
+        "thumb_path": "ec50c7d1-9909-4464-a2a9-60614ede25c9_thumb.webp",
+        "original_filename": "1000005809.jpg",
+        "taken_on": "2026-06-28",
+        "caption": "Cover photo",
+        "created_at": "2026-06-28T20:12:41.000000Z",
+        "updated_at": "2026-06-28T20:12:41.000000Z"
+      },
+      "condition": {
+        "key": "dead",
+        "label": "Did not make it"
+      },
+      "created_at": "2026-06-27T05:01:13.000000Z",
+      "updated_at": "2026-06-29T18:42:31.000000Z",
+      "tags": [
+        {
+          "id": 5,
+          "name": "Tropical",
+          "color": "var(--series-1)"
+        },
+        {
+          "id": 6,
+          "name": "Succulent",
+          "color": "var(--series-2)"
+        },
+        {
+          "id": 8,
+          "name": "Pet-safe",
+          "color": "var(--series-4)"
+        },
+        {
+          "id": 9,
+          "name": "Test1",
+          "color": "var(--series-5)"
+        },
+        {
+          "id": 10,
+          "name": "Test2",
+          "color": "var(--series-6)"
+        }
+      ],
+      "due_for_care": [],
+      "last_watered_at": null
+    },
+    "events": [
+      {
+        "id": 41,
+        "plant_id": 3,
+        "care_event_type_id": 5,
+        "type": "relocation",
+        "occurred_at": "2026-06-27T22:01:26.000000Z",
+        "logged_by_user_id": 1,
+        "note": null,
+        "created_at": "2026-06-27T22:01:26.000000Z",
+        "updated_at": "2026-06-27T22:01:26.000000Z",
+        "relocation": {
+          "care_event_id": 41,
+          "from_location": {
+            "id": 1,
+            "name": "step shelf"
+          },
+          "to_location": {
+            "id": 2,
+            "name": "Guest Bedroom"
+          }
+        }
+      },
+      {
+        "id": 39,
+        "plant_id": 3,
+        "care_event_type_id": 4,
+        "type": "observation",
+        "occurred_at": "2026-06-26T15:00:00.000000Z",
+        "logged_by_user_id": 1,
+        "note": null,
+        "created_at": "2026-06-27T05:02:08.000000Z",
+        "updated_at": "2026-06-27T05:02:08.000000Z",
+        "observation": {
+          "care_event_id": 39,
+          "overall_health": 1,
+          "health_note": "Showing some stress on lower leaves.",
+          "light_level": 5,
+          "growth_rate": "slow",
+          "growth_note": null,
+          "leaf_size_mm": null,
+          "weight_grams": null,
+          "weight": null,
+          "ambient_humidity_pct": null,
+          "ambient_temp_c": null,
+          "ambient_temp_display": null,
+          "temperature_unit": "F",
+          "soil_moisture_relative": null,
+          "soil_moisture_precise": null,
+          "symptoms": []
+        }
+      }
+    ],
+    "health_trend": [
+      {
+        "date": "2026-06-26",
+        "value": 1
+      }
+    ],
+    "weight_trend": [
+      {
+        "date": "2026-06-26",
+        "value": null
+      }
+    ],
+    "growth_trend": [
+      {
+        "date": "2026-06-26",
+        "value": "slow"
+      }
+    ],
+    "light_trend": [
+      {
+        "date": "2026-06-26",
+        "value": 5
+      }
+    ],
+    "leaf_size_trend": [
+      {
+        "date": "2026-06-26",
+        "value": null
+      }
+    ],
+    "due_for_care": [],
+    "recommendations": [],
+    "photos": [
+      {
+        "id": 4,
+        "plant_id": 3,
+        "care_event_id": null,
+        "path": "ec50c7d1-9909-4464-a2a9-60614ede25c9_hero.webp",
+        "thumb_path": "ec50c7d1-9909-4464-a2a9-60614ede25c9_thumb.webp",
+        "original_filename": "1000005809.jpg",
+        "taken_on": "2026-06-28",
+        "caption": "Cover photo",
+        "created_at": "2026-06-28T20:12:41.000000Z",
+        "updated_at": "2026-06-28T20:12:41.000000Z"
+      }
+    ]
+  }
+}

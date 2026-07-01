@@ -1,0 +1,18 @@
+{
+  "id": 49,
+  "plant_id": 5,
+  "care_event_type_id": 3,
+  "type": "repotting",
+  "occurred_at": "2026-06-30T12:00:00.000000Z",
+  "logged_by_user_id": 2,
+  "note": null,
+  "created_at": "2026-07-01T00:18:40.000000Z",
+  "updated_at": "2026-07-01T00:18:40.000000Z",
+  "repotting": {
+    "care_event_id": 49,
+    "soil_recipe": "Standard tropical mix",
+    "pot_size_value": 6,
+    "pot_size_unit": "in",
+    "fertilizer_added": false
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": 42,
+  "plant_id": 5,
+  "care_event_type_id": 1,
+  "type": "watering",
+  "occurred_at": "2026-06-28T18:45:00.000000Z",
+  "logged_by_user_id": 1,
+  "note": "Soil was dry, gave a thorough watering.",
+  "created_at": "2026-06-28T19:45:26.000000Z",
+  "updated_at": "2026-06-28T19:45:26.000000Z",
+  "watering": {
+    "care_event_id": 42,
+    "amount_ml": null
+  }
+}

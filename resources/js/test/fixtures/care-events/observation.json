@@ -1,0 +1,29 @@
+{
+  "id": 39,
+  "plant_id": 3,
+  "care_event_type_id": 4,
+  "type": "observation",
+  "occurred_at": "2026-06-26T15:00:00.000000Z",
+  "logged_by_user_id": 1,
+  "note": null,
+  "created_at": "2026-06-27T05:02:08.000000Z",
+  "updated_at": "2026-06-27T05:02:08.000000Z",
+  "observation": {
+    "care_event_id": 39,
+    "overall_health": 1,
+    "health_note": "Showing some stress on lower leaves.",
+    "light_level": 5,
+    "growth_rate": "slow",
+    "growth_note": null,
+    "leaf_size_mm": null,
+    "weight_grams": null,
+    "weight": null,
+    "ambient_humidity_pct": null,
+    "ambient_temp_c": null,
+    "ambient_temp_display": null,
+    "temperature_unit": "F",
+    "soil_moisture_relative": null,
+    "soil_moisture_precise": null,
+    "symptoms": []
+  }
+}
