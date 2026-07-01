@@ -23,6 +23,9 @@ Homestead.json
 /public/build
 /storage/pail
 
+# Vitest coverage report output
+/coverage
+
 # GBIF backbone seed data, built by `php artisan species:refresh-seed`.
 # Third-party data is downloaded at setup, never committed.
 /storage/app/seed/
