@@ -1,7 +1,27 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { LocationMeanHealthBar } from './location-mean-health'
 import type { LocationSummary } from '@/api/types'
+
+// jsdom has no layout engine, so getBoundingClientRect() always reports 0x0;
+// ResponsiveContainer reads it on mount and warns unless the container has size.
+beforeAll(() => {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    width: 500,
+    height: 300,
+    top: 0,
+    left: 0,
+    bottom: 300,
+    right: 500,
+    x: 0,
+    y: 0,
+    toJSON: () => {},
+  })
+})
+
+afterAll(() => {
+  vi.restoreAllMocks()
+})
 
 const loc = (
   location_id: number,
