@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { CareEvent } from '@/api/types'
@@ -23,6 +23,10 @@ beforeEach(() => {
     deleteEvent: { mutateAsync: vi.fn() },
     uploadEventPhoto: { mutateAsync: vi.fn() },
   } as unknown as ReturnType<typeof useCareEventMutations>)
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 const wateringEvent: CareEvent = {
@@ -71,5 +75,13 @@ describe('LogWateringForm', () => {
       )
     )
     expect(createWatering.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('defaults the "When" field to the current time for a new watering', () => {
+    vi.useFakeTimers({ now: new Date(2026, 6, 2, 14, 37, 0) })
+    render(<LogWateringForm plantId={1} onDone={vi.fn()} />)
+
+    const when = screen.getByLabelText(/when/i) as HTMLInputElement
+    expect(when.value).toBe('2026-07-02T14:37')
   })
 })
