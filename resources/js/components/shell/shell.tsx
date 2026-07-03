@@ -144,6 +144,7 @@ export function Shell() {
           title="Add a plant"
           subtitle="Search a species or keep your own name."
           wide={!mobile}
+          dusk="add-plant-modal"
         >
           <AddPlantForm onDone={() => setAddOpen(false)} />
         </Modal>

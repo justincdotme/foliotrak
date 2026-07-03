@@ -90,18 +90,34 @@ class PhotoApiTest extends TestCase
             ->assertJsonPath('data.taken_on', now()->format('Y-m-d'));
     }
 
-    public function test_uploading_with_set_as_cover_updates_the_plant(): void
+    public function test_setting_cover_without_crops_is_rejected(): void
     {
         Storage::fake('photos');
         $this->actAsHousehold();
         $plant = Plant::factory()->create(['cover_photo_id' => null]);
 
-        $response = $this->postJson("/api/plants/{$plant->id}/photos", [
-            'photo' => UploadedFile::fake()->image('hero.jpg'),
+        $this->postJson("/api/plants/{$plant->id}/photos", [
+            'photo' => UploadedFile::fake()->image('hero.jpg', 800, 1200),
             'set_as_cover' => true,
-        ])->assertCreated();
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['hero_crop', 'thumb_crop']);
 
-        $this->assertSame($response->json('data.id'), $plant->fresh()->cover_photo_id);
+        $this->assertNull($plant->fresh()->cover_photo_id);
+    }
+
+    public function test_setting_cover_without_crops_is_rejected_for_multipart_flag(): void
+    {
+        Storage::fake('photos');
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create(['cover_photo_id' => null]);
+
+        $this->post("/api/plants/{$plant->id}/photos", [
+            'photo' => UploadedFile::fake()->image('hero.jpg', 800, 1200),
+            'set_as_cover' => '1',
+        ], ['Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['hero_crop', 'thumb_crop']);
     }
 
     public function test_uploading_a_photo_links_it_to_a_care_event(): void

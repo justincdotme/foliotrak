@@ -146,12 +146,14 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
                   : '/images/plant-silhouette-hero.png'
               }
               alt=""
+              dusk="cover-hero"
               className={cn('h-full w-full object-cover', !plant.cover_photo && 'opacity-20')}
             />
           </div>
           <button
             onClick={() => setPhotoOpen(true)}
             aria-label="Change cover photo"
+            dusk="change-cover"
             title="Change cover photo"
             className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-surface border border-border-strong grid place-items-center text-text-muted hover:text-text shadow-sm"
           >
