@@ -43,7 +43,7 @@ describe('LogRepottingForm', () => {
     const onLogFertilizer = vi.fn()
     const requests: unknown[] = []
     server.use(
-      http.post('/api/plants/:id/repottings', async ({ request }) => {
+      http.post('/api/plants/:id/care-events', async ({ request }) => {
         requests.push(await request.json())
         return HttpResponse.json({ data: { id: 70 } }, { status: 201 })
       })
@@ -56,6 +56,7 @@ describe('LogRepottingForm', () => {
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
     expect(requests[0]).toMatchObject({
+      type: 'repotting',
       soil_recipe: null,
       pot_size_value: null,
       pot_size_unit: 'in',
@@ -70,7 +71,7 @@ describe('LogRepottingForm', () => {
     const onLogFertilizer = vi.fn()
     const requests: Array<{ occurred_at: string }> = []
     server.use(
-      http.post('/api/plants/:id/repottings', async ({ request }) => {
+      http.post('/api/plants/:id/care-events', async ({ request }) => {
         const body = (await request.json()) as { occurred_at: string }
         requests.push(body)
         return HttpResponse.json({ data: { id: 71 } }, { status: 201 })

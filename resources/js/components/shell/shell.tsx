@@ -144,6 +144,7 @@ export function Shell() {
           title="Add a plant"
           subtitle="Search a species or keep your own name."
           wide={!mobile}
+          dusk="add-plant-modal"
         >
           <AddPlantForm onDone={() => setAddOpen(false)} />
         </Modal>
@@ -153,6 +154,7 @@ export function Shell() {
           onClose={() => setLogFor(null)}
           title={logFor ? (logFor.event ? EDIT_TITLES[logFor.type] : LOG_TITLES[logFor.type]) : ''}
           wide={logFor?.type === 'observation' || logFor?.type === 'fertilizing'}
+          dusk="log-modal"
         >
           {logFor && renderLogForm(logFor)}
         </Modal>

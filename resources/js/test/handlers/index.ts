@@ -27,7 +27,6 @@ import wateringCreated from '../fixtures/care-events/watering.json'
 import fertilizingCreated from '../fixtures/care-events/fertilizing.json'
 import repottingCreated from '../fixtures/care-events/repotting.json'
 import observationCreated from '../fixtures/care-events/observation.json'
-import relocationCreated from '../fixtures/care-events/relocation.json'
 import careEventUpdated from '../fixtures/care-events/updated.json'
 import locationCreated from '../fixtures/locations/created-201.json'
 import tagCreated from '../fixtures/tags/created-201.json'
@@ -74,21 +73,16 @@ export const handlers = [
   http.delete('/api/photos/:id', () => new HttpResponse(null, { status: 204 })),
 
   // care events
-  http.post('/api/plants/:id/waterings', () =>
-    HttpResponse.json({ data: wateringCreated }, { status: 201 })
-  ),
-  http.post('/api/plants/:id/fertilizings', () =>
-    HttpResponse.json({ data: fertilizingCreated }, { status: 201 })
-  ),
-  http.post('/api/plants/:id/repottings', () =>
-    HttpResponse.json({ data: repottingCreated }, { status: 201 })
-  ),
-  http.post('/api/plants/:id/observations', () =>
-    HttpResponse.json({ data: observationCreated }, { status: 201 })
-  ),
-  http.post('/api/plants/:id/relocations', () =>
-    HttpResponse.json({ data: relocationCreated }, { status: 201 })
-  ),
+  http.post('/api/plants/:id/care-events', async ({ request }) => {
+    const body = (await request.json()) as { type: string }
+    const fixtures: Record<string, unknown> = {
+      watering: wateringCreated,
+      fertilizing: fertilizingCreated,
+      repotting: repottingCreated,
+      observation: observationCreated,
+    }
+    return HttpResponse.json({ data: fixtures[body.type] }, { status: 201 })
+  }),
   http.patch('/api/care-events/:id', () => HttpResponse.json(careEventUpdated, { status: 200 })),
   http.delete('/api/care-events/:id', () => new HttpResponse(null, { status: 204 })),
 

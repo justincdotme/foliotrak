@@ -37,9 +37,67 @@ describe('useCreatePlant', () => {
       await result.current.mutateAsync({ payload: { common_name: 'Pothos' } })
     })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data?.id).toBe(plantCreatedFixture.data.id)
-    expect(result.current.data?.common_name).toBe(plantCreatedFixture.data.common_name)
+    expect(result.current.data?.plant.id).toBe(plantCreatedFixture.data.id)
+    expect(result.current.data?.plant.common_name).toBe(plantCreatedFixture.data.common_name)
+    expect(result.current.data?.coverUploadFailed).toBe(false)
     expect(requests[0]).toMatchObject({ body: { common_name: 'Pothos' } })
+  })
+
+  it('sends crop coordinates and set_as_cover with the cover upload', async () => {
+    const uploadForms: FormData[] = []
+    server.use(
+      http.post('/api/plants', () => HttpResponse.json(plantCreatedFixture, { status: 201 })),
+      http.post('/api/plants/:id/photos', async ({ request }) => {
+        uploadForms.push(await request.formData())
+        return HttpResponse.json(photoCreatedFixture, { status: 201 })
+      })
+    )
+    const { result } = renderHook(() => useCreatePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      const outcome = await result.current.mutateAsync({
+        payload: { common_name: 'Crops Plant' },
+        cover: {
+          file: new File(['x'], 'cover.jpg', { type: 'image/jpeg' }),
+          heroCrop: { x: 1, y: 2, width: 300, height: 450 },
+          thumbCrop: { x: 5, y: 6, width: 200, height: 200 },
+        },
+      })
+      expect(outcome.coverUploadFailed).toBe(false)
+    })
+    expect(uploadForms[0]?.get('set_as_cover')).toBe('1')
+    expect(JSON.parse(uploadForms[0]?.get('hero_crop') as string)).toEqual({
+      x: 1,
+      y: 2,
+      width: 300,
+      height: 450,
+    })
+    expect(JSON.parse(uploadForms[0]?.get('thumb_crop') as string)).toEqual({
+      x: 5,
+      y: 6,
+      width: 200,
+      height: 200,
+    })
+  })
+
+  it('reports a failed cover upload without losing the created plant', async () => {
+    server.use(
+      http.post('/api/plants', () => HttpResponse.json(plantCreatedFixture, { status: 201 })),
+      http.post('/api/plants/:id/photos', () => jsonMessage(500, 'boom'))
+    )
+    const { result } = renderHook(() => useCreatePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      const outcome = await result.current.mutateAsync({
+        payload: { common_name: 'Partial Plant' },
+        cover: {
+          file: new File(['x'], 'cover.jpg', { type: 'image/jpeg' }),
+          heroCrop: { x: 0, y: 0, width: 100, height: 150 },
+          thumbCrop: { x: 0, y: 0, width: 100, height: 100 },
+        },
+      })
+      expect(outcome.plant.id).toBe(plantCreatedFixture.data.id)
+      expect(outcome.coverUploadFailed).toBe(true)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
   })
 
   it('surfaces an error when the API fails', async () => {

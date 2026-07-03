@@ -1,33 +1,41 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PlantWithTags } from '@/api/types'
+import type { CropArea, PlantWithTags } from '@/api/types'
 import type { PhotoUpload, PlantPayload } from '@/api/client'
 import { createPlant, deletePhoto, setCoverPhoto, updatePlant, uploadPhoto } from '@/api/client'
 
 export interface CreatePlantInput {
   payload: PlantPayload
-  coverFile?: File | null
+  cover?: { file: File; heroCrop: CropArea; thumbCrop: CropArea } | null
 }
 
-// Quick-add can attach a first photo; uploading it as the cover in the same flow
-// means the new card carries an image immediately.
+export interface CreatePlantResult {
+  plant: PlantWithTags
+  coverUploadFailed: boolean
+}
+
+// Quick-add can attach a first photo; it ships with both crop areas because the
+// API rejects an uncropped cover. A failed upload must not lose the created
+// plant, so the failure is returned as a flag instead of thrown.
 export function useCreatePlant() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ payload, coverFile }: CreatePlantInput) => {
+    mutationFn: async ({ payload, cover }: CreatePlantInput): Promise<CreatePlantResult> => {
       const plant = await createPlant(payload)
-      if (coverFile) {
+      let coverUploadFailed = false
+      if (cover) {
         try {
           await uploadPhoto(plant.id, {
-            file: coverFile,
+            file: cover.file,
             caption: 'Cover photo',
             setAsCover: true,
+            heroCrop: cover.heroCrop,
+            thumbCrop: cover.thumbCrop,
           })
         } catch {
-          // The plant is already created, so a failed optional cover upload must
-          // not lose it; the cover can be set later from the detail page.
+          coverUploadFailed = true
         }
       }
-      return plant
+      return { plant, coverUploadFailed }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plants'] })

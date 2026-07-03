@@ -23,6 +23,7 @@ export function ConfirmDelete({ open, onClose, onConfirm, label }: ConfirmDelete
           </Button>
           <Button
             variant="danger"
+            dusk="confirm-delete"
             onClick={() => {
               onConfirm()
               onClose()

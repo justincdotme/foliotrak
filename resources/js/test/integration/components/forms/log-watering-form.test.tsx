@@ -37,7 +37,7 @@ describe('LogWateringForm', () => {
     const onDone = vi.fn()
     const requests: Array<{ plantId: string; body: unknown }> = []
     server.use(
-      http.post('/api/plants/:id/waterings', async ({ request, params }) => {
+      http.post('/api/plants/:id/care-events', async ({ request, params }) => {
         requests.push({ plantId: params.id as string, body: await request.json() })
         return HttpResponse.json({ data: { id: 51 } }, { status: 201 })
       })
@@ -48,7 +48,10 @@ describe('LogWateringForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /Log watering/ }))
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
-    expect(requests[0]).toMatchObject({ plantId: '5', body: { amount_ml: 180, note: null } })
+    expect(requests[0]).toMatchObject({
+      plantId: '5',
+      body: { type: 'watering', amount_ml: 180, note: null },
+    })
   })
 
   it('edits an existing watering through the real PATCH, prefilled from the event', async () => {
@@ -76,7 +79,7 @@ describe('LogWateringForm', () => {
   it('maps a real 422 to the date field instead of a generic banner', async () => {
     const onDone = vi.fn()
     server.use(
-      http.post('/api/plants/:id/waterings', () =>
+      http.post('/api/plants/:id/care-events', () =>
         laravelValidationError({ occurred_at: ['The occurred at field is required.'] })
       )
     )

@@ -415,6 +415,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
                       outline={!sel}
                       color="var(--accent)"
                       onClick={() => toggleSym(numId)}
+                      dusk={`symptom-${s.key}`}
                     >
                       {sel && <Check size={12} />}
                       {s.label}
@@ -485,7 +486,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
         </div>
       )}
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" dusk="care-form-submit" disabled={isSubmitting}>
           <ClipboardList size={16} />
           {event ? 'Save changes' : 'Log observation'}
         </Button>

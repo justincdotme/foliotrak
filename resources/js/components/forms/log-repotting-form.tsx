@@ -111,6 +111,7 @@ export function LogRepottingForm({
             step="0.5"
             placeholder="10"
             className="flex-1"
+            dusk="repotting-pot-size"
             {...register('pot_size_value')}
           />
           <div className="w-28">
@@ -148,7 +149,7 @@ export function LogRepottingForm({
         </div>
       )}
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" dusk="care-form-submit" disabled={isSubmitting}>
           <Shovel size={16} />
           {event ? 'Save changes' : 'Log repotting'}
         </Button>

@@ -76,7 +76,7 @@ describe('LogObservationForm', () => {
     const requests: unknown[] = []
     const photoRequests: FormData[] = []
     server.use(
-      http.post('/api/plants/:id/observations', async ({ request }) => {
+      http.post('/api/plants/:id/care-events', async ({ request }) => {
         requests.push(await request.json())
         // The real handler envelopes fixtures/care-events/observation.json (id 39).
         return HttpResponse.json({ data: { id: 39 } }, { status: 201 })
@@ -109,6 +109,7 @@ describe('LogObservationForm', () => {
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
     expect(requests[0]).toMatchObject({
+      type: 'observation',
       weight: { lb: 0, oz: 0, g: 120 },
       symptom_ids: [1],
       custom_symptoms: ['curled tips'],
@@ -124,7 +125,7 @@ describe('LogObservationForm', () => {
     const onDone = vi.fn()
     const requests: unknown[] = []
     server.use(
-      http.post('/api/plants/:id/observations', async ({ request }) => {
+      http.post('/api/plants/:id/care-events', async ({ request }) => {
         requests.push(await request.json())
         return HttpResponse.json({ data: { id: 40 } }, { status: 201 })
       })
@@ -134,7 +135,7 @@ describe('LogObservationForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /Log observation/ }))
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
-    expect(requests[0]).toMatchObject({ weight: null })
+    expect(requests[0]).toMatchObject({ type: 'observation', weight: null })
   })
 
   it('prefills from a real observation event and routes the edit to the real PATCH', async () => {
@@ -142,7 +143,7 @@ describe('LogObservationForm', () => {
     const createSpy = vi.fn()
     const patchRequests: unknown[] = []
     server.use(
-      http.post('/api/plants/:id/observations', () => {
+      http.post('/api/plants/:id/care-events', () => {
         createSpy()
         return HttpResponse.json({ data: { id: 41 } }, { status: 201 })
       }),

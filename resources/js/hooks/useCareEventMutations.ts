@@ -1,13 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  createFertilizing,
-  createObservation,
-  createRepotting,
-  createWatering,
-  deleteCareEvent,
-  updateCareEvent,
-  uploadPhoto,
-} from '@/api/client'
+import { createCareEvent, deleteCareEvent, updateCareEvent, uploadPhoto } from '@/api/client'
 import type {
   CareEventUpdatePayload,
   FertilizingPayload,
@@ -30,19 +22,23 @@ export function useCareEventMutations(plantId: number) {
 
   return {
     createWatering: useMutation({
-      mutationFn: (payload: WateringPayload) => createWatering(plantId, payload),
+      mutationFn: (payload: WateringPayload) =>
+        createCareEvent(plantId, { type: 'watering', ...payload }),
       onSuccess,
     }),
     createFertilizing: useMutation({
-      mutationFn: (payload: FertilizingPayload) => createFertilizing(plantId, payload),
+      mutationFn: (payload: FertilizingPayload) =>
+        createCareEvent(plantId, { type: 'fertilizing', ...payload }),
       onSuccess,
     }),
     createRepotting: useMutation({
-      mutationFn: (payload: RepottingPayload) => createRepotting(plantId, payload),
+      mutationFn: (payload: RepottingPayload) =>
+        createCareEvent(plantId, { type: 'repotting', ...payload }),
       onSuccess,
     }),
     createObservation: useMutation({
-      mutationFn: (payload: ObservationPayload) => createObservation(plantId, payload),
+      mutationFn: (payload: ObservationPayload) =>
+        createCareEvent(plantId, { type: 'observation', ...payload }),
       onSuccess,
     }),
     updateEvent: useMutation({

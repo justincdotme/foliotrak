@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Enums\GrowthRate;
 use App\Models\CareEvent;
+use App\Models\FertilizerForm;
 use App\Models\Location;
 use App\Models\Observation;
 use App\Models\Photo;
@@ -126,6 +127,46 @@ class PlantTimelineApiTest extends TestCase
             ->assertJsonPath('data.growth_trend.1.value', null);
 
         $response->assertJsonCount(1, 'data.photos');
+    }
+
+    public function test_timeline_renders_the_detail_block_for_every_care_event_type(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create();
+        $liquid = FertilizerForm::where('key', 'liquid')->value('id');
+
+        $watering = CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(4)]);
+        $watering->watering()->create(['amount_ml' => 150]);
+
+        $fertilizing = CareEvent::factory()->ofType('fertilizing')->for($plant)->create(['occurred_at' => now()->subDays(3)]);
+        $fertilizing->fertilizing()->create(['fertilizer_form_id' => $liquid, 'dose_pct' => 50]);
+
+        $repotting = CareEvent::factory()->ofType('repotting')->for($plant)->create(['occurred_at' => now()->subDays(2)]);
+        $repotting->repotting()->create(['pot_size_value' => 10, 'pot_size_unit' => 'in', 'fertilizer_added' => true]);
+
+        $observation = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDay()]);
+        Observation::factory()->create(['care_event_id' => $observation->id, 'overall_health' => 4]);
+
+        $shelf = Location::factory()->create(['name' => 'shelf']);
+        $window = Location::factory()->create(['name' => 'window']);
+        $relocation = CareEvent::factory()->ofType('relocation')->for($plant)->create(['occurred_at' => now()]);
+        $relocation->relocation()->create(['from_location_id' => $shelf->id, 'to_location_id' => $window->id]);
+
+        $response = $this->getJson("/api/plants/{$plant->id}/timeline")->assertOk();
+
+        $response
+            ->assertJsonCount(5, 'data.events')
+            ->assertJsonPath('data.events.0.type', 'relocation')
+            ->assertJsonPath('data.events.0.relocation.to_location.name', 'window')
+            ->assertJsonPath('data.events.1.type', 'observation')
+            ->assertJsonPath('data.events.1.observation.overall_health', 4)
+            ->assertJsonPath('data.events.2.type', 'repotting')
+            ->assertJsonPath('data.events.2.repotting.pot_size_value', 10)
+            ->assertJsonPath('data.events.3.type', 'fertilizing')
+            ->assertJsonPath('data.events.3.fertilizing.form', 'liquid')
+            ->assertJsonPath('data.events.4.type', 'watering')
+            ->assertJsonPath('data.events.4.watering.amount_ml', 150);
     }
 
     public function test_observation_event_without_a_detail_row_yields_a_null_trend_point(): void

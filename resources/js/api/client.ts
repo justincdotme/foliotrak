@@ -171,29 +171,17 @@ export type CareEventUpdatePayload = Partial<
     }
 >
 
-export const createWatering = async (
-  plantId: number,
-  payload: WateringPayload
-): Promise<CareEvent> =>
-  unwrap(await api.post<{ data: CareEvent }>(`/api/plants/${plantId}/waterings`, payload))
+export type CareEventCreatePayload =
+  | ({ type: 'watering' } & WateringPayload)
+  | ({ type: 'fertilizing' } & FertilizingPayload)
+  | ({ type: 'repotting' } & RepottingPayload)
+  | ({ type: 'observation' } & ObservationPayload)
 
-export const createFertilizing = async (
+export const createCareEvent = async (
   plantId: number,
-  payload: FertilizingPayload
+  payload: CareEventCreatePayload
 ): Promise<CareEvent> =>
-  unwrap(await api.post<{ data: CareEvent }>(`/api/plants/${plantId}/fertilizings`, payload))
-
-export const createRepotting = async (
-  plantId: number,
-  payload: RepottingPayload
-): Promise<CareEvent> =>
-  unwrap(await api.post<{ data: CareEvent }>(`/api/plants/${plantId}/repottings`, payload))
-
-export const createObservation = async (
-  plantId: number,
-  payload: ObservationPayload
-): Promise<CareEvent> =>
-  unwrap(await api.post<{ data: CareEvent }>(`/api/plants/${plantId}/observations`, payload))
+  unwrap(await api.post<{ data: CareEvent }>(`/api/plants/${plantId}/care-events`, payload))
 
 export const updateCareEvent = async (
   eventId: number,

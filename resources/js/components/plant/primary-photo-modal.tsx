@@ -6,7 +6,6 @@ import { Modal } from '@/components/app/modal'
 import { cn } from '@/lib/utils'
 import { photoUrl } from '@/lib/photos'
 import { useDeletePhoto, useSetCoverPhoto, useUploadPhoto } from '@/hooks/usePlantMutations'
-// Extracted to prevent accidental removal (FOL-59). Guard tests in primary-photo-modal.test.tsx.
 import { CropWorkflow } from './crop-workflow'
 
 interface PrimaryPhotoModalProps {
@@ -222,6 +221,7 @@ export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhoto
               type="file"
               accept="image/*"
               className="hidden"
+              dusk="cover-upload-input"
               disabled={busy}
               onChange={onFileChange}
             />

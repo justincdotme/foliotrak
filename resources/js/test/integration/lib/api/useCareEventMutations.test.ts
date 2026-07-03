@@ -23,7 +23,7 @@ describe('useCareEventMutations - createWatering', () => {
   it('creates a watering event and resolves the bare fixture the handler envelopes', async () => {
     const requests: Array<{ plantId: string; body: unknown }> = []
     server.use(
-      http.post('/api/plants/:id/waterings', async ({ request, params }) => {
+      http.post('/api/plants/:id/care-events', async ({ request, params }) => {
         requests.push({ plantId: params.id as string, body: await request.json() })
         return HttpResponse.json({ data: wateringFixture }, { status: 201 })
       })
@@ -36,7 +36,7 @@ describe('useCareEventMutations - createWatering', () => {
     expect(result.current.createWatering.data).toEqual(wateringFixture)
     expect(requests[0]).toMatchObject({
       plantId: '5',
-      body: { occurred_at: '2026-06-28T18:45:00Z' },
+      body: { type: 'watering', occurred_at: '2026-06-28T18:45:00Z' },
     })
   })
 })
@@ -45,7 +45,7 @@ describe('useCareEventMutations - createFertilizing', () => {
   it('creates a fertilizing event and resolves the enveloped fixture data', async () => {
     const requests: Array<{ plantId: string; body: unknown }> = []
     server.use(
-      http.post('/api/plants/:id/fertilizings', async ({ request, params }) => {
+      http.post('/api/plants/:id/care-events', async ({ request, params }) => {
         requests.push({ plantId: params.id as string, body: await request.json() })
         return HttpResponse.json({ data: fertilizingFixture }, { status: 201 })
       })
@@ -61,7 +61,7 @@ describe('useCareEventMutations - createFertilizing', () => {
     expect(result.current.createFertilizing.data).toEqual(fertilizingFixture)
     expect(requests[0]).toMatchObject({
       plantId: '5',
-      body: { occurred_at: '2026-06-30T12:00:00Z', fertilizer_form_id: 1 },
+      body: { type: 'fertilizing', occurred_at: '2026-06-30T12:00:00Z', fertilizer_form_id: 1 },
     })
   })
 })
@@ -70,7 +70,7 @@ describe('useCareEventMutations - createRepotting', () => {
   it('creates a repotting event and resolves the enveloped fixture data', async () => {
     const requests: Array<{ plantId: string; body: unknown }> = []
     server.use(
-      http.post('/api/plants/:id/repottings', async ({ request, params }) => {
+      http.post('/api/plants/:id/care-events', async ({ request, params }) => {
         requests.push({ plantId: params.id as string, body: await request.json() })
         return HttpResponse.json({ data: repottingFixture }, { status: 201 })
       })
@@ -83,7 +83,7 @@ describe('useCareEventMutations - createRepotting', () => {
     expect(result.current.createRepotting.data).toEqual(repottingFixture)
     expect(requests[0]).toMatchObject({
       plantId: '5',
-      body: { occurred_at: '2026-06-30T12:00:00Z' },
+      body: { type: 'repotting', occurred_at: '2026-06-30T12:00:00Z' },
     })
   })
 })
@@ -92,7 +92,7 @@ describe('useCareEventMutations - createObservation', () => {
   it('creates an observation event and resolves the bare fixture the handler envelopes', async () => {
     const requests: Array<{ plantId: string; body: unknown }> = []
     server.use(
-      http.post('/api/plants/:id/observations', async ({ request, params }) => {
+      http.post('/api/plants/:id/care-events', async ({ request, params }) => {
         requests.push({ plantId: params.id as string, body: await request.json() })
         return HttpResponse.json({ data: observationFixture }, { status: 201 })
       })
@@ -105,7 +105,7 @@ describe('useCareEventMutations - createObservation', () => {
     expect(result.current.createObservation.data).toEqual(observationFixture)
     expect(requests[0]).toMatchObject({
       plantId: '3',
-      body: { occurred_at: '2026-06-26T15:00:00Z' },
+      body: { type: 'observation', occurred_at: '2026-06-26T15:00:00Z' },
     })
   })
 })

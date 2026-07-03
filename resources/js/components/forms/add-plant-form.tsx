@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type KeyboardEvent, type SyntheticEvent } from 'react'
 import { AlertTriangle, Check, ImageIcon, Plus, Search } from 'lucide-react'
-import type { SpeciesSuggestion, Tag } from '@/api/types'
+import type { CropArea, SpeciesSuggestion, Tag } from '@/api/types'
 import { cn } from '@/lib/utils'
 import { useSpeciesSuggest } from '@/hooks/useSpeciesSuggest'
 import { useTags } from '@/hooks/useTags'
@@ -11,6 +11,7 @@ import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { LocationCombobox } from '@/components/app/location-combobox'
 import { TagInlineCreate } from '@/components/app/tag-inline-create'
+import { CropWorkflow } from '@/components/plant/crop-workflow'
 import { handleApiError } from '@/lib/handle-api-error'
 
 interface AddPlantFormProps {
@@ -28,9 +29,14 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const [acquired, setAcquired] = useState('')
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [cropping, setCropping] = useState(false)
+  const [heroCrop, setHeroCrop] = useState<CropArea | null>(null)
+  const [thumbCrop, setThumbCrop] = useState<CropArea | null>(null)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const [formError, setFormError] = useState<string | null>(null)
+  const [partialError, setPartialError] = useState<string | null>(null)
   const { results, loading } = useSpeciesSuggest(common)
 
   const matchedAlias = (g: SpeciesSuggestion): string | null => {
@@ -59,6 +65,34 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
     )
   }
 
+  // The API rejects an uncropped cover, so a picked file goes straight into the
+  // crop workflow and an aborted crop discards the file.
+  const startCrop = (f: File) => {
+    if (preview) URL.revokeObjectURL(preview)
+    setPhotoFile(f)
+    setHeroCrop(null)
+    setThumbCrop(null)
+    setPreview(URL.createObjectURL(f))
+    setCropping(true)
+  }
+
+  const abortCrop = () => {
+    setCropping(false)
+    setPhotoFile(null)
+    setHeroCrop(null)
+    setThumbCrop(null)
+    if (preview) URL.revokeObjectURL(preview)
+    setPreview(null)
+  }
+
+  const finishCrop = (hero: CropArea, thumb: CropArea) => {
+    setHeroCrop(hero)
+    setThumbCrop(thumb)
+    setCropping(false)
+    if (preview) URL.revokeObjectURL(preview)
+    setPreview(null)
+  }
+
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!open) return
     if (e.key === 'ArrowDown') {
@@ -82,7 +116,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
     if (!common.trim()) return
     setFormError(null)
     try {
-      await create.mutateAsync({
+      const { coverUploadFailed } = await create.mutateAsync({
         payload: {
           common_name: common.trim(),
           scientific_name: sci || null,
@@ -92,8 +126,14 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
           acquired_on: acquired || null,
           tag_ids: selectedTags.map(t => t.id),
         },
-        coverFile: photoFile,
+        cover: photoFile && heroCrop && thumbCrop ? { file: photoFile, heroCrop, thumbCrop } : null,
       })
+      if (coverUploadFailed) {
+        setPartialError(
+          "The plant was added, but the cover photo didn't upload. Set it from the plant's page."
+        )
+        return
+      }
       onDone()
     } catch (err) {
       setFormError(handleApiError(err))
@@ -124,6 +164,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
               aria-expanded={open}
               aria-autocomplete="list"
               aria-controls="species-list"
+              dusk="add-plant-name"
             />
           </div>
           {open && common.trim().length >= 2 && (
@@ -225,14 +266,19 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
       <Field label="Photo" hint="optional, becomes the cover">
         <label className="flex h-11 cursor-pointer items-center gap-2 rounded-[8px] border border-dashed border-border-strong bg-surface-raised px-3 text-text-muted hover:text-text">
           <ImageIcon size={16} />
-          <span className="text-[13px] truncate">{photoFile ? photoFile.name : 'Add a photo'}</span>
+          <span className="text-[13px] truncate">
+            {photoFile ? `${photoFile.name} (cropped)` : 'Add a photo'}
+          </span>
           <input
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setPhotoFile(e.target.files?.[0] ?? null)
-            }
+            dusk="add-plant-photo"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              const f = e.target.files?.[0]
+              if (f) startCrop(f)
+              e.target.value = ''
+            }}
           />
         </label>
       </Field>
@@ -242,12 +288,38 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
           {formError}
         </div>
       )}
+      {partialError && (
+        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
+          <AlertTriangle size={14} />
+          {partialError}
+        </div>
+      )}
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="submit" disabled={create.isPending || !common.trim()}>
-          <Plus size={16} />
-          Add plant
-        </Button>
+        {partialError ? (
+          <Button type="button" onClick={onDone}>
+            Done
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            dusk="add-plant-submit"
+            disabled={create.isPending || !common.trim()}
+          >
+            <Plus size={16} />
+            Add plant
+          </Button>
+        )}
       </div>
+      {cropping && preview && (
+        <CropWorkflow
+          preview={preview}
+          onBack={abortCrop}
+          onComplete={finishCrop}
+          onClose={abortCrop}
+          busy={false}
+          failed={false}
+        />
+      )}
     </form>
   )
 }

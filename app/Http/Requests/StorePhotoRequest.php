@@ -30,8 +30,8 @@ class StorePhotoRequest extends FormRequest
                 'integer',
                 Rule::exists('care_events', 'id')->where('plant_id', $this->route('plant')->id),
             ],
-            'hero_crop' => ['nullable', 'json', 'required_with:thumb_crop'],
-            'thumb_crop' => ['nullable', 'json', 'required_with:hero_crop'],
+            'hero_crop' => ['nullable', 'json', 'required_with:thumb_crop', 'required_if_accepted:set_as_cover'],
+            'thumb_crop' => ['nullable', 'json', 'required_with:hero_crop', 'required_if_accepted:set_as_cover'],
         ];
     }
 

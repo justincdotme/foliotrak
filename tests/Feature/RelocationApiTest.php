@@ -30,7 +30,8 @@ class RelocationApiTest extends TestCase
         $east = Location::factory()->create(['name' => 'east window']);
         $plant = Plant::factory()->create(['location_id' => $south->id]);
 
-        $this->postJson("/api/plants/{$plant->id}/relocations", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'relocation',
             'to_location_id' => $east->id,
             'occurred_at' => '2026-06-20T12:00:00Z',
             'note' => 'Winter light',
@@ -53,7 +54,7 @@ class RelocationApiTest extends TestCase
         $south = Location::factory()->create(['name' => 'south window']);
         $plant = Plant::factory()->create(['location_id' => $south->id]);
 
-        $this->postJson("/api/plants/{$plant->id}/relocations", ['to_location_id' => $south->id])
+        $this->postJson("/api/plants/{$plant->id}/care-events", ['type' => 'relocation', 'to_location_id' => $south->id])
             ->assertNoContent();
 
         $this->assertDatabaseCount('care_events', 0);
