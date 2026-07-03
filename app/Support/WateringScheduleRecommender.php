@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Enums\SoilMoistureLevel;
+use App\Support\Care\CareSchedule;
 use Closure;
 use Illuminate\Support\Carbon;
 
@@ -29,7 +30,7 @@ final class WateringScheduleRecommender
      */
     public static function recommend(array $waterings, array $healthObservations, array $amounts, Carbon $earliest, Carbon $now, array $soilReadings = []): ?array
     {
-        $overall = CareScheduleResolver::medianGapDays($waterings);
+        $overall = CareSchedule::medianGapDays($waterings);
         if ($overall === null) {
             return null;
         }
@@ -49,10 +50,10 @@ final class WateringScheduleRecommender
             $baselineEnd = $earliest->copy()->addDays(self::WINDOW_DAYS);
             $recentStart = $now->copy()->subDays(self::WINDOW_DAYS);
 
-            $baselineCadence = CareScheduleResolver::medianGapDays(
+            $baselineCadence = CareSchedule::medianGapDays(
                 array_values(array_filter($waterings, fn (Carbon $w): bool => $w <= $baselineEnd))
             );
-            $recentCadence = CareScheduleResolver::medianGapDays(
+            $recentCadence = CareSchedule::medianGapDays(
                 array_values(array_filter($waterings, fn (Carbon $w): bool => $w >= $recentStart))
             );
 
@@ -244,12 +245,7 @@ final class WateringScheduleRecommender
             return (float) $reading['precise'];
         }
 
-        return match ($reading['relative']) {
-            SoilMoistureLevel::Dry => 2.0,
-            SoilMoistureLevel::Moist => 5.0,
-            SoilMoistureLevel::Wet => 8.0,
-            null => null,
-        };
+        return $reading['relative']?->numericValue();
     }
 
     private static function fmtHealth(float $value): string

@@ -268,9 +268,6 @@ describe('PlantDetailPage light and leaf-size trend gating', () => {
 
 describe('PlantDetailPage due signal wiring', () => {
   const wateringDue = {
-    plant_id: 1,
-    common_name: 'Pothos',
-    scientific_name: 'Epipremnum',
     status: 'overdue' as const,
     due_date: '2026-06-15',
     type: 'watering' as const,

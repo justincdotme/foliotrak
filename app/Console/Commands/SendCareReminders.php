@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Enums\PlantStatus;
-use App\Models\CareEvent;
 use App\Models\Plant;
 use App\Models\SentReminder;
 use App\Models\User;
 use App\Notifications\PlantCareReminder;
-use App\Support\CareScheduleResolver;
+use App\Support\Care\CareDue;
+use App\Support\Care\ScheduledCareType;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -38,8 +38,9 @@ class SendCareReminders extends Command
 
         $dispatched = 0;
         foreach ($plants as $plant) {
-            $dispatched += $this->remind($plant, 'watering', $plant->watering_interval_days_override, $plant->wateringEvents, $recipients, $plant->watering_schedule_start_date);
-            $dispatched += $this->remind($plant, 'fertilizing', $plant->fertilizing_interval_days_override, $plant->fertilizingEvents, $recipients);
+            foreach (ScheduledCareType::cases() as $type) {
+                $dispatched += $this->remind($plant, $type, $recipients);
+            }
         }
 
         $this->info("Dispatched {$dispatched} care reminder(s).");
@@ -51,40 +52,24 @@ class SendCareReminders extends Command
      * Claims the day's reminder before dispatch, so a missed or repeated run never
      * sends the same plant, type, and due date twice.
      *
-     * @param  Collection<int, CareEvent>  $events  every logged event of the type, oldest first
      * @param  Collection<int, User>  $recipients
      */
-    private function remind(Plant $plant, string $type, ?int $override, Collection $events, Collection $recipients, ?Carbon $startDate = null): int
+    private function remind(Plant $plant, ScheduledCareType $type, Collection $recipients): int
     {
-        $interval = CareScheduleResolver::intervalForType(
-            $override,
-            $events->map(fn (CareEvent $event): Carbon => $event->occurred_at)->all(),
-        );
-
-        if ($interval === null) {
-            return 0;
-        }
-
-        $anchor = $events->isEmpty() ? $startDate : $events->last()->occurred_at;
-
-        if ($anchor === null) {
-            return 0;
-        }
-
-        $due = $anchor->copy()->addDays($interval);
-        if ($due->startOfDay()->greaterThan(Carbon::today())) {
+        $due = CareDue::for($plant, $type);
+        if ($due === null || ! $due->isDue()) {
             return 0;
         }
 
         $reminder = SentReminder::firstOrCreate(
-            ['plant_id' => $plant->id, 'reminder_type' => $type, 'due_on' => $due->toDateString()],
+            ['plant_id' => $plant->id, 'reminder_type' => $type->value, 'due_on' => $due->dueDate->toDateString()],
             ['status' => 'sent', 'sent_at' => Carbon::now()],
         );
         if (! $reminder->wasRecentlyCreated) {
             return 0;
         }
 
-        Notification::send($recipients, new PlantCareReminder($plant, $type, $due->toDateString(), $interval));
+        Notification::send($recipients, new PlantCareReminder($plant, $type->value, $due->dueDate->toDateString(), $due->intervalDays));
 
         return 1;
     }

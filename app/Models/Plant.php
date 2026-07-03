@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\PlantStatus;
-use App\Support\CareScheduleResolver;
+use App\Support\Care\CareDue;
+use App\Support\Care\ScheduledCareType;
 use App\Support\PlantConditionResolver;
 use Database\Factories\PlantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -190,23 +191,8 @@ class Plant extends Model
 
     private function isLikelyDry(): bool
     {
-        $waterings = $this->wateringEvents;
+        $due = CareDue::for($this, ScheduledCareType::Watering);
 
-        $interval = CareScheduleResolver::intervalForType(
-            $this->watering_interval_days_override,
-            $waterings->map(fn (CareEvent $event): Carbon => $event->occurred_at)->all(),
-        );
-        if ($interval === null) {
-            return false;
-        }
-
-        $lastWatered = $waterings->isEmpty() ? $this->watering_schedule_start_date : $waterings->last()->occurred_at;
-        if ($lastWatered === null) {
-            return false;
-        }
-
-        $overdueDays = $lastWatered->copy()->addDays($interval)->diffInDays(now(), false);
-
-        return $overdueDays > max(2, $interval * 0.4);
+        return $due !== null && $due->daysOverdue() > max(2, $due->intervalDays * 0.4);
     }
 }

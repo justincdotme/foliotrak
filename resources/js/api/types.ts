@@ -40,7 +40,7 @@ export interface Plant {
   condition: Condition
   created_at: string
   updated_at: string
-  due_for_care: DueForCare[]
+  due_for_care: DueEntry[]
   last_watered_at: string | null
 }
 
@@ -282,15 +282,18 @@ export interface SpeciesSuggestion {
   family: string | null
 }
 
-export interface DueForCare {
-  plant_id: number
-  common_name: string | null
-  scientific_name: string | null
+export interface DueEntry {
   status: CareStatus
   due_date: string
   type: 'watering' | 'fertilizing'
   daysLeft: number
   interval: number
+}
+
+export interface DueForCare extends DueEntry {
+  plant_id: number
+  common_name: string | null
+  scientific_name: string | null
 }
 
 export interface RecentActivity {
@@ -379,7 +382,7 @@ export interface PlantTimeline {
   growth_trend: GrowthTrendPoint[]
   light_trend: TrendPoint[]
   leaf_size_trend: TrendPoint[]
-  due_for_care: DueForCare[]
+  due_for_care: DueEntry[]
   recommendations: Recommendation[]
   photos: Photo[]
 }

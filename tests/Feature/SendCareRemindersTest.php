@@ -110,14 +110,35 @@ class SendCareRemindersTest extends TestCase
         Notification::fake();
         $this->userWithKey();
 
-        // No override, but a 7-day rhythm; last watering 8 days ago is overdue.
+        // No override, but a 7-day rhythm with 36 days of history; the last
+        // watering 8 days ago is overdue.
+        $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
+        $this->wateredDaysAgo($plant, 36, 29, 22, 15, 8);
+
+        $this->artisan('app:send-care-reminders')->assertSuccessful();
+
+        Notification::assertSentTimes(PlantCareReminder::class, 1);
+        $this->assertDatabaseHas('sent_reminders', [
+            'plant_id' => $plant->id,
+            'reminder_type' => 'watering',
+            'due_on' => '2026-06-25',
+        ]);
+    }
+
+    public function test_history_under_28_days_drives_no_reminder_without_an_override(): void
+    {
+        Notification::fake();
+        $this->userWithKey();
+
+        // The same 7-day rhythm, but the first watering is only 22 days old:
+        // below the 28-day gate no interval is derived (FOL-98).
         $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
         $this->wateredDaysAgo($plant, 22, 15, 8);
 
         $this->artisan('app:send-care-reminders')->assertSuccessful();
 
-        Notification::assertSentTimes(PlantCareReminder::class, 1);
-        $this->assertDatabaseHas('sent_reminders', ['plant_id' => $plant->id, 'reminder_type' => 'watering']);
+        Notification::assertNothingSent();
+        $this->assertDatabaseCount('sent_reminders', 0);
     }
 
     public function test_a_single_event_with_no_override_cannot_derive_a_due_date(): void
