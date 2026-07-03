@@ -104,6 +104,21 @@ class PlantConditionApiTest extends TestCase
             ->assertJsonPath('data.condition.key', 'unknown');
     }
 
+    public function test_watering_history_under_28_days_does_not_read_as_likely_dry(): void
+    {
+        // A 3-day rhythm whose last watering is 14 days past would read dry, but
+        // the first watering is only 20 days old: below the 28-day gate no
+        // interval is derived, so the chip stays quiet (FOL-98).
+        $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
+        foreach ([20, 17, 14] as $daysAgo) {
+            CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
+        }
+
+        $this->getJson("/api/plants/{$plant->id}")
+            ->assertOk()
+            ->assertJsonPath('data.condition.key', 'unknown');
+    }
+
     private function logObservation(Plant $plant, ?int $health, string $occurredAt, ?string $symptomKey = null): void
     {
         $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => $occurredAt]);

@@ -239,11 +239,11 @@ class PlantTimelineApiTest extends TestCase
 
         $response
             ->assertJsonCount(1, 'data.due_for_care')
-            ->assertJsonPath('data.due_for_care.0.plant_id', $plant->id)
             ->assertJsonPath('data.due_for_care.0.type', 'watering')
             ->assertJsonPath('data.due_for_care.0.status', 'overdue')
             ->assertJsonPath('data.due_for_care.0.daysLeft', -2)
             ->assertJsonPath('data.due_for_care.0.interval', 7)
-            ->assertJsonPath('data.due_for_care.0.due_date', '2026-06-24');
+            ->assertJsonPath('data.due_for_care.0.due_date', '2026-06-24')
+            ->assertJsonMissingPath('data.due_for_care.0.plant_id');
     }
 }

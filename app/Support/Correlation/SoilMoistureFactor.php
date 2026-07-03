@@ -10,9 +10,9 @@ use Illuminate\Support\Collection;
 
 /**
  * Soil moisture against observed health. Uses soil_moisture_precise (1 to 10 int) when recorded;
- * falls back to a numeric mapping of soil_moisture_relative (dry=2, moist=5, wet=8) when the
- * precise field is absent. Pairs with overall_health; skips when both moisture values are null
- * or health is null. Pooled across the plant group.
+ * falls back to `SoilMoistureLevel::numericValue()` when the precise field is absent. Pairs with
+ * overall_health; skips when both moisture values are null or health is null. Pooled across the
+ * plant group.
  */
 final class SoilMoistureFactor implements Factor
 {
@@ -70,11 +70,6 @@ final class SoilMoistureFactor implements Factor
             return (float) $precise;
         }
 
-        return match ($relative) {
-            SoilMoistureLevel::Dry => 2.0,
-            SoilMoistureLevel::Moist => 5.0,
-            SoilMoistureLevel::Wet => 8.0,
-            null => null,
-        };
+        return $relative?->numericValue();
     }
 }

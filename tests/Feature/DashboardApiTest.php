@@ -108,10 +108,11 @@ class DashboardApiTest extends TestCase
     {
         $this->actAsHousehold();
 
-        // No override, but three waterings seven days apart derive a 7-day interval.
-        // Last watered 8 days ago, so it is one day overdue.
+        // No override, but five waterings seven days apart give 36 days of
+        // history and derive a 7-day interval. Last watered 8 days ago, so it
+        // is one day overdue.
         $plant = Plant::factory()->create(['common_name' => 'Rhythmic', 'watering_interval_days_override' => null]);
-        foreach ([22, 15, 8] as $daysAgo) {
+        foreach ([36, 29, 22, 15, 8] as $daysAgo) {
             CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
         }
 
@@ -124,6 +125,20 @@ class DashboardApiTest extends TestCase
             ->assertJsonPath('data.due_for_care.0.interval', 7)
             ->assertJsonPath('data.due_for_care.0.status', 'overdue')
             ->assertJsonPath('data.due_for_care.0.daysLeft', -1);
+    }
+
+    public function test_due_for_care_omits_a_derived_interval_under_28_days_of_history(): void
+    {
+        $this->actAsHousehold();
+
+        // The same 7-day rhythm, but the first watering is only 22 days old:
+        // below the 28-day gate no median is derived, so nothing is due (FOL-98).
+        $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
+        foreach ([22, 15, 8] as $daysAgo) {
+            CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
+        }
+
+        $this->getJson('/api/dashboard')->assertOk()->assertJsonCount(0, 'data.due_for_care');
     }
 
     public function test_recent_activity_returns_the_eight_newest_events_across_plants(): void
@@ -185,19 +200,20 @@ class DashboardApiTest extends TestCase
         );
     }
 
-    public function test_days_left_rounds_the_fractional_delta_to_whole_days(): void
+    public function test_days_left_counts_midnight_normalized_calendar_days(): void
     {
         $this->actAsHousehold();
 
-        // Watered 5.5 days ago on a 7-day override -> due 1.5 days out -> rounds to 2 -> ok.
+        // Watered 5.5 days ago on a 7-day override -> the due moment is 20:30
+        // tomorrow, one calendar day away regardless of clock time.
         $plant = Plant::factory()->create(['watering_interval_days_override' => 7]);
         CareEvent::factory()->ofType('watering')->for($plant)->create([
             'occurred_at' => now()->subDays(5)->subHours(12),
         ]);
 
         $this->getJson('/api/dashboard')->assertOk()
-            ->assertJsonPath('data.due_for_care.0.daysLeft', 2)
-            ->assertJsonPath('data.due_for_care.0.status', 'ok')
+            ->assertJsonPath('data.due_for_care.0.daysLeft', 1)
+            ->assertJsonPath('data.due_for_care.0.status', 'due-soon')
             ->assertJsonPath('data.due_for_care.0.due_date', '2026-06-27');
     }
 

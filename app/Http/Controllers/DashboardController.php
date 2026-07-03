@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\PlantStatus;
+use App\Http\Resources\DueForCareResource;
 use App\Http\Resources\UserResource;
 use App\Models\CareEvent;
 use App\Models\Plant;
-use App\Support\CareDueResolver;
+use App\Support\Care\CareDue;
 use App\Support\ProblemFlagger;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -36,9 +37,11 @@ class DashboardController extends Controller
             ->get();
 
         $dueForCare = $plants
-            ->flatMap(fn (Plant $plant): array => CareDueResolver::forPlant($plant))
-            ->sortBy('daysLeft')
+            ->flatMap(fn (Plant $plant) => collect(CareDue::forPlant($plant))
+                ->map(fn (CareDue $due): array => ['plant' => $plant, 'due' => $due]))
+            ->sortBy(fn (array $entry): int => $entry['due']->daysLeft)
             ->values()
+            ->map(fn (array $entry): array => (new DueForCareResource($entry['plant'], $entry['due']))->resolve($request))
             ->all();
 
         $flaggedProblems = $plants

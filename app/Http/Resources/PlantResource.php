@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\Plant;
-use App\Support\CareDueResolver;
+use App\Support\Care\CareDue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -39,7 +39,7 @@ class PlantResource extends JsonResource
             'updated_at' => $this->updated_at?->toISOString(),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'equipment' => EquipmentResource::collection($this->whenLoaded('equipment')),
-            'due_for_care' => CareDueResolver::forPlant($this->resource),
+            'due_for_care' => CareDueResource::collection(CareDue::forPlant($this->resource)),
             'last_watered_at' => $this->wateringEvents->last()?->occurred_at?->toISOString(),
         ];
     }

@@ -91,9 +91,6 @@ describe('PlantsPage', () => {
       makePlant({
         due_for_care: [
           {
-            plant_id: 1,
-            common_name: 'Pothos',
-            scientific_name: 'Epipremnum aureum',
             status: 'ok',
             due_date: '2026-07-05',
             type: 'watering',

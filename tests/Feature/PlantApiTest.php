@@ -325,8 +325,9 @@ class PlantApiTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.0.due_for_care.0.type', 'watering')
             ->assertJsonPath('data.0.due_for_care.0.status', 'ok')
+            ->assertJsonMissingPath('data.0.due_for_care.0.plant_id')
             ->assertJsonStructure([
-                'data' => [['due_for_care' => [['plant_id', 'status', 'due_date', 'type', 'daysLeft', 'interval']]]],
+                'data' => [['due_for_care' => [['status', 'due_date', 'type', 'daysLeft', 'interval']]]],
             ]);
     }
 
