@@ -247,26 +247,27 @@ class BackboneExtractor
                     continue;
                 }
 
-                $record = ['gbif_key' => $key, 'scientific_name' => $scientificName];
-                if ($plan['canonical'] !== null) {
-                    $canonical = $this->normalize($this->cell($row, $plan['canonical']));
-                    if ($canonical !== '') {
-                        $record['canonical_name'] = $canonical;
-                    }
-                }
-                if (isset($commonNames[$key])) {
-                    $record['common_name'] = $commonNames[$key][0];
-                    $record['common_names'] = $commonNames[$key];
-                }
-                $record['rank'] = $rank;
-                if ($plan['family'] !== null) {
-                    $family = $this->normalize($this->cell($row, $plan['family']));
-                    if ($family !== '') {
-                        $record['family'] = $family;
-                    }
-                }
+                $canonical = $plan['canonical'] !== null
+                    ? ($this->normalize($this->cell($row, $plan['canonical'])) ?: null)
+                    : null;
 
-                gzwrite($out, json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n");
+                $names = $commonNames[$key] ?? null;
+
+                $family = $plan['family'] !== null
+                    ? ($this->normalize($this->cell($row, $plan['family'])) ?: null)
+                    : null;
+
+                $speciesRow = new SpeciesRow(
+                    gbifKey: (string) $key,
+                    scientificName: $scientificName,
+                    canonicalName: $canonical,
+                    commonName: $names[0] ?? null,
+                    commonNames: $names,
+                    rank: $rank,
+                    family: $family,
+                );
+
+                gzwrite($out, json_encode($speciesRow->toArray(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n");
                 if ($progress !== null && ++$written % 100_000 === 0) {
                     $progress("wrote {$written} species");
                 }

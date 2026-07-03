@@ -63,9 +63,9 @@ class BackboneExtractorTest extends TestCase
         $this->assertArrayNotHasKey(6666666, $this->byKey); // family rank
     }
 
-    public function test_gbif_key_is_written_as_an_integer(): void
+    public function test_gbif_key_is_written_as_a_string(): void
     {
-        $this->assertIsInt($this->byKey[2868241]['gbif_key']);
+        $this->assertIsString($this->byKey[2868241]['gbif_key']);
     }
 
     public function test_joins_the_first_english_common_name(): void
@@ -82,12 +82,12 @@ class BackboneExtractorTest extends TestCase
         );
     }
 
-    public function test_omits_common_name_when_no_english_name_exists(): void
+    public function test_sets_null_common_name_when_no_english_name_exists(): void
     {
-        $this->assertArrayNotHasKey('common_name', $this->byKey[2769648]);
-        $this->assertArrayNotHasKey('common_name', $this->byKey[7777777]);
-        $this->assertArrayNotHasKey('common_names', $this->byKey[2769648]);
-        $this->assertArrayNotHasKey('common_names', $this->byKey[7777777]);
+        $this->assertNull($this->byKey[2769648]['common_name']);
+        $this->assertNull($this->byKey[7777777]['common_name']);
+        $this->assertNull($this->byKey[2769648]['common_names']);
+        $this->assertNull($this->byKey[7777777]['common_names']);
     }
 
     public function test_normalizes_rank_to_uppercase_across_offered_ranks(): void

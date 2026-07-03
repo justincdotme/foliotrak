@@ -7,12 +7,11 @@ namespace App\Services;
 use App\Exceptions\SearchDegradedException;
 use App\Models\SpeciesCache;
 use App\Support\Gbif\GbifClient;
-use Illuminate\Support\Carbon;
+use App\Support\Gbif\SpeciesRow;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Normalizer;
 
-/** @phpstan-type SpeciesRow array<string, mixed> */
 class PlantSearchService
 {
     public function __construct(private readonly GbifClient $gbif) {}
@@ -99,21 +98,21 @@ class PlantSearchService
             return [];
         }
 
-        if (isset($raw['hits']) && is_array($raw['hits'])) {
-            return array_values(array_map(
-                static fn (mixed $hit): array => is_array($hit) ? $hit : [],
-                $raw['hits'],
-            ));
-        }
+        $items = [];
 
-        if (isset($raw['results']) && is_array($raw['results'])) {
-            return array_values(array_map(
+        if (isset($raw['hits']) && is_array($raw['hits'])) {
+            $items = $raw['hits'];
+        } elseif (isset($raw['results']) && is_array($raw['results'])) {
+            $items = array_map(
                 static fn (mixed $model): array => $model instanceof SpeciesCache ? $model->toSearchableArray() : [],
                 $raw['results'],
-            ));
+            );
         }
 
-        return [];
+        return array_values(array_filter(array_map(
+            static fn (mixed $item): ?SpeciesRow => is_array($item) ? SpeciesRow::fromArray($item) : null,
+            $items,
+        )));
     }
 
     /**
@@ -123,11 +122,7 @@ class PlantSearchService
     {
         $threshold = now()->subDays($this->ttlDays());
 
-        return $hits->contains(function (array $hit) use ($threshold): bool {
-            $cachedAt = $hit['cached_at'] ?? null;
-
-            return $cachedAt === null || Carbon::parse((string) $cachedAt)->lt($threshold);
-        });
+        return $hits->contains(fn (SpeciesRow $hit): bool => $hit->cachedAt === null || $hit->cachedAt->lt($threshold));
     }
 
     /**
@@ -137,24 +132,24 @@ class PlantSearchService
     {
         foreach ($records as $record) {
             $attributes = [
-                'scientific_name' => $record['scientific_name'],
-                'canonical_name' => $record['canonical_name'],
-                'rank' => $record['rank'],
-                'family' => $record['family'],
-                'payload' => $record['payload'],
+                'scientific_name' => $record->scientificName,
+                'canonical_name' => $record->canonicalName,
+                'rank' => $record->rank,
+                'family' => $record->family,
+                'payload' => $record->payload,
                 'cached_at' => now(),
             ];
 
-            if (($record['common_name'] ?? null) !== null) {
-                $attributes['common_name'] = $record['common_name'];
+            if ($record->commonName !== null) {
+                $attributes['common_name'] = $record->commonName;
             }
 
-            if (($record['common_names'] ?? null) !== null) {
-                $attributes['common_names'] = $record['common_names'];
+            if ($record->commonNames !== null) {
+                $attributes['common_names'] = $record->commonNames;
             }
 
             SpeciesCache::updateOrCreate(
-                ['gbif_key' => $record['gbif_key']],
+                ['gbif_key' => $record->gbifKey],
                 $attributes,
             );
         }
@@ -169,16 +164,15 @@ class PlantSearchService
      */
     private function hasRelevantMatch(Collection $hits, string $query): bool
     {
-        return $hits->contains(function (array $hit) use ($query): bool {
-            foreach (['canonical_name', 'scientific_name', 'common_name'] as $field) {
-                $value = $hit[$field] ?? null;
+        return $hits->contains(function (SpeciesRow $hit) use ($query): bool {
+            foreach ([$hit->canonicalName, $hit->scientificName, $hit->commonName] as $value) {
                 if (is_string($value) && str_contains(Str::lower($value), $query)) {
                     return true;
                 }
             }
 
-            foreach ($hit['common_names'] ?? [] as $name) {
-                if (is_string($name) && str_contains(Str::lower($name), $query)) {
+            foreach ($hit->commonNames ?? [] as $name) {
+                if (str_contains(Str::lower($name), $query)) {
                     return true;
                 }
             }
