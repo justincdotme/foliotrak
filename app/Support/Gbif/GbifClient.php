@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Gbif;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -56,41 +57,19 @@ class GbifClient
      * (breaker open, throttle saturated, any non-2xx, or a timeout), so the
      * caller serves cache and leaves the query uncached for a later retry.
      *
-     * @return list<array<string, mixed>>|null
+     * @return list<SpeciesRow>|null
      */
     public function lookup(string $query): ?array
     {
-        if ($this->breakerIsOpen()) {
+        $response = $this->guardedGet('/species/match', [
+            'name' => $query,
+            'strict' => 'false',
+            'verbose' => 'true',
+        ]);
+
+        if ($response === null) {
             return null;
         }
-
-        if (RateLimiter::tooManyAttempts($this->throttleKey(), $this->throttleMaxAttempts)) {
-            return null;
-        }
-
-        RateLimiter::increment($this->throttleKey(), $this->throttleDecaySeconds);
-
-        try {
-            $response = Http::withHeaders(['User-Agent' => $this->userAgent])
-                ->timeout($this->timeout)
-                ->get($this->baseUrl.'/species/match', [
-                    'name' => $query,
-                    'strict' => 'false',
-                    'verbose' => 'true',
-                ])
-                ->throw();
-        } catch (Throwable $e) {
-            // Record the root cause so a degraded (503) search is diagnosable.
-            Log::warning('GBIF lookup failed; serving cache.', [
-                'query' => $query,
-                'error' => $e->getMessage(),
-            ]);
-            $this->recordFailure();
-
-            return null;
-        }
-
-        $this->recordSuccess();
 
         $body = $response->json();
 
@@ -102,41 +81,19 @@ class GbifClient
      * `/species/match` returns nothing, since match is a scientific name endpoint
      * that cannot resolve common names.
      *
-     * @return list<array<string, mixed>>|null
+     * @return list<SpeciesRow>|null
      */
     public function searchCommonName(string $query): ?array
     {
-        if ($this->breakerIsOpen()) {
+        $response = $this->guardedGet('/species/search', [
+            'q' => $query,
+            'rank' => 'SPECIES',
+            'limit' => 5,
+        ]);
+
+        if ($response === null) {
             return null;
         }
-
-        if (RateLimiter::tooManyAttempts($this->throttleKey(), $this->throttleMaxAttempts)) {
-            return null;
-        }
-
-        RateLimiter::increment($this->throttleKey(), $this->throttleDecaySeconds);
-
-        try {
-            $response = Http::withHeaders(['User-Agent' => $this->userAgent])
-                ->timeout($this->timeout)
-                ->get($this->baseUrl.'/species/search', [
-                    'q' => $query,
-                    'rank' => 'SPECIES',
-                    'limit' => 5,
-                ])
-                ->throw();
-        } catch (Throwable $e) {
-            // Record the root cause so a degraded search is diagnosable.
-            Log::warning('GBIF search failed; serving cache.', [
-                'query' => $query,
-                'error' => $e->getMessage(),
-            ]);
-            $this->recordFailure();
-
-            return null;
-        }
-
-        $this->recordSuccess();
 
         $body = $response->json();
         $results = is_array($body) ? ($body['results'] ?? []) : [];
@@ -152,8 +109,8 @@ class GbifClient
                 continue;
             }
             $record = $this->normalizeSearchResult($result);
-            if ($record !== null && ! isset($seen[$record['gbif_key']])) {
-                $seen[$record['gbif_key']] = true;
+            if ($record !== null && ! isset($seen[$record->gbifKey])) {
+                $seen[$record->gbifKey] = true;
                 $records[] = $record;
             }
         }
@@ -162,8 +119,43 @@ class GbifClient
     }
 
     /**
+     * @param  array<string, mixed>  $params
+     */
+    private function guardedGet(string $path, array $params): ?Response
+    {
+        if ($this->breakerIsOpen()) {
+            return null;
+        }
+
+        if (RateLimiter::tooManyAttempts($this->throttleKey(), $this->throttleMaxAttempts)) {
+            return null;
+        }
+
+        RateLimiter::increment($this->throttleKey(), $this->throttleDecaySeconds);
+
+        try {
+            $response = Http::withHeaders(['User-Agent' => $this->userAgent])
+                ->timeout($this->timeout)
+                ->get($this->baseUrl.$path, $params)
+                ->throw();
+        } catch (Throwable $e) {
+            Log::warning('GBIF request failed; serving cache.', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+            $this->recordFailure();
+
+            return null;
+        }
+
+        $this->recordSuccess();
+
+        return $response;
+    }
+
+    /**
      * @param  array<string, mixed>  $body
-     * @return list<array<string, mixed>>
+     * @return list<SpeciesRow>
      */
     private function extractMatches(array $body): array
     {
@@ -190,13 +182,38 @@ class GbifClient
     }
 
     /**
+     * GBIF's match and search endpoints use different field names for the same
+     * synonym-to-accepted resolution.
+     *
+     * @param  array<string, mixed>  $record
+     * @return array{key: mixed, scientificName: string}|null
+     */
+    private function resolveSynonym(array $record, string $statusField, string $keyField, string $acceptedKeyField): ?array
+    {
+        $isSynonym = ($record[$statusField] ?? null) === 'SYNONYM';
+
+        $key = $isSynonym && isset($record[$acceptedKeyField])
+            ? $record[$acceptedKeyField]
+            : ($record[$keyField] ?? null);
+
+        if ($key === null) {
+            return null;
+        }
+
+        $scientificName = $isSynonym && isset($record['accepted'])
+            ? $record['accepted']
+            : ($record['scientificName'] ?? '');
+
+        return ['key' => $key, 'scientificName' => (string) $scientificName];
+    }
+
+    /**
      * Keep only confident species-level name matches, resolving a synonym to its
      * accepted name so the cache holds the current taxonomy.
      *
      * @param  array<string, mixed>  $match
-     * @return array<string, mixed>|null
      */
-    private function normalizeMatch(array $match): ?array
+    private function normalizeMatch(array $match): ?SpeciesRow
     {
         $matchType = $match['matchType'] ?? 'NONE';
         if ($matchType !== 'EXACT' && $matchType !== 'FUZZY') {
@@ -207,29 +224,19 @@ class GbifClient
             return null;
         }
 
-        $isSynonym = ($match['status'] ?? null) === 'SYNONYM';
-
-        $key = $isSynonym && isset($match['acceptedUsageKey'])
-            ? $match['acceptedUsageKey']
-            : ($match['usageKey'] ?? null);
-
-        if ($key === null) {
+        $resolved = $this->resolveSynonym($match, 'status', 'usageKey', 'acceptedUsageKey');
+        if ($resolved === null) {
             return null;
         }
 
-        $scientificName = $isSynonym && isset($match['accepted'])
-            ? $match['accepted']
-            : ($match['scientificName'] ?? '');
-
-        return [
-            'gbif_key' => (string) $key,
-            'scientific_name' => (string) $scientificName,
-            'canonical_name' => $match['canonicalName'] ?? null,
-            'common_name' => null,
-            'rank' => $match['rank'] ?? null,
-            'family' => $match['family'] ?? null,
-            'payload' => $match,
-        ];
+        return new SpeciesRow(
+            gbifKey: (string) $resolved['key'],
+            scientificName: $resolved['scientificName'],
+            canonicalName: $match['canonicalName'] ?? null,
+            rank: $match['rank'] ?? null,
+            family: $match['family'] ?? null,
+            payload: $match,
+        );
     }
 
     /**
@@ -237,27 +244,17 @@ class GbifClient
      * not `status`, and includes vernacular names inline.
      *
      * @param  array<string, mixed>  $result
-     * @return array<string, mixed>|null
      */
-    private function normalizeSearchResult(array $result): ?array
+    private function normalizeSearchResult(array $result): ?SpeciesRow
     {
         if (($result['rank'] ?? null) !== 'SPECIES') {
             return null;
         }
 
-        $isSynonym = ($result['taxonomicStatus'] ?? null) === 'SYNONYM';
-
-        $key = $isSynonym && isset($result['acceptedKey'])
-            ? $result['acceptedKey']
-            : ($result['key'] ?? null);
-
-        if ($key === null) {
+        $resolved = $this->resolveSynonym($result, 'taxonomicStatus', 'key', 'acceptedKey');
+        if ($resolved === null) {
             return null;
         }
-
-        $scientificName = $isSynonym && isset($result['accepted'])
-            ? $result['accepted']
-            : ($result['scientificName'] ?? '');
 
         $englishNames = [];
         foreach ($result['vernacularNames'] ?? [] as $entry) {
@@ -270,16 +267,16 @@ class GbifClient
         }
         $englishNames = array_values(array_unique($englishNames));
 
-        return [
-            'gbif_key' => (string) $key,
-            'scientific_name' => (string) $scientificName,
-            'canonical_name' => $result['canonicalName'] ?? null,
-            'common_name' => $englishNames[0] ?? null,
-            'common_names' => $englishNames !== [] ? $englishNames : null,
-            'rank' => $result['rank'],
-            'family' => $result['family'] ?? null,
-            'payload' => $result,
-        ];
+        return new SpeciesRow(
+            gbifKey: (string) $resolved['key'],
+            scientificName: $resolved['scientificName'],
+            canonicalName: $result['canonicalName'] ?? null,
+            commonName: $englishNames[0] ?? null,
+            commonNames: $englishNames !== [] ? $englishNames : null,
+            rank: $result['rank'],
+            family: $result['family'] ?? null,
+            payload: $result,
+        );
     }
 
     private function throttleKey(): string

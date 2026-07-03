@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\SpeciesCache;
+use App\Support\Gbif\SpeciesRow;
 use Illuminate\Console\Command;
 
 /**
@@ -98,24 +99,21 @@ class ImportSpeciesSeed extends Command
             return null;
         }
 
-        $key = $data['gbif_key'] ?? null;
-        $scientificName = $data['scientific_name'] ?? null;
-        if ($key === null || ! is_string($scientificName) || $scientificName === '') {
+        $row = SpeciesRow::fromArray($data);
+        if ($row === null) {
             return null;
         }
 
         $now = now()->toDateTimeString();
 
-        $commonNames = $data['common_names'] ?? null;
-
         return [
-            'gbif_key' => (string) $key,
-            'scientific_name' => $scientificName,
-            'canonical_name' => $data['canonical_name'] ?? null,
-            'common_name' => $data['common_name'] ?? null,
-            'common_names' => is_array($commonNames) ? json_encode($commonNames) : null,
-            'rank' => $data['rank'] ?? null,
-            'family' => $data['family'] ?? null,
+            'gbif_key' => $row->gbifKey,
+            'scientific_name' => $row->scientificName,
+            'canonical_name' => $row->canonicalName,
+            'common_name' => $row->commonName,
+            'common_names' => $row->commonNames !== null ? json_encode($row->commonNames) : null,
+            'rank' => $row->rank,
+            'family' => $row->family,
             'cached_at' => $now,
             'created_at' => $now,
             'updated_at' => $now,

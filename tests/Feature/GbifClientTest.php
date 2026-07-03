@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Support\Gbif\GbifClient;
+use App\Support\Gbif\SpeciesRow;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -48,10 +49,10 @@ class GbifClientTest extends TestCase
         $records = $this->client()->lookup('monstera delicosa');
 
         $this->assertCount(1, $records);
-        $this->assertSame('2868241', $records[0]['gbif_key']);
-        $this->assertSame('Monstera deliciosa Liebm.', $records[0]['scientific_name']);
-        $this->assertSame('Araceae', $records[0]['family']);
-        $this->assertNull($records[0]['common_name']);
+        $this->assertSame('2868241', $records[0]->gbifKey);
+        $this->assertSame('Monstera deliciosa Liebm.', $records[0]->scientificName);
+        $this->assertSame('Araceae', $records[0]->family);
+        $this->assertNull($records[0]->commonName);
     }
 
     #[DataProvider('confidenceCases')]
@@ -122,8 +123,8 @@ class GbifClientTest extends TestCase
 
         $records = $this->client()->lookup('sanseveria trifasciata');
 
-        $this->assertSame('222', $records[0]['gbif_key']);
-        $this->assertSame('Dracaena trifasciata (Prain) Mabb.', $records[0]['scientific_name']);
+        $this->assertSame('222', $records[0]->gbifKey);
+        $this->assertSame('Dracaena trifasciata (Prain) Mabb.', $records[0]->scientificName);
     }
 
     public function test_includes_confident_alternatives_and_drops_weak_ones(): void
@@ -142,7 +143,7 @@ class GbifClientTest extends TestCase
 
         $records = $this->client()->lookup('whatever');
 
-        $this->assertSame(['1', '2'], array_column($records, 'gbif_key'));
+        $this->assertSame(['1', '2'], array_map(fn (SpeciesRow $r) => $r->gbifKey, $records));
     }
 
     public function test_throttle_saturation_returns_null_without_forwarding(): void
@@ -228,11 +229,11 @@ class GbifClientTest extends TestCase
         $records = $this->client()->searchCommonName('zz plant');
 
         $this->assertCount(1, $records);
-        $this->assertSame('7911643', $records[0]['gbif_key']);
-        $this->assertSame('Zamioculcas zamiifolia (Lodd.) Engl.', $records[0]['scientific_name']);
-        $this->assertSame('ZZ Plant', $records[0]['common_name']);
-        $this->assertSame(['ZZ Plant', 'Zanzibar gem'], $records[0]['common_names']);
-        $this->assertSame('Araceae', $records[0]['family']);
+        $this->assertSame('7911643', $records[0]->gbifKey);
+        $this->assertSame('Zamioculcas zamiifolia (Lodd.) Engl.', $records[0]->scientificName);
+        $this->assertSame('ZZ Plant', $records[0]->commonName);
+        $this->assertSame(['ZZ Plant', 'Zanzibar gem'], $records[0]->commonNames);
+        $this->assertSame('Araceae', $records[0]->family);
     }
 
     public function test_search_resolves_synonym_to_accepted_name(): void
@@ -262,9 +263,9 @@ class GbifClientTest extends TestCase
 
         $records = $this->client()->searchCommonName('snake plant');
 
-        $this->assertSame('222', $records[0]['gbif_key']);
-        $this->assertSame('Dracaena trifasciata (Prain) Mabb.', $records[0]['scientific_name']);
-        $this->assertSame('Snake Plant', $records[0]['common_name']);
+        $this->assertSame('222', $records[0]->gbifKey);
+        $this->assertSame('Dracaena trifasciata (Prain) Mabb.', $records[0]->scientificName);
+        $this->assertSame('Snake Plant', $records[0]->commonName);
     }
 
     public function test_search_deduplicates_by_resolved_key(): void
@@ -301,7 +302,7 @@ class GbifClientTest extends TestCase
         $records = $this->client()->searchCommonName('snake plant');
 
         $this->assertCount(1, $records);
-        $this->assertSame('222', $records[0]['gbif_key']);
+        $this->assertSame('222', $records[0]->gbifKey);
     }
 
     public function test_search_shares_throttle_and_breaker_with_lookup(): void
