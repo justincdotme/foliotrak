@@ -8,15 +8,18 @@ use App\Http\Requests\StorePhotoRequest;
 use App\Http\Resources\PhotoResource;
 use App\Models\Photo;
 use App\Models\Plant;
-use App\Support\ImageProcessor;
+use App\Services\PhotoService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class PhotoController extends Controller
 {
+    use AuthorizesRequests;
+
+    public function __construct(private readonly PhotoService $service) {}
+
     public function index(Plant $plant): AnonymousResourceCollection
     {
         return PhotoResource::collection(
@@ -24,40 +27,20 @@ class PhotoController extends Controller
         );
     }
 
-    public function store(StorePhotoRequest $request, Plant $plant, ImageProcessor $processor): JsonResponse
+    public function store(StorePhotoRequest $request, Plant $plant): JsonResponse
     {
-        $file = $request->file('photo');
-        $heroCrop = $request->heroCrop();
-        $thumbCrop = $request->thumbCrop();
+        $this->authorize('update', $plant);
 
-        if ($heroCrop && $thumbCrop) {
-            $processed = $processor->processCoverPhoto($file, $heroCrop, $thumbCrop);
-
-            $photo = $plant->photos()->create([
-                'disk' => 'photos',
-                'path' => $processed['hero_path'],
-                'thumb_path' => $processed['thumb_path'],
-                'original_filename' => $file->getClientOriginalName(),
-                'taken_on' => $request->date('taken_on') ?? now(),
-                'caption' => $request->string('caption')->value() ?: null,
-                'care_event_id' => $request->input('care_event_id'),
-            ]);
-        } else {
-            $path = $file->store('', 'photos');
-
-            $photo = $plant->photos()->create([
-                'disk' => 'photos',
-                'path' => $path,
-                'original_filename' => $file->getClientOriginalName(),
-                'taken_on' => $request->date('taken_on') ?? now(),
-                'caption' => $request->string('caption')->value() ?: null,
-                'care_event_id' => $request->input('care_event_id'),
-            ]);
-        }
-
-        if ($request->boolean('set_as_cover')) {
-            $plant->update(['cover_photo_id' => $photo->id]);
-        }
+        $photo = $this->service->create(
+            plant: $plant,
+            file: $request->file('photo'),
+            takenOn: $request->date('taken_on'),
+            caption: $request->string('caption')->value() ?: null,
+            careEventId: $request->input('care_event_id'),
+            setAsCover: $request->boolean('set_as_cover'),
+            heroCrop: $request->heroCrop(),
+            thumbCrop: $request->thumbCrop(),
+        );
 
         return PhotoResource::make($photo)
             ->response()
@@ -66,24 +49,9 @@ class PhotoController extends Controller
 
     public function destroy(Photo $photo): Response
     {
-        $plant = $photo->plant;
-        $disk = $photo->disk;
-        $path = $photo->path;
-        $thumbPath = $photo->thumb_path;
+        $this->authorize('delete', $photo->plant);
 
-        DB::transaction(function () use ($plant, $photo): void {
-            if ($plant->cover_photo_id === $photo->id) {
-                $plant->update(['cover_photo_id' => null]);
-            }
-
-            $photo->delete();
-        });
-
-        Storage::disk($disk)->delete($path);
-
-        if ($thumbPath) {
-            Storage::disk($disk)->delete($thumbPath);
-        }
+        $this->service->delete($photo);
 
         return response()->noContent();
     }
