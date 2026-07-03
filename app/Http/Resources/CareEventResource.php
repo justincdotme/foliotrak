@@ -49,4 +49,27 @@ class CareEventResource extends JsonResource
             $resource,
         );
     }
+
+    /**
+     * @return list<string>
+     */
+    public static function detailRelations(string $type): array
+    {
+        return match ($type) {
+            'watering' => ['watering'],
+            'fertilizing' => ['fertilizing.fertilizerForm', 'fertilizing.nutrients.nutrient'],
+            'repotting' => ['repotting'],
+            'observation' => ['observation.symptoms'],
+            'relocation' => ['relocation.fromLocation', 'relocation.toLocation'],
+            default => [],
+        };
+    }
+
+    /** Union of every type's detail relations, for mixed-type loads (the timeline). */
+    public static function allDetailRelations(): array
+    {
+        return array_merge(
+            ...array_map(fn (string $t) => self::detailRelations($t), ['watering', 'fertilizing', 'repotting', 'observation', 'relocation'])
+        );
+    }
 }

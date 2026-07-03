@@ -146,7 +146,12 @@ export function LogFertilizingForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <DateTimeField register={register} name="occurred_at" error={errors.occurred_at?.message} />
       <Field label="Form" error={errors.fertilizer_form_id?.message}>
-        <select {...register('fertilizer_form_id')} className={inputClass} aria-label="Form">
+        <select
+          {...register('fertilizer_form_id')}
+          className={inputClass}
+          aria-label="Form"
+          dusk="fertilizing-form-select"
+        >
           {forms.map(form => (
             <option key={form.id} value={String(form.id)}>
               {form.label}
@@ -254,7 +259,7 @@ export function LogFertilizingForm({
         </div>
       )}
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" dusk="care-form-submit" disabled={isSubmitting}>
           <FlaskConical size={16} />
           {event ? 'Save changes' : 'Log fertilizing'}
         </Button>

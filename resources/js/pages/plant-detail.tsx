@@ -215,19 +215,19 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
 
       {/* Log actions */}
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="outline" onClick={() => openLog('watering')}>
+        <Button variant="outline" dusk="log-watering" onClick={() => openLog('watering')}>
           <Droplets size={16} className="text-info" />
           Water
         </Button>
-        <Button variant="outline" onClick={() => openLog('fertilizing')}>
+        <Button variant="outline" dusk="log-fertilizing" onClick={() => openLog('fertilizing')}>
           <FlaskConical size={16} className="text-accent" />
           Fertilize
         </Button>
-        <Button variant="outline" onClick={() => openLog('repotting')}>
+        <Button variant="outline" dusk="log-repotting" onClick={() => openLog('repotting')}>
           <Shovel size={16} style={{ color: 'var(--series-4)' }} />
           Repot
         </Button>
-        <Button variant="outline" onClick={() => openLog('observation')}>
+        <Button variant="outline" dusk="log-observation" onClick={() => openLog('observation')}>
           <ClipboardList size={16} className="text-primary" />
           Observe
         </Button>

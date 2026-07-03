@@ -48,7 +48,7 @@ describe('LogFertilizingForm', () => {
     const onDone = vi.fn()
     const requests: unknown[] = []
     server.use(
-      http.post('/api/plants/:id/fertilizings', async ({ request }) => {
+      http.post('/api/plants/:id/care-events', async ({ request }) => {
         requests.push(await request.json())
         return HttpResponse.json({ data: { id: 60 } }, { status: 201 })
       })
@@ -62,14 +62,19 @@ describe('LogFertilizingForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /Log fertilizing/ }))
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
-    expect(requests[0]).toMatchObject({ fertilizer_form_id: 1, nutrients: [], dose_pct: 50 })
+    expect(requests[0]).toMatchObject({
+      type: 'fertilizing',
+      fertilizer_form_id: 1,
+      nutrients: [],
+      dose_pct: 50,
+    })
   })
 
   it('includes a real nutrient from the lookup when the organic form is picked', async () => {
     const onDone = vi.fn()
     const requests: unknown[] = []
     server.use(
-      http.post('/api/plants/:id/fertilizings', async ({ request }) => {
+      http.post('/api/plants/:id/care-events', async ({ request }) => {
         requests.push(await request.json())
         return HttpResponse.json({ data: { id: 61 } }, { status: 201 })
       })
@@ -83,6 +88,7 @@ describe('LogFertilizingForm', () => {
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
     expect(requests[0]).toMatchObject({
+      type: 'fertilizing',
       fertilizer_form_id: 4,
       nutrients: [{ nutrient_id: 1, note: null }],
     })
@@ -93,7 +99,7 @@ describe('LogFertilizingForm', () => {
     const createSpy = vi.fn()
     const patchRequests: unknown[] = []
     server.use(
-      http.post('/api/plants/:id/fertilizings', () => {
+      http.post('/api/plants/:id/care-events', () => {
         createSpy()
         return HttpResponse.json({ data: { id: 62 } }, { status: 201 })
       }),

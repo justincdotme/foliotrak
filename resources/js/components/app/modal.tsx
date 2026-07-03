@@ -12,11 +12,21 @@ interface ModalProps {
   children: ReactNode
   footer?: ReactNode
   wide?: boolean
+  dusk?: string
 }
 
 // Radix Dialog supplies the focus trap, escape handling, and scroll lock; the styling
 // handles layout (centered on desktop, bottom sheet on mobile) to match the prototype.
-export function Modal({ open, onClose, title, subtitle, children, footer, wide }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  wide,
+  dusk,
+}: ModalProps) {
   const { mobile } = useAppContext()
   return (
     <Dialog.Root
@@ -28,6 +38,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, wide }
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
+          dusk={dusk}
           aria-describedby={undefined}
           className={cn(
             'fixed z-50 flex flex-col border border-border bg-surface shadow-xl focus:outline-none',

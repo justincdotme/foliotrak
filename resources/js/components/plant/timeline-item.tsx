@@ -34,6 +34,7 @@ export function TimelineItem({ e, photos, onEdit, onViewPhoto, onDelete }: Timel
       <div className="pb-5">
         <button
           onClick={() => setOpen(o => !o)}
+          dusk="timeline-item"
           className="w-full text-left flex items-center gap-2"
         >
           <span className="font-medium">{m.label}</span>
@@ -69,7 +70,7 @@ export function TimelineItem({ e, photos, onEdit, onViewPhoto, onDelete }: Timel
               </div>
             )}
             <div className="flex gap-1 mt-2.5 pt-2.5 border-t border-border">
-              <Button size="sm" variant="ghost" onClick={onEdit}>
+              <Button size="sm" variant="ghost" dusk="timeline-edit" onClick={onEdit}>
                 <Pencil size={14} />
                 Edit
               </Button>
@@ -77,6 +78,7 @@ export function TimelineItem({ e, photos, onEdit, onViewPhoto, onDelete }: Timel
                 size="sm"
                 variant="ghost"
                 className="text-overdue"
+                dusk="timeline-delete"
                 onClick={() => setConfirm(true)}
               >
                 <Trash2 size={14} />

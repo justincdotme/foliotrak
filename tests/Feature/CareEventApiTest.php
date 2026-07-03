@@ -38,7 +38,7 @@ class CareEventApiTest extends TestCase
     {
         $plant = Plant::factory()->create();
 
-        $this->postJson("/api/plants/{$plant->id}/waterings", ['occurred_at' => now()->toISOString()])
+        $this->postJson("/api/plants/{$plant->id}/care-events", ['type' => 'watering', 'occurred_at' => now()->toISOString()])
             ->assertUnauthorized();
     }
 
@@ -47,7 +47,8 @@ class CareEventApiTest extends TestCase
         $user = $this->actAsHousehold();
         $plant = Plant::factory()->create();
 
-        $response = $this->postJson("/api/plants/{$plant->id}/waterings", [
+        $response = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'watering',
             'occurred_at' => '2026-06-20T08:30:00Z',
             'amount_ml' => 200,
             'note' => 'Deep soak',
@@ -71,7 +72,8 @@ class CareEventApiTest extends TestCase
         $plant = Plant::factory()->create();
         $liquid = FertilizerForm::where('key', 'liquid')->value('id');
 
-        $this->postJson("/api/plants/{$plant->id}/fertilizings", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'fertilizing',
             'occurred_at' => '2026-06-18T09:15:00Z',
             'fertilizer_form_id' => $liquid,
             'brand' => 'Dyna-Gro',
@@ -98,7 +100,8 @@ class CareEventApiTest extends TestCase
         $fish = Nutrient::where('key', 'fish_emulsion')->value('id');
         $kelp = Nutrient::where('key', 'kelp')->value('id');
 
-        $response = $this->postJson("/api/plants/{$plant->id}/fertilizings", [
+        $response = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'fertilizing',
             'occurred_at' => '2026-06-15T09:15:00Z',
             'fertilizer_form_id' => $organic,
             'brand' => "Neptune's Harvest",
@@ -130,7 +133,8 @@ class CareEventApiTest extends TestCase
         $this->actAsHousehold();
         $plant = Plant::factory()->create();
 
-        $this->postJson("/api/plants/{$plant->id}/repottings", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'repotting',
             'occurred_at' => '2026-05-15T11:00:00Z',
             'soil_recipe' => '5 parts bark, 2 parts coir, 1 part perlite',
             'pot_size_value' => 10,
@@ -150,7 +154,8 @@ class CareEventApiTest extends TestCase
         $plant = Plant::factory()->create();
         $spiderMites = Symptom::where('key', 'spider_mites')->value('id');
 
-        $response = $this->postJson("/api/plants/{$plant->id}/observations", [
+        $response = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-22T18:00:00Z',
             'overall_health' => 4,
             'light_level' => 6,
@@ -181,12 +186,14 @@ class CareEventApiTest extends TestCase
         $this->actAsHousehold();
         $plant = Plant::factory()->create();
 
-        $this->postJson("/api/plants/{$plant->id}/observations", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-20T18:00:00Z',
             'custom_symptoms' => ['Sticky residue'],
         ])->assertCreated();
 
-        $this->postJson("/api/plants/{$plant->id}/observations", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-21T18:00:00Z',
             'custom_symptoms' => ['sticky  residue!'],
         ])->assertCreated();
@@ -199,7 +206,8 @@ class CareEventApiTest extends TestCase
         $this->actAsHousehold();
         $plant = Plant::factory()->create();
 
-        $this->postJson("/api/plants/{$plant->id}/observations", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-22T18:00:00Z',
             'overall_health' => 6,
         ])
@@ -212,7 +220,7 @@ class CareEventApiTest extends TestCase
         $this->actAsHousehold();
         $plant = Plant::factory()->create();
 
-        $this->postJson("/api/plants/{$plant->id}/fertilizings", ['occurred_at' => now()->toISOString()])
+        $this->postJson("/api/plants/{$plant->id}/care-events", ['type' => 'fertilizing', 'occurred_at' => now()->toISOString()])
             ->assertUnprocessable()
             ->assertJsonValidationErrorFor('fertilizer_form_id');
     }
@@ -221,7 +229,8 @@ class CareEventApiTest extends TestCase
     {
         $this->actAsHousehold();
         $plant = Plant::factory()->create();
-        $created = $this->postJson("/api/plants/{$plant->id}/waterings", [
+        $created = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'watering',
             'occurred_at' => '2026-06-20T08:30:00Z',
             'amount_ml' => 200,
         ])->json('data.id');
@@ -239,7 +248,8 @@ class CareEventApiTest extends TestCase
         $mites = Symptom::where('key', 'spider_mites')->value('id');
         $mildew = Symptom::where('key', 'powdery_mildew')->value('id');
 
-        $eventId = $this->postJson("/api/plants/{$plant->id}/observations", [
+        $eventId = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-22T18:00:00Z',
             'symptom_ids' => [$mites],
         ])->json('data.id');
@@ -254,7 +264,8 @@ class CareEventApiTest extends TestCase
     {
         $this->actAsHousehold();
         $plant = Plant::factory()->create();
-        $eventId = $this->postJson("/api/plants/{$plant->id}/waterings", [
+        $eventId = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'watering',
             'occurred_at' => '2026-06-20T08:30:00Z',
             'amount_ml' => 200,
         ])->json('data.id');
@@ -272,7 +283,8 @@ class CareEventApiTest extends TestCase
 
         // "Spider mites" slugs to the seeded pest key, so it must attach to that row,
         // not mint a duplicate custom one, or correlation joins split.
-        $response = $this->postJson("/api/plants/{$plant->id}/observations", [
+        $response = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-22T18:00:00Z',
             'overall_health' => 4,
             'custom_symptoms' => ['Spider mites'],
@@ -298,7 +310,8 @@ class CareEventApiTest extends TestCase
             Nutrient::where('key', 'worm_castings')->value('id'),
         ];
 
-        $eventId = $this->postJson("/api/plants/{$plant->id}/fertilizings", [
+        $eventId = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'fertilizing',
             'occurred_at' => '2026-06-15T09:15:00Z',
             'fertilizer_form_id' => $organic,
             'nutrients' => [['nutrient_id' => $fish], ['nutrient_id' => $kelp]],
@@ -322,7 +335,7 @@ class CareEventApiTest extends TestCase
         $west = Location::factory()->create(['name' => 'west window']);
         $plant = Plant::factory()->create(['location_id' => $south->id]);
 
-        $eventId = $this->postJson("/api/plants/{$plant->id}/relocations", ['to_location_id' => $east->id])
+        $eventId = $this->postJson("/api/plants/{$plant->id}/care-events", ['type' => 'relocation', 'to_location_id' => $east->id])
             ->json('data.id');
 
         $this->patchJson("/api/care-events/{$eventId}", ['to_location_id' => $west->id])
@@ -338,7 +351,8 @@ class CareEventApiTest extends TestCase
         $this->actAsHousehold();
         $plant = Plant::factory()->create();
 
-        $this->postJson("/api/plants/{$plant->id}/observations", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-22T18:00:00Z',
             'overall_health' => 4,
             'weight' => ['lb' => 0, 'oz' => 0, 'g' => 0],
@@ -353,7 +367,8 @@ class CareEventApiTest extends TestCase
         $this->actAsHousehold();
         $plant = Plant::factory()->create();
 
-        $this->postJson("/api/plants/{$plant->id}/observations", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-22T18:00:00Z',
             'weight' => ['lb' => 100000, 'oz' => 0, 'g' => 0],
         ])
@@ -368,13 +383,15 @@ class CareEventApiTest extends TestCase
         $liquid = FertilizerForm::where('key', 'liquid')->value('id');
 
         // Explicit null for the optional collections must not 500 the create path.
-        $this->postJson("/api/plants/{$plant->id}/fertilizings", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'fertilizing',
             'occurred_at' => '2026-06-15T09:15:00Z',
             'fertilizer_form_id' => $liquid,
             'nutrients' => null,
         ])->assertCreated()->assertJsonPath('data.fertilizing.nutrients', []);
 
-        $this->postJson("/api/plants/{$plant->id}/observations", [
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type' => 'observation',
             'occurred_at' => '2026-06-22T18:00:00Z',
             'symptom_ids' => null,
             'custom_symptoms' => null,

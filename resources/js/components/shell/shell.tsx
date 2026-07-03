@@ -153,6 +153,7 @@ export function Shell() {
           onClose={() => setLogFor(null)}
           title={logFor ? (logFor.event ? EDIT_TITLES[logFor.type] : LOG_TITLES[logFor.type]) : ''}
           wide={logFor?.type === 'observation' || logFor?.type === 'fertilizing'}
+          dusk="log-modal"
         >
           {logFor && renderLogForm(logFor)}
         </Modal>
