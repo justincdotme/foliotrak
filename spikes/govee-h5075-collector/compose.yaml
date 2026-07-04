@@ -1,0 +1,8 @@
+services:
+  collector:
+    build: .
+    user: "1000:1000"
+    stop_signal: SIGINT
+    volumes:
+      - /run/dbus:/run/dbus:ro
+      - ./:/app

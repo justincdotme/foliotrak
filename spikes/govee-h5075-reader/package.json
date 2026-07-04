@@ -1,0 +1,13 @@
+{
+  "name": "govee-h5075-reader-spike",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node reader.js",
+    "test": "node --test reader.test.js"
+  },
+  "dependencies": {
+    "@stoprocent/noble": "^2.5.5",
+    "better-sqlite3": "^12.11.1"
+  }
+}
