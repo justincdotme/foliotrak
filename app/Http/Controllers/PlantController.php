@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\RecordEquipmentChange;
 use App\Actions\RecordRelocation;
 use App\Http\Requests\StorePlantRequest;
 use App\Http\Requests\UpdatePlantRequest;
@@ -55,14 +56,14 @@ class PlantController extends Controller
         );
     }
 
-    public function store(StorePlantRequest $request): JsonResponse
+    public function store(StorePlantRequest $request, RecordEquipmentChange $recordEquipmentChange): JsonResponse
     {
         $this->authorize('create', Plant::class);
 
-        $plant = DB::transaction(function () use ($request): Plant {
+        $plant = DB::transaction(function () use ($request, $recordEquipmentChange): Plant {
             $plant = Plant::create($request->safe()->except(['tag_ids', 'equipment_ids']));
             $this->syncTags($request, $plant);
-            $this->syncEquipment($request, $plant);
+            $this->syncEquipment($request, $plant, $recordEquipmentChange);
 
             return $plant;
         });
@@ -79,11 +80,11 @@ class PlantController extends Controller
         return $this->present($plant->load(self::RELATIONS));
     }
 
-    public function update(UpdatePlantRequest $request, Plant $plant, RecordRelocation $recordRelocation): PlantResource
+    public function update(UpdatePlantRequest $request, Plant $plant, RecordRelocation $recordRelocation, RecordEquipmentChange $recordEquipmentChange): PlantResource
     {
         $this->authorize('update', $plant);
 
-        DB::transaction(function () use ($request, $plant, $recordRelocation): void {
+        DB::transaction(function () use ($request, $plant, $recordRelocation, $recordEquipmentChange): void {
             $plant->update($request->safe()->except(['tag_ids', 'equipment_ids', 'location_id']));
 
             if ($request->has('location_id')) {
@@ -91,7 +92,7 @@ class PlantController extends Controller
             }
 
             $this->syncTags($request, $plant);
-            $this->syncEquipment($request, $plant);
+            $this->syncEquipment($request, $plant, $recordEquipmentChange);
         });
 
         return $this->present($plant->load(self::RELATIONS));
@@ -117,10 +118,10 @@ class PlantController extends Controller
         }
     }
 
-    private function syncEquipment(Request $request, Plant $plant): void
+    private function syncEquipment(Request $request, Plant $plant, RecordEquipmentChange $recordEquipmentChange): void
     {
         if ($request->has('equipment_ids')) {
-            $plant->equipment()->sync($request->collect('equipment_ids')->all());
+            $recordEquipmentChange->record($plant, $request->collect('equipment_ids')->all(), $request->user()?->id);
         }
     }
 

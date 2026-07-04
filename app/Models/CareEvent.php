@@ -91,4 +91,12 @@ class CareEvent extends Model
     {
         return $this->hasOne(RelocationDetail::class);
     }
+
+    /**
+     * @return HasOne<EquipmentChangeDetail, $this>
+     */
+    public function equipmentChange(): HasOne
+    {
+        return $this->hasOne(EquipmentChangeDetail::class);
+    }
 }

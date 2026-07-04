@@ -15,6 +15,7 @@ const LOG_TITLES: Record<CareType, string> = {
   repotting: 'Log repotting',
   observation: 'Log observation',
   relocation: 'Log relocation',
+  equipment: 'Equipment',
 }
 
 const EDIT_TITLES: Record<CareType, string> = {
@@ -23,6 +24,7 @@ const EDIT_TITLES: Record<CareType, string> = {
   repotting: 'Edit repotting',
   observation: 'Edit observation',
   relocation: 'Edit move',
+  equipment: 'Equipment',
 }
 
 interface CareLogModalsProps {

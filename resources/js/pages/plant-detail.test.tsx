@@ -10,6 +10,7 @@ vi.mock('@/hooks/useRecommendations', () => ({ useRecommendations: vi.fn() }))
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
 vi.mock('@/hooks/useEquipment', () => ({
   useEquipment: () => ({ data: [], loading: false }),
+  useCreateEquipment: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 vi.mock('@/components/charts/timeline-overlay', () => ({
   TimelineOverlay: () => <div data-testid="overlay" />,

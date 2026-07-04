@@ -42,7 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('fertilizer-forms', [FertilizerFormController::class, 'index']);
     Route::get('nutrients', [NutrientController::class, 'index']);
     Route::get('symptoms', [SymptomController::class, 'index']);
-    Route::get('equipment', [EquipmentController::class, 'index']);
+    Route::apiResource('equipment', EquipmentController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('locations', [LocationController::class, 'index']);
     Route::post('locations', [LocationController::class, 'store']);
 

@@ -31,6 +31,8 @@ import careEventUpdated from '../fixtures/care-events/updated.json'
 import locationCreated from '../fixtures/locations/created-201.json'
 import tagCreated from '../fixtures/tags/created-201.json'
 import tagUpdated from '../fixtures/tags/updated.json'
+import equipmentCreated from '../fixtures/equipment/created-201.json'
+import equipmentUpdated from '../fixtures/equipment/updated.json'
 import settingsUpdated from '../fixtures/settings/updated.json'
 
 export const handlers = [
@@ -93,6 +95,11 @@ export const handlers = [
   http.post('/api/tags', () => HttpResponse.json(tagCreated, { status: 201 })),
   http.patch('/api/tags/:id', () => HttpResponse.json(tagUpdated, { status: 200 })),
   http.delete('/api/tags/:id', () => new HttpResponse(null, { status: 204 })),
+
+  // equipment
+  http.post('/api/equipment', () => HttpResponse.json(equipmentCreated, { status: 201 })),
+  http.patch('/api/equipment/:id', () => HttpResponse.json(equipmentUpdated, { status: 200 })),
+  http.delete('/api/equipment/:id', () => new HttpResponse(null, { status: 204 })),
 
   // settings
   http.patch('/api/settings', () => HttpResponse.json(settingsUpdated, { status: 200 })),

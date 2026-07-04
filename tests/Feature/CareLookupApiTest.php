@@ -31,7 +31,7 @@ class CareLookupApiTest extends TestCase
 
         $this->getJson('/api/care-event-types')
             ->assertOk()
-            ->assertJsonCount(5, 'data')
+            ->assertJsonCount(6, 'data')
             ->assertJsonPath('data.0.key', 'watering');
     }
 
