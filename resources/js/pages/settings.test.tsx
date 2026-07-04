@@ -15,10 +15,22 @@ vi.mock('@/hooks/useTags', () => ({
   useUpdateTag: vi.fn(),
   useDeleteTag: vi.fn(),
 }))
+vi.mock('@/hooks/useEquipment', () => ({
+  useEquipment: vi.fn(),
+  useCreateEquipment: vi.fn(),
+  useUpdateEquipment: vi.fn(),
+  useDeleteEquipment: vi.fn(),
+}))
 
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/useTags'
+import {
+  useEquipment,
+  useCreateEquipment,
+  useUpdateEquipment,
+  useDeleteEquipment,
+} from '@/hooks/useEquipment'
 
 const SAVED_KEY = 'z9y8x7w6v5'.repeat(3)
 const NEW_KEY = 'a1b2c3d4e5'.repeat(3)
@@ -35,11 +47,26 @@ const TAGS = [
   { id: 2, name: 'Succulent', color: 'var(--series-2)' },
 ]
 
+const EQUIPMENT = [
+  { id: 1, key: 'grow_light', label: 'Grow Light', sort_order: 1 },
+  { id: 2, key: 'humidifier', label: 'Humidifier', sort_order: 2 },
+]
+
 function mockTagHooks() {
   vi.mocked(useTags).mockReturnValue({ data: TAGS, loading: false, error: null })
   vi.mocked(useCreateTag).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as never)
   vi.mocked(useUpdateTag).mockReturnValue({ mutateAsync: vi.fn() } as never)
   vi.mocked(useDeleteTag).mockReturnValue({ mutate: vi.fn() } as never)
+}
+
+function mockEquipmentHooks() {
+  vi.mocked(useEquipment).mockReturnValue({ data: EQUIPMENT, loading: false })
+  vi.mocked(useCreateEquipment).mockReturnValue({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  } as never)
+  vi.mocked(useUpdateEquipment).mockReturnValue({ mutateAsync: vi.fn() } as never)
+  vi.mocked(useDeleteEquipment).mockReturnValue({ mutate: vi.fn() } as never)
 }
 
 function setup(opts: {
@@ -74,6 +101,7 @@ function settingsValue(key: string | null) {
 beforeEach(() => {
   vi.clearAllMocks()
   mockTagHooks()
+  mockEquipmentHooks()
 })
 
 describe('SettingsPage', () => {
@@ -232,5 +260,67 @@ describe('TagManager', () => {
     await userEvent.click(screen.getByRole('button', { name: /delete tropical/i }))
 
     expect(screen.getByText(/will be removed from all plants/i)).toBeInTheDocument()
+  })
+})
+
+describe('EquipmentManager', () => {
+  it('lists existing equipment with rename and delete controls', () => {
+    setup({ key: null })
+
+    expect(screen.getByText('Grow Light')).toBeInTheDocument()
+    expect(screen.getByText('Humidifier')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /rename grow light/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete grow light/i })).toBeInTheDocument()
+  })
+
+  it('shows empty state when no equipment exists', () => {
+    vi.mocked(useEquipment).mockReturnValue({ data: [], loading: false })
+    setup({ key: null })
+
+    expect(screen.getByText(/no equipment yet/i)).toBeInTheDocument()
+  })
+
+  it('enters rename mode and calls update', async () => {
+    const mutateAsync = vi
+      .fn()
+      .mockResolvedValue({ id: 1, key: 'led_panel', label: 'LED Panel', sort_order: 1 })
+    vi.mocked(useUpdateEquipment).mockReturnValue({ mutateAsync } as never)
+    setup({ key: null })
+
+    await userEvent.click(screen.getByRole('button', { name: /rename grow light/i }))
+
+    const inputs = screen.getAllByRole('textbox')
+    const renameInput = inputs.find(
+      el => (el as HTMLInputElement).value === 'Grow Light'
+    ) as HTMLInputElement
+    expect(renameInput).toBeTruthy()
+
+    await userEvent.clear(renameInput)
+    await userEvent.type(renameInput, 'LED Panel')
+    await userEvent.keyboard('{Enter}')
+
+    expect(mutateAsync).toHaveBeenCalledWith({ id: 1, payload: { label: 'LED Panel' } })
+  })
+
+  it('shows a delete confirmation before removing equipment', async () => {
+    setup({ key: null })
+
+    await userEvent.click(screen.getByRole('button', { name: /delete humidifier/i }))
+
+    expect(screen.getByText(/will be removed from all plants/i)).toBeInTheDocument()
+  })
+
+  it('creates equipment via the add input', async () => {
+    const mutateAsync = vi
+      .fn()
+      .mockResolvedValue({ id: 3, key: 'heat_mat', label: 'Heat Mat', sort_order: 3 })
+    vi.mocked(useCreateEquipment).mockReturnValue({ mutateAsync, isPending: false } as never)
+    setup({ key: null })
+
+    await userEvent.click(screen.getByText(/add equipment/i))
+    await userEvent.type(screen.getByPlaceholderText(/equipment name/i), 'Heat Mat')
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }))
+
+    expect(mutateAsync).toHaveBeenCalledWith('Heat Mat')
   })
 })

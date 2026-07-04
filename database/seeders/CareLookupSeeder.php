@@ -36,6 +36,7 @@ class CareLookupSeeder extends Seeder
             ['key' => 'repotting', 'label' => 'Repotting'],
             ['key' => 'observation', 'label' => 'Observation'],
             ['key' => 'relocation', 'label' => 'Relocation'],
+            ['key' => 'equipment', 'label' => 'Equipment'],
         ];
 
         foreach ($types as $order => $type) {

@@ -1,5 +1,6 @@
 export type PlantStatus = 'active' | 'archived' | 'dead'
-export type CareType = 'watering' | 'fertilizing' | 'repotting' | 'observation' | 'relocation'
+export type CareType =
+  'watering' | 'fertilizing' | 'repotting' | 'observation' | 'relocation' | 'equipment'
 export type FertilizerForm = 'liquid' | 'powdered' | 'granular' | 'organic' | 'food' | 'other'
 export type GrowthRate = 'none' | 'slow' | 'moderate' | 'fast'
 export type CareStatus = 'ok' | 'due-soon' | 'overdue'
@@ -134,6 +135,13 @@ export interface RelocationDetail {
   to_location: Location | null
 }
 
+export interface EquipmentChangeDetail {
+  care_event_id: number
+  equipment_id: number | null
+  equipment_label: string
+  action: 'added' | 'removed'
+}
+
 export interface ObservationDetail {
   care_event_id: number
   overall_health: number | null
@@ -168,6 +176,7 @@ export interface CareEvent {
   repotting?: RepottingDetail
   observation?: ObservationDetail
   relocation?: RelocationDetail
+  equipment_change?: EquipmentChangeDetail
 }
 
 export interface Recommendation {

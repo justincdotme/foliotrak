@@ -3,6 +3,7 @@ import type { PlantWithTags } from '@/api/types'
 import { Card } from '@/components/ui/card'
 import { Chip } from '@/components/app/chip'
 import { SectionTitle } from '@/components/app/section-title'
+import { EquipmentInlineCreate } from '@/components/plant/equipment-inline-create'
 import { useEquipment } from '@/hooks/useEquipment'
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
 import { useNotification } from '@/components/app/notification-context'
@@ -43,6 +44,14 @@ export function PlantEquipmentCard({ plant }: PlantEquipmentCardProps) {
             </Chip>
           )
         })}
+        <EquipmentInlineCreate
+          onCreated={eq => {
+            const current = plant.equipment?.map(e => e.id) ?? []
+            update
+              .mutateAsync({ equipment_ids: [...current, eq.id] })
+              .catch(err => showError(handleApiError(err)))
+          }}
+        />
       </div>
       {allEquipment.length === 0 && (
         <p className="text-[13px] text-text-muted mt-1">No equipment options available.</p>

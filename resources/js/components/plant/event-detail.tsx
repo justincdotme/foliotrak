@@ -112,6 +112,17 @@ export function EventDetail({ e }: EventDetailProps) {
     )
   }
 
+  if (e.type === 'equipment') {
+    const ec = e.equipment_change
+    if (!ec) return null
+    return (
+      <div className="text-[13px] text-text-muted">
+        {ec.action === 'added' ? 'Added ' : 'Removed '}
+        <span className="text-text">{ec.equipment_label}</span>
+      </div>
+    )
+  }
+
   const o = e.observation
   if (!o) return null
   const w = o.weight_grams != null ? gramsToWeight(o.weight_grams) : null

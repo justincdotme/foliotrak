@@ -10,6 +10,7 @@ import {
   Info,
   Leaf,
   Move,
+  Settings2,
   Shovel,
   X,
   type LucideIcon,
@@ -48,6 +49,7 @@ export interface CareMeta {
   icon: LucideIcon
   label: string
   color: string
+  readOnly?: boolean
 }
 
 export const CARE_META: Record<CareType, CareMeta> = {
@@ -56,6 +58,7 @@ export const CARE_META: Record<CareType, CareMeta> = {
   repotting: { icon: Shovel, label: 'Repotting', color: 'var(--series-4)' },
   observation: { icon: ClipboardList, label: 'Observation', color: 'var(--primary)' },
   relocation: { icon: Move, label: 'Moved', color: 'var(--series-3)' },
+  equipment: { icon: Settings2, label: 'Equipment', color: 'var(--series-6)', readOnly: true },
 }
 
 export const CONDITION_COLOR: Record<ConditionKey, string> = {

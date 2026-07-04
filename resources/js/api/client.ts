@@ -227,6 +227,19 @@ export const listFertilizerForms = async (): Promise<FertilizerFormOption[]> =>
 export const listEquipment = async (): Promise<EquipmentOption[]> =>
   unwrap(await api.get<{ data: EquipmentOption[] }>('/api/equipment'))
 
+export const createEquipment = async (label: string): Promise<EquipmentOption> =>
+  unwrap(await api.post<{ data: EquipmentOption }>('/api/equipment', { label }))
+
+export const updateEquipment = async (
+  id: number,
+  payload: { label?: string }
+): Promise<EquipmentOption> =>
+  unwrap(await api.patch<{ data: EquipmentOption }>(`/api/equipment/${id}`, payload))
+
+export const deleteEquipment = async (id: number): Promise<void> => {
+  await api.delete(`/api/equipment/${id}`)
+}
+
 // The /api/user route returns the model directly, not the `data` envelope the
 // API Resources use, so this one is read without unwrap.
 export const getUser = async (): Promise<User> => (await api.get<User>('/api/user')).data

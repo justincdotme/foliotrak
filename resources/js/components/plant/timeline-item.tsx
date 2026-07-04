@@ -69,27 +69,29 @@ export function TimelineItem({ e, photos, onDelete }: TimelineItemProps) {
                 {e.note}
               </div>
             )}
-            <div className="flex gap-1 mt-2.5 pt-2.5 border-t border-border">
-              <Button
-                size="sm"
-                variant="ghost"
-                dusk="timeline-edit"
-                onClick={() => openLog(e.type, e)}
-              >
-                <Pencil size={14} />
-                Edit
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-overdue"
-                dusk="timeline-delete"
-                onClick={() => setConfirm(true)}
-              >
-                <Trash2 size={14} />
-                Delete
-              </Button>
-            </div>
+            {!m.readOnly && (
+              <div className="flex gap-1 mt-2.5 pt-2.5 border-t border-border">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  dusk="timeline-edit"
+                  onClick={() => openLog(e.type, e)}
+                >
+                  <Pencil size={14} />
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-overdue"
+                  dusk="timeline-delete"
+                  onClick={() => setConfirm(true)}
+                >
+                  <Trash2 size={14} />
+                  Delete
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

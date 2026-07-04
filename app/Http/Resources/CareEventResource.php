@@ -34,6 +34,7 @@ class CareEventResource extends JsonResource
             'repotting' => $this->detail('repotting', fn () => new RepottingDetailResource($this->repotting)),
             'observation' => $this->detail('observation', fn () => new ObservationDetailResource($this->observation)),
             'relocation' => $this->detail('relocation', fn () => new RelocationDetailResource($this->relocation)),
+            'equipment_change' => $this->detail('equipmentChange', fn () => new EquipmentChangeDetailResource($this->equipmentChange)),
         ];
     }
 
@@ -61,6 +62,7 @@ class CareEventResource extends JsonResource
             'repotting' => ['repotting'],
             'observation' => ['observation.symptoms'],
             'relocation' => ['relocation.fromLocation', 'relocation.toLocation'],
+            'equipment' => ['equipmentChange'],
             default => [],
         };
     }
@@ -69,7 +71,7 @@ class CareEventResource extends JsonResource
     public static function allDetailRelations(): array
     {
         return array_merge(
-            ...array_map(fn (string $t) => self::detailRelations($t), ['watering', 'fertilizing', 'repotting', 'observation', 'relocation'])
+            ...array_map(fn (string $t) => self::detailRelations($t), ['watering', 'fertilizing', 'repotting', 'observation', 'relocation', 'equipment'])
         );
     }
 }
