@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\SymptomCategory;
 use App\Models\CareEventType;
 use App\Models\Equipment;
 use App\Models\FertilizerForm;
@@ -84,21 +85,21 @@ class CareLookupSeeder extends Seeder
     private function seedSymptoms(): void
     {
         $symptoms = [
-            ['category' => 'leaf', 'key' => 'yellow_leaf', 'label' => 'Yellowing leaves'],
-            ['category' => 'leaf', 'key' => 'brown_tips', 'label' => 'Brown leaf tips'],
-            ['category' => 'leaf', 'key' => 'leaf_drop', 'label' => 'Leaf drop'],
-            ['category' => 'leaf', 'key' => 'leaf_curl', 'label' => 'Leaf curl'],
-            ['category' => 'leaf', 'key' => 'leaf_spots', 'label' => 'Leaf spots'],
-            ['category' => 'stem', 'key' => 'soft_stem', 'label' => 'Soft stem'],
-            ['category' => 'stem', 'key' => 'leggy', 'label' => 'Leggy growth'],
-            ['category' => 'root', 'key' => 'root_bound', 'label' => 'Root-bound'],
-            ['category' => 'root', 'key' => 'root_rot', 'label' => 'Root rot'],
-            ['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites'],
-            ['category' => 'pest', 'key' => 'fungus_gnats', 'label' => 'Fungus gnats'],
-            ['category' => 'pest', 'key' => 'mealybugs', 'label' => 'Mealybugs'],
-            ['category' => 'disease', 'key' => 'powdery_mildew', 'label' => 'Powdery mildew'],
-            ['category' => 'general', 'key' => 'wilting', 'label' => 'Wilting'],
-            ['category' => 'general', 'key' => 'drooping', 'label' => 'Drooping'],
+            ['category' => SymptomCategory::Leaf, 'key' => 'yellow_leaf', 'label' => 'Yellowing leaves'],
+            ['category' => SymptomCategory::Leaf, 'key' => Symptom::KEY_BROWN_TIPS, 'label' => 'Brown leaf tips'],
+            ['category' => SymptomCategory::Leaf, 'key' => 'leaf_drop', 'label' => 'Leaf drop'],
+            ['category' => SymptomCategory::Leaf, 'key' => 'leaf_curl', 'label' => 'Leaf curl'],
+            ['category' => SymptomCategory::Leaf, 'key' => Symptom::KEY_LEAF_SPOTS, 'label' => 'Leaf spots'],
+            ['category' => SymptomCategory::Stem, 'key' => 'soft_stem', 'label' => 'Soft stem'],
+            ['category' => SymptomCategory::Stem, 'key' => 'leggy', 'label' => 'Leggy growth'],
+            ['category' => SymptomCategory::Root, 'key' => Symptom::KEY_ROOT_BOUND, 'label' => 'Root-bound'],
+            ['category' => SymptomCategory::Root, 'key' => Symptom::KEY_ROOT_ROT, 'label' => 'Root rot'],
+            ['category' => SymptomCategory::Pest, 'key' => 'spider_mites', 'label' => 'Spider mites'],
+            ['category' => SymptomCategory::Pest, 'key' => 'fungus_gnats', 'label' => 'Fungus gnats'],
+            ['category' => SymptomCategory::Pest, 'key' => 'mealybugs', 'label' => 'Mealybugs'],
+            ['category' => SymptomCategory::Disease, 'key' => 'powdery_mildew', 'label' => 'Powdery mildew'],
+            ['category' => SymptomCategory::General, 'key' => 'wilting', 'label' => 'Wilting'],
+            ['category' => SymptomCategory::General, 'key' => 'drooping', 'label' => 'Drooping'],
         ];
 
         foreach ($symptoms as $order => $symptom) {

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Enums\SymptomCategory;
 use App\Models\Plant;
+use App\Models\Symptom;
 
 class ProblemFlagger
 {
@@ -31,16 +33,16 @@ class ProblemFlagger
         if ($health !== null && $health <= 2) {
             $flags[] = self::flag($plant, "Low overall health ({$health}/5)", 'alert');
         }
-        if (in_array('root_rot', $keys, true)) {
+        if (in_array(Symptom::KEY_ROOT_ROT, $keys, true)) {
             $flags[] = self::flag($plant, 'Root rot reported', 'alert');
         }
-        if (in_array('root_bound', $keys, true)) {
+        if (in_array(Symptom::KEY_ROOT_BOUND, $keys, true)) {
             $flags[] = self::flag($plant, 'Root-bound signs', 'warning');
         }
-        if (in_array('pest', $categories, true)) {
+        if (in_array(SymptomCategory::Pest, $categories, true)) {
             $flags[] = self::flag($plant, 'Pest activity', 'alert');
         }
-        if (in_array('disease', $categories, true)) {
+        if (in_array(SymptomCategory::Disease, $categories, true)) {
             $flags[] = self::flag($plant, 'Disease signs', 'alert');
         }
 

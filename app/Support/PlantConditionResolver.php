@@ -5,16 +5,13 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Enums\PlantStatus;
+use App\Enums\SymptomCategory;
+use App\Models\Symptom;
 
-/**
- * The single source for a plant's at-a-glance condition (decision D24), so every
- * surface that shows it agrees. Phase 1a feeds it status only; the observation and
- * watering-due inputs are wired in once the care spine lands in Phase 2a.
- */
 final class PlantConditionResolver
 {
     /**
-     * @param  list<string>  $symptomCategories  categories on the latest observation
+     * @param  list<SymptomCategory>  $symptomCategories  categories on the latest observation
      * @param  list<string>  $symptomKeys  symptom keys on the latest observation
      * @param  bool  $likelyDry  watering overdue beyond max(2, interval * 0.4) days
      * @return array{key: string, label: string}
@@ -30,11 +27,11 @@ final class PlantConditionResolver
             return ['key' => 'dead', 'label' => 'Did not make it'];
         }
 
-        if (in_array('pest', $symptomCategories, true)) {
+        if (in_array(SymptomCategory::Pest, $symptomCategories, true)) {
             return ['key' => 'infested', 'label' => 'Infested'];
         }
 
-        if (in_array('disease', $symptomCategories, true)) {
+        if (in_array(SymptomCategory::Disease, $symptomCategories, true)) {
             return ['key' => 'diseased', 'label' => 'Diseased'];
         }
 
@@ -42,7 +39,7 @@ final class PlantConditionResolver
             return ['key' => 'dry', 'label' => 'Likely dry'];
         }
 
-        if (in_array('brown_tips', $symptomKeys, true) || in_array('leaf_spots', $symptomKeys, true)) {
+        if (in_array(Symptom::KEY_BROWN_TIPS, $symptomKeys, true) || in_array(Symptom::KEY_LEAF_SPOTS, $symptomKeys, true)) {
             return ['key' => 'burnt', 'label' => 'Leaf stress'];
         }
 
