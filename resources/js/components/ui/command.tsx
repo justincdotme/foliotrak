@@ -81,7 +81,7 @@ export const CommandItem = forwardRef<
     className={cn(
       'relative flex cursor-pointer select-none items-center rounded-[6px] px-3 py-2 text-[13px] outline-none transition-colors',
       'data-[selected=true]:bg-surface data-[selected=true]:text-text',
-      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
       'aria-selected:bg-surface aria-selected:text-text',
       className
     )}

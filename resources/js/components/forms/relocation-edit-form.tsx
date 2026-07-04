@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertTriangle, Move } from 'lucide-react'
+import { Move } from 'lucide-react'
 import type { CareEvent } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
 import { isoToLocal, toIso } from '@/lib/datetime'
-import { handleApiError } from '@/lib/handle-api-error'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
+import { FormError } from '@/components/app/form-error'
 import { LocationCombobox } from '@/components/app/location-combobox'
 import { Textarea } from '@/components/ui/textarea'
 import { DateTimeField } from './date-time-field'
@@ -29,7 +30,6 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
   const [toLocationId, setToLocationId] = useState<number | null>(
     event.relocation?.to_location?.id ?? null
   )
-  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -43,22 +43,19 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
     },
   })
 
+  const { submit, formError } = useCareFormSubmit({
+    updateFn: updateEvent.mutateAsync,
+    eventId: event.id,
+    setError,
+  })
+
   const onSubmit = async (v: z.infer<typeof schema>) => {
-    setFormError(null)
-    try {
-      await updateEvent.mutateAsync({
-        eventId: event.id,
-        payload: {
-          occurred_at: toIso(v.occurred_at),
-          to_location_id: toLocationId,
-          note: v.note || null,
-        },
-      })
-      onDone()
-    } catch (err) {
-      const msg = handleApiError(err, setError)
-      if (msg) setFormError(msg)
+    const payload = {
+      occurred_at: toIso(v.occurred_at),
+      to_location_id: toLocationId,
+      note: v.note || null,
     }
+    await submit(payload, () => onDone())
   }
 
   return (
@@ -77,12 +74,7 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
       <Field label="Note" hint="optional">
         <Textarea {...register('note')} />
       </Field>
-      {formError && (
-        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
-          <AlertTriangle size={14} />
-          {formError}
-        </div>
-      )}
+      <FormError message={formError} />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={isSubmitting || toLocationId == null}>
           <Move size={16} />
