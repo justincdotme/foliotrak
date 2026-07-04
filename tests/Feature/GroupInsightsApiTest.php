@@ -363,7 +363,7 @@ class GroupInsightsApiTest extends TestCase
         $this->observe($plant3, overallHealth: 5, daysAgo: 1);
 
         $response = $this->getJson('/api/insights/locations')->assertOk();
-        $byLocation = collect($response->json())->keyBy('location_id');
+        $byLocation = collect($response->json('data'))->keyBy('location_id');
 
         $livingData = $byLocation[$living->id];
         $this->assertEquals('Living Room', $livingData['location_name']);
@@ -395,7 +395,7 @@ class GroupInsightsApiTest extends TestCase
         $this->observe($archived, overallHealth: 1, daysAgo: 1);
 
         $response = $this->getJson('/api/insights/locations')->assertOk();
-        $locationData = collect($response->json())->firstWhere('location_id', $location->id);
+        $locationData = collect($response->json('data'))->firstWhere('location_id', $location->id);
 
         $this->assertEquals(1, $locationData['plant_count']);
         $this->assertEquals(4.0, $locationData['mean_health']);
@@ -411,7 +411,7 @@ class GroupInsightsApiTest extends TestCase
         Plant::factory()->create(['location_id' => $location->id]);
 
         $response = $this->getJson('/api/insights/locations')->assertOk();
-        $locationData = collect($response->json())->firstWhere('location_id', $location->id);
+        $locationData = collect($response->json('data'))->firstWhere('location_id', $location->id);
 
         $this->assertEquals(1, $locationData['plant_count']);
         $this->assertNull($locationData['mean_health']);

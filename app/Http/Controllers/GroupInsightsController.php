@@ -92,6 +92,6 @@ class GroupInsightsController extends Controller
             ];
         });
 
-        return response()->json($summary->values()->all());
+        return response()->json(['data' => $summary->values()->all()]);
     }
 }
