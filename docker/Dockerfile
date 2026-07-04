@@ -21,7 +21,7 @@ RUN docker-php-ext-configure gd \
     --with-webp \
     --with-xpm
 
-RUN docker-php-ext-install \
+RUN docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     mbstring \
     bcmath \
@@ -33,7 +33,7 @@ RUN docker-php-ext-install \
     pcntl
 
 # pdo_sqlite backs the in-memory test database (mirrors the CI runner)
-RUN apk add --no-cache sqlite-dev && docker-php-ext-install pdo_sqlite
+RUN apk add --no-cache sqlite-dev && docker-php-ext-install -j$(nproc) pdo_sqlite
 
 # git lets commits run inside the container, where the pre-commit checks live
 RUN apk add --no-cache git
