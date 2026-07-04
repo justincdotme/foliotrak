@@ -1,17 +1,17 @@
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertTriangle, Info, Shovel } from 'lucide-react'
+import { Info, Shovel } from 'lucide-react'
 import type { CareEvent } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
 import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
-import { handleApiError } from '@/lib/handle-api-error'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
+import { FormError } from '@/components/app/form-error'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Toggle } from '@/components/app/toggle'
+import { Switch } from '@/components/ui/switch'
 import { Segmented } from '@/components/app/segmented'
 import { DateTimeField } from './date-time-field'
 
@@ -40,7 +40,6 @@ export function LogRepottingForm({
   onLogFertilizer,
 }: LogRepottingFormProps) {
   const { createRepotting, updateEvent } = useCareEventMutations(plantId)
-  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -64,35 +63,30 @@ export function LogRepottingForm({
   const unit = watch('pot_size_unit')
   const fertAdded = watch('fertilizer_added')
 
+  const { submit, formError } = useCareFormSubmit({
+    createFn: createRepotting.mutateAsync,
+    updateFn: updateEvent.mutateAsync,
+    eventId: event?.id,
+    setError,
+  })
+
   const onSubmit = async (v: z.infer<typeof schema>) => {
-    setFormError(null)
-    try {
-      const occurredAt = toIso(v.occurred_at)
-      const payload = {
-        occurred_at: occurredAt,
-        soil_recipe: v.soil_recipe || null,
-        pot_size_value: v.pot_size_value ? Number(v.pot_size_value) : null,
-        pot_size_unit: v.pot_size_unit,
-        fertilizer_added: v.fertilizer_added,
-        note: v.note || null,
-      }
-
-      if (event) {
-        await updateEvent.mutateAsync({ eventId: event.id, payload })
-        onDone()
-        return
-      }
-
-      await createRepotting.mutateAsync(payload)
-      if (v.fertilizer_added && onLogFertilizer) {
+    const occurredAt = toIso(v.occurred_at)
+    const payload = {
+      occurred_at: occurredAt,
+      soil_recipe: v.soil_recipe || null,
+      pot_size_value: v.pot_size_value ? Number(v.pot_size_value) : null,
+      pot_size_unit: v.pot_size_unit,
+      fertilizer_added: v.fertilizer_added,
+      note: v.note || null,
+    }
+    await submit(payload, () => {
+      if (!event && v.fertilizer_added && onLogFertilizer) {
         onLogFertilizer(occurredAt)
       } else {
         onDone()
       }
-    } catch (err) {
-      const msg = handleApiError(err, setError)
-      if (msg) setFormError(msg)
-    }
+    })
   }
 
   return (
@@ -127,11 +121,16 @@ export function LogRepottingForm({
         </div>
       </Field>
       <div className="rounded-[8px] border border-border bg-surface-raised p-3">
-        <Toggle
-          checked={fertAdded}
-          onChange={v => setValue('fertilizer_added', v)}
-          label="Fertilizer added during repot"
-        />
+        <div className="inline-flex items-center gap-2.5">
+          <Switch
+            id="fertilizer-added"
+            checked={fertAdded}
+            onCheckedChange={v => setValue('fertilizer_added', v)}
+          />
+          <label htmlFor="fertilizer-added" className="cursor-pointer text-sm text-text">
+            Fertilizer added during repot
+          </label>
+        </div>
         {fertAdded && !event && (
           <p className="mt-2 flex items-center gap-1.5 text-[12px] text-text-muted">
             <Info size={13} />
@@ -142,12 +141,7 @@ export function LogRepottingForm({
       <Field label="Note" hint="optional">
         <Textarea {...register('note')} />
       </Field>
-      {formError && (
-        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
-          <AlertTriangle size={14} />
-          {formError}
-        </div>
-      )}
+      <FormError message={formError} />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" dusk="care-form-submit" disabled={isSubmitting}>
           <Shovel size={16} />

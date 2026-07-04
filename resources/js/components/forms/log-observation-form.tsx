@@ -2,35 +2,28 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import {
-  AlertTriangle,
-  Check,
-  ClipboardList,
-  Droplets,
-  HeartPulse,
-  ImageIcon,
-  Moon,
-  Plus,
-  Sun,
-  Thermometer,
-  X,
-} from 'lucide-react'
-import type { CareEvent, GrowthRate, SoilMoistureLevel, Symptom } from '@/api/types'
+import { AlertTriangle, ClipboardList, Droplets, HeartPulse, Thermometer } from 'lucide-react'
+import type { CareEvent, GrowthRate } from '@/api/types'
 import { weightToGrams } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
 import { useSymptoms } from '@/hooks/useCareLookups'
 import { useSettings } from '@/hooks/useSettings'
 import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
-import { handleApiError } from '@/lib/handle-api-error'
-import { HEALTH_LABELS, HEALTH_VAR } from '@/lib/domain'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
+import { FormError } from '@/components/app/form-error'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Chip } from '@/components/app/chip'
 import { Segmented } from '@/components/app/segmented'
 import { DateTimeField } from './date-time-field'
 import { FormSection } from './form-section'
+import { HealthPicker } from './health-picker'
+import { LightSlider } from './light-slider'
+import { SoilMoistureField, type SoilMoistureValue } from './soil-moisture-field'
+import { WeightInput, type WeightValue } from './weight-input'
+import { SymptomReport, type SymptomValue } from './symptom-report'
+import { PhotoAttach } from './photo-attach'
 
 const schema = z.object({
   occurred_at: z.string().min(1, 'Pick a date and time'),
@@ -42,20 +35,8 @@ const schema = z.object({
   leaf_size_mm: z.string(),
   ambient_humidity_pct: z.string(),
   ambient_temp: z.string(),
-  lb: z.string(),
-  oz: z.string(),
-  g: z.string(),
   note: z.string(),
 })
-
-const CAT_LABEL: Record<string, string> = {
-  leaf: 'Leaves',
-  stem: 'Stem',
-  root: 'Roots',
-  pest: 'Pests',
-  disease: 'Disease',
-  general: 'General',
-}
 
 interface LogObservationFormProps {
   plantId: number
@@ -70,7 +51,6 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
   const tempUnit = settings?.temperature_unit ?? 'F'
 
   const detail = event?.observation
-  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -91,92 +71,60 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
       ambient_humidity_pct:
         detail?.ambient_humidity_pct != null ? String(detail.ambient_humidity_pct) : '',
       ambient_temp: detail?.ambient_temp_display != null ? String(detail.ambient_temp_display) : '',
-      lb: detail?.weight?.lb != null ? String(detail.weight.lb) : '0',
-      oz: detail?.weight?.oz != null ? String(detail.weight.oz) : '0',
-      g: detail?.weight?.g != null ? String(detail.weight.g) : '0',
       note: event?.note ?? '',
     },
   })
 
-  const [symptoms, setSymptoms] = useState<number[]>(
-    (detail?.symptoms ?? []).filter(s => !s.is_custom).map(s => Number(s.id))
-  )
-  const [customs, setCustoms] = useState<string[]>(
-    (detail?.symptoms ?? []).filter(s => s.is_custom).map(s => s.label)
-  )
-  const [customDraft, setCustomDraft] = useState('')
+  const [soilMoisture, setSoilMoisture] = useState<SoilMoistureValue>({
+    relative: detail?.soil_moisture_relative ?? null,
+    precise: detail?.soil_moisture_precise ?? null,
+  })
+  const [weight, setWeight] = useState<WeightValue>({
+    lb: detail?.weight?.lb ?? 0,
+    oz: detail?.weight?.oz ?? 0,
+    g: detail?.weight?.g ?? 0,
+  })
+  const [symptomData, setSymptomData] = useState<SymptomValue>({
+    ids: (detail?.symptoms ?? []).filter(s => !s.is_custom).map(s => Number(s.id)),
+    customs: (detail?.symptoms ?? []).filter(s => s.is_custom).map(s => s.label),
+  })
   const [photoFile, setPhotoFile] = useState<File | null>(null)
-
-  const initMoistureMode =
-    detail?.soil_moisture_relative != null
-      ? ('relative' as const)
-      : detail?.soil_moisture_precise != null
-        ? ('precise' as const)
-        : ('relative' as const)
-  const [moistureMode, setMoistureMode] = useState<'relative' | 'precise'>(initMoistureMode)
-  const [moistureRelative, setMoistureRelative] = useState<SoilMoistureLevel | null>(
-    detail?.soil_moisture_relative ?? null
-  )
-  const [moisturePrecise, setMoisturePrecise] = useState(
-    detail?.soil_moisture_precise != null ? detail.soil_moisture_precise : 5
-  )
 
   const healthStr = watch('overall_health')
   const lightStr = watch('light_level')
   const light = Number(lightStr) || 5
   const growth = watch('growth_rate')
-  const lb = Number(watch('lb')) || 0
-  const oz = Number(watch('oz')) || 0
-  const g = Number(watch('g')) || 0
   const health = healthStr ? Number(healthStr) : null
-  const grams = weightToGrams({ lb, oz, g })
+  const grams = weightToGrams(weight)
+  const problemCount = symptomData.ids.length + symptomData.customs.length
 
-  const toggleSym = (id: number) =>
-    setSymptoms(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
-
-  const addCustom = () => {
-    const v = customDraft.trim()
-    if (v && !customs.includes(v)) {
-      setCustoms(c => [...c, v])
-      setCustomDraft('')
-    }
-  }
-
-  const problemCount = symptoms.length + customs.length
-
-  // Custom entries are captured by the freetext field below, not the chips.
-  const byCat: Record<string, Symptom[]> = {}
-  allSymptoms
-    .filter(s => !s.is_custom && s.category !== 'custom')
-    .forEach(s => {
-      ;(byCat[s.category] ??= []).push(s)
-    })
+  const { submit, formError } = useCareFormSubmit({
+    createFn: createObservation.mutateAsync,
+    updateFn: updateEvent.mutateAsync,
+    eventId: event?.id,
+    setError,
+  })
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
-    setFormError(null)
-    try {
-      const payload = {
-        occurred_at: toIso(v.occurred_at),
-        overall_health: v.overall_health ? Number(v.overall_health) : null,
-        health_note: v.health_note || null,
-        light_level: Number(v.light_level),
-        growth_rate: (v.growth_rate || null) as GrowthRate | null,
-        growth_note: v.growth_note || null,
-        leaf_size_mm: v.leaf_size_mm ? Number(v.leaf_size_mm) : null,
-        weight: grams > 0 ? { lb, oz, g } : null,
-        ambient_humidity_pct: v.ambient_humidity_pct ? Number(v.ambient_humidity_pct) : null,
-        ambient_temp: v.ambient_temp !== '' ? Number(v.ambient_temp) : null,
-        soil_moisture_relative: moistureMode === 'relative' ? moistureRelative : null,
-        soil_moisture_precise: moistureMode === 'precise' ? moisturePrecise : null,
-        symptom_ids: symptoms,
-        custom_symptoms: customs,
-        note: v.note || null,
-      }
+    const payload = {
+      occurred_at: toIso(v.occurred_at),
+      overall_health: v.overall_health ? Number(v.overall_health) : null,
+      health_note: v.health_note || null,
+      light_level: Number(v.light_level),
+      growth_rate: (v.growth_rate || null) as GrowthRate | null,
+      growth_note: v.growth_note || null,
+      leaf_size_mm: v.leaf_size_mm ? Number(v.leaf_size_mm) : null,
+      weight: grams > 0 ? weight : null,
+      ambient_humidity_pct: v.ambient_humidity_pct ? Number(v.ambient_humidity_pct) : null,
+      ambient_temp: v.ambient_temp !== '' ? Number(v.ambient_temp) : null,
+      soil_moisture_relative: soilMoisture.relative,
+      soil_moisture_precise: soilMoisture.precise,
+      symptom_ids: symptomData.ids,
+      custom_symptoms: symptomData.customs,
+      note: v.note || null,
+    }
 
-      const saved = event
-        ? await updateEvent.mutateAsync({ eventId: event.id, payload })
-        : await createObservation.mutateAsync(payload)
-
+    await submit(payload, async saved => {
       if (photoFile) {
         try {
           await uploadEventPhoto.mutateAsync({ file: photoFile, careEventId: saved.id })
@@ -185,10 +133,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
         }
       }
       onDone()
-    } catch (err) {
-      const msg = handleApiError(err, setError)
-      if (msg) setFormError(msg)
-    }
+    })
   }
 
   return (
@@ -196,48 +141,12 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
       <DateTimeField register={register} name="occurred_at" />
 
       <FormSection title="Vitals" icon={HeartPulse}>
-        <Field label="Overall health" hint="1–5">
-          <div className="flex gap-1.5">
-            {[1, 2, 3, 4, 5].map(v => {
-              const sel = health === v
-              const c = HEALTH_VAR[v]
-              return (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setValue('overall_health', sel ? '' : String(v))}
-                  aria-pressed={sel}
-                  className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[8px] border text-[12px] font-medium transition-colors"
-                  style={
-                    sel
-                      ? { background: c, color: '#fff', borderColor: c }
-                      : { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }
-                  }
-                >
-                  <span className="tnum text-sm">{v}</span>
-                  <span className="text-[10px] leading-tight">{HEALTH_LABELS[v]}</span>
-                </button>
-              )
-            })}
-          </div>
-        </Field>
+        <HealthPicker
+          value={health}
+          onChange={v => setValue('overall_health', v == null ? '' : String(v))}
+        />
         <hr className="border-border" />
-        <Field label="Light level" hint={`${light} / 10`}>
-          <div className="flex items-center gap-3">
-            <Moon size={18} className="shrink-0" style={{ color: 'var(--info)' }} />
-            <input
-              type="range"
-              min={0}
-              max={10}
-              step={1}
-              value={light}
-              onChange={e => setValue('light_level', String(e.target.value))}
-              className="flex-1"
-              aria-label="Light level"
-            />
-            <Sun size={18} className="shrink-0" style={{ color: 'var(--due-soon)' }} />
-          </div>
-        </Field>
+        <LightSlider value={light} onChange={v => setValue('light_level', String(v))} />
         <hr className="border-border" />
         <Field label="Growth rate">
           <Segmented
@@ -296,98 +205,16 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
           </Field>
         </div>
         <hr className="border-border" />
-        <Field label="Soil moisture">
-          <div className="space-y-2">
-            <div className="flex gap-1.5">
-              <button
-                type="button"
-                className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] font-medium transition-colors ${
-                  moistureMode === 'relative'
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border-strong text-text-muted'
-                }`}
-                onClick={() => setMoistureMode('relative')}
-              >
-                Quick check
-              </button>
-              <button
-                type="button"
-                className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] font-medium transition-colors ${
-                  moistureMode === 'precise'
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border-strong text-text-muted'
-                }`}
-                onClick={() => setMoistureMode('precise')}
-              >
-                Meter (1-10)
-              </button>
-            </div>
-            {moistureMode === 'relative' ? (
-              <Segmented
-                value={moistureRelative ?? ''}
-                onChange={v =>
-                  setMoistureRelative(moistureRelative === v ? null : (v as SoilMoistureLevel))
-                }
-                options={[
-                  { value: 'dry', label: 'Dry' },
-                  { value: 'moist', label: 'Moist' },
-                  { value: 'wet', label: 'Wet' },
-                ]}
-              />
-            ) : (
-              <div className="flex items-center gap-3">
-                <span className="text-[12px] text-text-subtle">1</span>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  step={1}
-                  value={moisturePrecise}
-                  onChange={e => setMoisturePrecise(Number(e.target.value))}
-                  className="flex-1"
-                  aria-label="Soil moisture level 1 to 10"
-                />
-                <span className="text-[12px] text-text-subtle">10</span>
-                <span className="tnum text-[13px] text-text min-w-[2ch] text-right">
-                  {moisturePrecise}
-                </span>
-              </div>
-            )}
-          </div>
-        </Field>
+        <SoilMoistureField
+          defaultRelative={soilMoisture.relative}
+          defaultPrecise={soilMoisture.precise}
+          onChange={setSoilMoisture}
+        />
         <hr className="border-border" />
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Leaf size" hint="mm, optional">
-            <Input type="number" placeholder="120" {...register('leaf_size_mm')} />
-          </Field>
-          <Field label="Weight total" hint="from below">
-            <div className="grid h-11 items-center rounded-[8px] border border-border bg-surface px-3 tnum text-text-muted">
-              {grams} g
-            </div>
-          </Field>
-        </div>
-        <Field label="Weight" hint="lb · oz · g">
-          <div className="grid grid-cols-3 gap-2">
-            <div className="relative">
-              <Input type="number" min="0" aria-label="Pounds" {...register('lb')} />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
-                lb
-              </span>
-            </div>
-            <div className="relative">
-              <Input type="number" min="0" aria-label="Ounces" {...register('oz')} />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
-                oz
-              </span>
-            </div>
-            <div className="relative">
-              <Input type="number" min="0" step="0.1" aria-label="Grams" {...register('g')} />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
-                g
-              </span>
-            </div>
-          </div>
+        <Field label="Leaf size" hint="mm, optional">
+          <Input type="number" placeholder="120" {...register('leaf_size_mm')} />
         </Field>
+        <WeightInput defaultValue={weight} onChange={setWeight} />
       </FormSection>
 
       <FormSection
@@ -395,96 +222,19 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
         icon={AlertTriangle}
         tone="var(--accent)"
       >
-        <p className="text-[12px] text-text-subtle">
-          Flag any symptoms. These feed the Flagged problems list and the at-a-glance condition.
-        </p>
-        <div className="space-y-2.5">
-          {Object.entries(byCat).map(([cat, list]) => (
-            <div key={cat}>
-              <div className="mb-1.5 text-[11px] uppercase tracking-wide text-text-subtle">
-                {CAT_LABEL[cat] || cat}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {list.map(s => {
-                  const numId = Number(s.id)
-                  const sel = symptoms.includes(numId)
-                  return (
-                    <Chip
-                      key={s.id}
-                      active={sel}
-                      outline={!sel}
-                      color="var(--accent)"
-                      onClick={() => toggleSym(numId)}
-                      dusk={`symptom-${s.key}`}
-                    >
-                      {sel && <Check size={12} />}
-                      {s.label}
-                    </Chip>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div>
-          <div className="mb-1.5 text-[11px] uppercase tracking-wide text-text-subtle">Custom</div>
-          {customs.length > 0 && (
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              {customs.map(c => (
-                <Chip
-                  key={c}
-                  active
-                  color="var(--accent)"
-                  onClick={() => setCustoms(cs => cs.filter(x => x !== c))}
-                >
-                  {c}
-                  <X size={12} />
-                </Chip>
-              ))}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <Input
-              value={customDraft}
-              onChange={e => setCustomDraft(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  addCustom()
-                }
-              }}
-              placeholder="Describe another symptom"
-              aria-label="Custom symptom"
-            />
-            <Button type="button" variant="outline" onClick={addCustom}>
-              <Plus size={16} />
-              Add
-            </Button>
-          </div>
-        </div>
+        <SymptomReport
+          allSymptoms={allSymptoms}
+          defaultIds={symptomData.ids}
+          defaultCustoms={symptomData.customs}
+          onChange={setSymptomData}
+        />
       </FormSection>
 
       <Field label="Health note" hint="optional">
         <Textarea placeholder="What did you notice this week?" {...register('health_note')} />
       </Field>
-      <Field label="Photo" hint="optional">
-        <label className="flex h-11 cursor-pointer items-center gap-2 rounded-[8px] border border-dashed border-border-strong bg-surface-raised px-3 text-text-muted hover:text-text">
-          <ImageIcon size={16} />
-          <span className="text-[13px]">{photoFile ? photoFile.name : 'Attach a photo'}</span>
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={e => setPhotoFile(e.target.files?.[0] ?? null)}
-          />
-        </label>
-      </Field>
-      {formError && (
-        <div className="flex items-center gap-1.5 text-[12px] text-overdue">
-          <AlertTriangle size={14} />
-          {formError}
-        </div>
-      )}
+      <PhotoAttach onChange={setPhotoFile} />
+      <FormError message={formError} />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" dusk="care-form-submit" disabled={isSubmitting}>
           <ClipboardList size={16} />
