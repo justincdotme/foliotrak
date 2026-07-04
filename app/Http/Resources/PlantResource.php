@@ -15,6 +15,15 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PlantResource extends JsonResource
 {
     /**
+     * @param  array<string, mixed>  $condition
+     * @param  list<CareDue>  $dueForCare
+     */
+    public function __construct(Plant $plant, private readonly array $condition, private readonly array $dueForCare)
+    {
+        parent::__construct($plant);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -34,12 +43,12 @@ class PlantResource extends JsonResource
             'fertilizing_interval_days_override' => $this->fertilizing_interval_days_override,
             'cover_photo_id' => $this->cover_photo_id,
             'cover_photo' => $this->coverPhoto ? new PhotoResource($this->coverPhoto) : null,
-            'condition' => $this->resource->condition(),
+            'condition' => $this->condition,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'equipment' => EquipmentResource::collection($this->whenLoaded('equipment')),
-            'due_for_care' => CareDueResource::collection(CareDue::forPlant($this->resource)),
+            'due_for_care' => CareDueResource::collection($this->dueForCare),
             'last_watered_at' => $this->wateringEvents->last()?->occurred_at?->toISOString(),
         ];
     }

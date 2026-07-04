@@ -9,6 +9,7 @@ use App\Http\Requests\StorePlantRequest;
 use App\Http\Requests\UpdatePlantRequest;
 use App\Http\Resources\PlantResource;
 use App\Models\Plant;
+use App\Support\Care\CareDue;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,7 +50,9 @@ class PlantController extends Controller
             ->latest()
             ->get();
 
-        return PlantResource::collection($plants);
+        return PlantResource::collection(
+            $plants->map(fn (Plant $plant) => $this->present($plant))
+        );
     }
 
     public function store(StorePlantRequest $request): JsonResponse
@@ -64,7 +67,7 @@ class PlantController extends Controller
             return $plant;
         });
 
-        return PlantResource::make($plant->load(self::RELATIONS))
+        return $this->present($plant->load(self::RELATIONS))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }
@@ -73,7 +76,7 @@ class PlantController extends Controller
     {
         $this->authorize('view', $plant);
 
-        return PlantResource::make($plant->load(self::RELATIONS));
+        return $this->present($plant->load(self::RELATIONS));
     }
 
     public function update(UpdatePlantRequest $request, Plant $plant, RecordRelocation $recordRelocation): PlantResource
@@ -91,7 +94,7 @@ class PlantController extends Controller
             $this->syncEquipment($request, $plant);
         });
 
-        return PlantResource::make($plant->load(self::RELATIONS));
+        return $this->present($plant->load(self::RELATIONS));
     }
 
     public function destroy(Plant $plant): Response
@@ -119,5 +122,10 @@ class PlantController extends Controller
         if ($request->has('equipment_ids')) {
             $plant->equipment()->sync($request->collect('equipment_ids')->all());
         }
+    }
+
+    private function present(Plant $plant): PlantResource
+    {
+        return new PlantResource($plant, $plant->condition(), CareDue::forPlant($plant));
     }
 }

@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
-use App\Models\CareEvent;
 use App\Models\Plant;
 use App\Support\Care\CareDue;
-use App\Support\Trends;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,24 +15,30 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PlantTimelineResource extends JsonResource
 {
     /**
+     * @param  array<string, list<array{date: string, value: int|float|string|null}>>  $trends
+     * @param  array<string, mixed>  $condition
+     * @param  list<CareDue>  $dueForCare
+     */
+    public function __construct(Plant $plant, private readonly array $trends, private readonly array $condition, private readonly array $dueForCare)
+    {
+        parent::__construct($plant);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
-        $observations = $this->careEvents->filter(
-            fn (CareEvent $event): bool => $event->careEventType->key === 'observation'
-        );
-
         return [
-            'plant' => new PlantResource($this->resource),
+            'plant' => new PlantResource($this->resource, $this->condition, $this->dueForCare),
             'events' => CareEventResource::collection($this->careEvents),
-            'health_trend' => Trends::health($observations),
-            'weight_trend' => Trends::weight($observations),
-            'growth_trend' => Trends::growth($observations),
-            'light_trend' => Trends::light($observations),
-            'leaf_size_trend' => Trends::leafSize($observations),
-            'due_for_care' => CareDueResource::collection(CareDue::forPlant($this->resource)),
-            // This endpoint does not compute schedule recommendations; the contract keeps the key present.
+            'health_trend' => $this->trends['health'],
+            'weight_trend' => $this->trends['weight'],
+            'growth_trend' => $this->trends['growth'],
+            'light_trend' => $this->trends['light'],
+            'leaf_size_trend' => $this->trends['leaf_size'],
+            'due_for_care' => CareDueResource::collection($this->dueForCare),
+            // The contract keeps the key present while recommendations are not yet computed.
             'recommendations' => [],
             'photos' => PhotoResource::collection($this->photos),
         ];
