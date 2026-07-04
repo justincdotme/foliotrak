@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\SymptomCategory;
 use App\Models\Symptom;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,7 +20,7 @@ class SymptomFactory extends Factory
         $label = fake()->unique()->words(2, true);
 
         return [
-            'category' => fake()->randomElement(['leaf', 'stem', 'root', 'pest', 'disease', 'general']),
+            'category' => fake()->randomElement(SymptomCategory::cases()),
             'key' => Symptom::slugFor($label),
             'label' => ucfirst($label),
             'sort_order' => fake()->numberBetween(1, 20),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\SymptomCategory;
 use Database\Factories\SymptomFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,11 +17,20 @@ class Symptom extends Model
     /** @use HasFactory<SymptomFactory> */
     use HasFactory;
 
+    public const string KEY_BROWN_TIPS = 'brown_tips';
+
+    public const string KEY_LEAF_SPOTS = 'leaf_spots';
+
+    public const string KEY_ROOT_ROT = 'root_rot';
+
+    public const string KEY_ROOT_BOUND = 'root_bound';
+
     public $timestamps = false;
 
     protected function casts(): array
     {
         return [
+            'category' => SymptomCategory::class,
             'sort_order' => 'integer',
             'is_custom' => 'boolean',
         ];
@@ -35,7 +45,7 @@ class Symptom extends Model
     {
         return static::firstOrCreate(
             ['key' => static::slugFor($label)],
-            ['category' => 'custom', 'label' => $label, 'sort_order' => 99, 'is_custom' => true],
+            ['category' => SymptomCategory::Custom, 'label' => $label, 'sort_order' => 99, 'is_custom' => true],
         );
     }
 

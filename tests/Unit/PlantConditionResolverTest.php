@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Enums\PlantStatus;
+use App\Enums\SymptomCategory;
+use App\Models\Symptom;
 use App\Support\PlantConditionResolver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 class PlantConditionResolverTest extends TestCase
 {
     /**
-     * @param  list<string>  $symptomCategories
+     * @param  list<SymptomCategory>  $symptomCategories
      * @param  list<string>  $symptomKeys
      */
     #[DataProvider('conditionCases')]
@@ -40,23 +42,21 @@ class PlantConditionResolverTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{PlantStatus, int|null, list<string>, list<string>, bool, string, string}>
+     * @return iterable<string, array{PlantStatus, int|null, list<SymptomCategory>, list<string>, bool, string, string}>
      */
     public static function conditionCases(): iterable
     {
-        // Each case pins one branch of the precedence chain, plus the ordering
-        // between branches that could otherwise mask each other.
-        yield 'dead outranks every other signal' => [PlantStatus::Dead, 5, ['pest'], ['brown_tips'], true, 'dead', 'Did not make it'];
-        yield 'pest reads as infested' => [PlantStatus::Active, 4, ['pest'], [], false, 'infested', 'Infested'];
-        yield 'pest outranks disease' => [PlantStatus::Active, 4, ['pest', 'disease'], [], false, 'infested', 'Infested'];
-        yield 'disease reads as diseased' => [PlantStatus::Active, 4, ['disease'], [], false, 'diseased', 'Diseased'];
+        yield 'dead outranks every other signal' => [PlantStatus::Dead, 5, [SymptomCategory::Pest], [Symptom::KEY_BROWN_TIPS], true, 'dead', 'Did not make it'];
+        yield 'pest reads as infested' => [PlantStatus::Active, 4, [SymptomCategory::Pest], [], false, 'infested', 'Infested'];
+        yield 'pest outranks disease' => [PlantStatus::Active, 4, [SymptomCategory::Pest, SymptomCategory::Disease], [], false, 'infested', 'Infested'];
+        yield 'disease reads as diseased' => [PlantStatus::Active, 4, [SymptomCategory::Disease], [], false, 'diseased', 'Diseased'];
         yield 'overdue watering outranks a healthy reading' => [PlantStatus::Active, 5, [], [], true, 'dry', 'Likely dry'];
-        yield 'disease outranks likely dry' => [PlantStatus::Active, 3, ['disease'], [], true, 'diseased', 'Diseased'];
-        yield 'brown tips read as leaf stress' => [PlantStatus::Active, 5, [], ['brown_tips'], false, 'burnt', 'Leaf stress'];
-        yield 'leaf spots read as leaf stress' => [PlantStatus::Active, 5, [], ['leaf_spots'], false, 'burnt', 'Leaf stress'];
-        yield 'likely dry outranks leaf stress' => [PlantStatus::Active, 5, [], ['brown_tips'], true, 'dry', 'Likely dry'];
+        yield 'disease outranks likely dry' => [PlantStatus::Active, 3, [SymptomCategory::Disease], [], true, 'diseased', 'Diseased'];
+        yield 'brown tips read as leaf stress' => [PlantStatus::Active, 5, [], [Symptom::KEY_BROWN_TIPS], false, 'burnt', 'Leaf stress'];
+        yield 'leaf spots read as leaf stress' => [PlantStatus::Active, 5, [], [Symptom::KEY_LEAF_SPOTS], false, 'burnt', 'Leaf stress'];
+        yield 'likely dry outranks leaf stress' => [PlantStatus::Active, 5, [], [Symptom::KEY_BROWN_TIPS], true, 'dry', 'Likely dry'];
         yield 'no observation reads as no reading' => [PlantStatus::Active, null, [], [], false, 'unknown', 'No reading'];
-        yield 'null health with a non-triggering symptom is still no reading' => [PlantStatus::Active, null, ['leaf'], ['leaf_yellowing'], false, 'unknown', 'No reading'];
+        yield 'null health with a non-triggering symptom is still no reading' => [PlantStatus::Active, null, [SymptomCategory::Leaf], ['leaf_yellowing'], false, 'unknown', 'No reading'];
         yield 'health five reads as healthy' => [PlantStatus::Active, 5, [], [], false, 'healthy', 'Healthy'];
         yield 'health four reads as healthy' => [PlantStatus::Active, 4, [], [], false, 'healthy', 'Healthy'];
         yield 'health three reads as fair' => [PlantStatus::Active, 3, [], [], false, 'fair', 'Fair'];

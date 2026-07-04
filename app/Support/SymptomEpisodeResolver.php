@@ -60,7 +60,7 @@ final class SymptomEpisodeResolver
                     $episodes[] = [
                         'symptom_key' => $activeKey,
                         'symptom_label' => $entry['symptom']->label,
-                        'category' => $entry['symptom']->category,
+                        'category' => $entry['symptom']->category->value,
                         'appeared_at' => $entry['appeared_at']->toDateString(),
                         'cleared_at' => $event->occurred_at->toDateString(),
                         'duration_days' => (int) $entry['appeared_at']->diffInDays($event->occurred_at),
@@ -76,7 +76,7 @@ final class SymptomEpisodeResolver
             $episodes[] = [
                 'symptom_key' => $key,
                 'symptom_label' => $entry['symptom']->label,
-                'category' => $entry['symptom']->category,
+                'category' => $entry['symptom']->category->value,
                 'appeared_at' => $entry['appeared_at']->toDateString(),
                 'cleared_at' => null,
                 'duration_days' => null,
