@@ -125,7 +125,7 @@ const renderPage = () => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
-      <PlantDetailPage id={1} go={vi.fn()} openLog={vi.fn()} viewPhoto={vi.fn()} />
+      <PlantDetailPage id={1} go={vi.fn()} />
     </QueryClientProvider>
   )
 }

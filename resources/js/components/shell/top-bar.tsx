@@ -1,16 +1,12 @@
-import { Leaf, LogOut, Moon, Plus, Settings, Sun } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Leaf, Moon, Plus, Sun } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { IconButton } from '@/components/app/icon-button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useTheme } from '@/hooks/useTheme'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { cn } from '@/lib/utils'
+import { AccountMenu } from './account-menu'
 import { initials, NAV } from './nav'
 
 interface TopBarProps {
@@ -20,7 +16,6 @@ interface TopBarProps {
 
 export function TopBar({ onAdd, onLogout }: TopBarProps) {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
   const { isDark, toggle } = useTheme()
   const { user } = useCurrentUser()
 
@@ -42,21 +37,23 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
         </button>
         <nav className="flex items-center gap-1">
           {NAV.slice(0, 3).map(item => {
-            const active = item.to === '/' ? pathname === '/' : pathname.startsWith(item.to)
             const Icon = item.icon
             return (
-              <button
+              <NavLink
                 key={item.to}
+                to={item.to}
+                end={item.to === '/'}
                 dusk={`nav-${item.label.toLowerCase()}`}
-                onClick={() => navigate(item.to)}
-                className={cn(
-                  'flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium',
-                  active ? 'bg-surface-raised text-text' : 'text-text-muted hover:text-text'
-                )}
+                className={({ isActive }) =>
+                  cn(
+                    'flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium',
+                    isActive ? 'bg-surface-raised text-text' : 'text-text-muted hover:text-text'
+                  )
+                }
               >
                 <Icon size={15} />
                 {item.label}
-              </button>
+              </NavLink>
             )
           })}
         </nav>
@@ -83,20 +80,7 @@ export function TopBar({ onAdd, onLogout }: TopBarProps) {
                 {initials(user?.name ?? '')}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-44 p-1">
-              <div className="border-b border-border px-3 py-2">
-                <div className="text-[13px] font-medium">{user?.name}</div>
-                <div className="tnum text-[11px] text-text-subtle">{user?.email}</div>
-              </div>
-              <DropdownMenuItem dusk="settings-link" onSelect={() => navigate('/settings')}>
-                <Settings size={15} />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem dusk="logout-button" onSelect={onLogout} className="text-overdue">
-                <LogOut size={15} />
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
+            <AccountMenu onLogout={onLogout} />
           </DropdownMenu>
         </div>
       </div>

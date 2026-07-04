@@ -44,4 +44,9 @@ class UpdatePlantRequest extends FormRequest
             'equipment_ids.*' => ['integer', Rule::exists('equipment', 'id')],
         ];
     }
+
+    public function locationId(): ?int
+    {
+        return $this->filled('location_id') ? $this->integer('location_id') : null;
+    }
 }

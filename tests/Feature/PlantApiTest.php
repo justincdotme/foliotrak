@@ -144,6 +144,24 @@ class PlantApiTest extends TestCase
         ]);
     }
 
+    public function test_relocates_when_location_id_is_sent_as_a_string(): void
+    {
+        $this->actAsHousehold();
+        $south = Location::factory()->create(['name' => 'south window']);
+        $east = Location::factory()->create(['name' => 'east window']);
+        $plant = Plant::factory()->create(['location_id' => $south->id]);
+
+        // A form-encoded PATCH, or any client that stringifies ids, sends location_id
+        // as a string. The SPA sends a JSON int, so patchJson-with-int hid this path.
+        $this->patchJson("/api/plants/{$plant->id}", [
+            'location_id' => (string) $east->id,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.location.name', 'east window');
+
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $east->id]);
+    }
+
     public function test_rejects_an_invalid_status(): void
     {
         $this->actAsHousehold();

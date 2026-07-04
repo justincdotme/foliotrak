@@ -51,7 +51,7 @@ const makeWrapper = () => {
 }
 
 const renderPage = () =>
-  render(<PlantDetailPage id={3} go={vi.fn()} openLog={vi.fn()} viewPhoto={vi.fn()} />, {
+  render(<PlantDetailPage id={3} go={vi.fn()} />, {
     wrapper: makeWrapper(),
   })
 

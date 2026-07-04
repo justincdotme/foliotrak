@@ -87,7 +87,7 @@ class PlantController extends Controller
             $plant->update($request->safe()->except(['tag_ids', 'equipment_ids', 'location_id']));
 
             if ($request->has('location_id')) {
-                $recordRelocation->record($plant, $request->input('location_id'), userId: $request->user()?->id);
+                $recordRelocation->record($plant, $request->locationId(), userId: $request->user()?->id);
             }
 
             $this->syncTags($request, $plant);
