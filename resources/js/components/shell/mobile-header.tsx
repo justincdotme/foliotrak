@@ -1,13 +1,9 @@
-import { ChevronDown, Leaf, LogOut, Moon, Plus, Sun, User as UserIcon } from 'lucide-react'
+import { ChevronDown, Leaf, Moon, Plus, Sun } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useTheme } from '@/hooks/useTheme'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { AccountMenu } from './account-menu'
 import { initials } from './nav'
 
 interface MobileHeaderProps {
@@ -63,25 +59,7 @@ export function MobileHeader({ onAdd, onLogout }: MobileHeaderProps) {
               <ChevronDown size={14} className="text-text-subtle" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-48 p-1">
-            <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-[12px] font-semibold text-primary">
-                {initials(user?.name ?? '')}
-              </span>
-              <div className="min-w-0">
-                <div className="truncate text-[13px] font-medium">{user?.name}</div>
-                <div className="tnum truncate text-[11px] text-text-subtle">{user?.email}</div>
-              </div>
-            </div>
-            <DropdownMenuItem dusk="settings-link" onSelect={() => navigate('/settings')}>
-              <UserIcon size={15} />
-              Account &amp; settings
-            </DropdownMenuItem>
-            <DropdownMenuItem dusk="logout-button" onSelect={onLogout} className="text-overdue">
-              <LogOut size={15} />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
+          <AccountMenu onLogout={onLogout} />
         </DropdownMenu>
       </div>
     </header>

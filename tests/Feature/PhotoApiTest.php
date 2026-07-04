@@ -140,6 +140,28 @@ class PhotoApiTest extends TestCase
         ]);
     }
 
+    public function test_links_a_photo_to_a_care_event_sent_as_a_multipart_string(): void
+    {
+        Storage::fake('photos');
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+        $event = CareEvent::factory()->for($plant)->create();
+
+        // A real browser posts multipart/form-data, where care_event_id arrives as a
+        // string. postJson (used above) sends it as an int and hides this path.
+        $this->post("/api/plants/{$plant->id}/photos", [
+            'photo' => UploadedFile::fake()->image('observation.jpg'),
+            'care_event_id' => (string) $event->id,
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('data.care_event_id', $event->id);
+
+        $this->assertDatabaseHas('photos', [
+            'plant_id' => $plant->id,
+            'care_event_id' => $event->id,
+        ]);
+    }
+
     public function test_rejects_a_care_event_belonging_to_another_plant(): void
     {
         Storage::fake('photos');

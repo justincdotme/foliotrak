@@ -7,17 +7,17 @@ import { PhotoTile } from '@/components/app/photo-tile'
 import { CARE_META } from '@/lib/domain'
 import { fmtDate, fmtDateY, fmtTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useCareLog } from './care-log-context'
 import { EventDetail } from './event-detail'
 
 interface TimelineItemProps {
   e: CareEvent
   photos: Photo[]
-  onEdit: () => void
-  onViewPhoto: (photo: Photo) => void
   onDelete: (id: number) => Promise<void>
 }
 
-export function TimelineItem({ e, photos, onEdit, onViewPhoto, onDelete }: TimelineItemProps) {
+export function TimelineItem({ e, photos, onDelete }: TimelineItemProps) {
+  const { openLog, viewPhoto } = useCareLog()
   const [open, setOpen] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const m = CARE_META[e.type]
@@ -59,7 +59,7 @@ export function TimelineItem({ e, photos, onEdit, onViewPhoto, onDelete }: Timel
                     key={p.id}
                     photo={p}
                     className="h-16 w-16 rounded-[6px]"
-                    onClick={() => onViewPhoto(p)}
+                    onClick={() => viewPhoto(p)}
                   />
                 ))}
               </div>
@@ -70,7 +70,12 @@ export function TimelineItem({ e, photos, onEdit, onViewPhoto, onDelete }: Timel
               </div>
             )}
             <div className="flex gap-1 mt-2.5 pt-2.5 border-t border-border">
-              <Button size="sm" variant="ghost" dusk="timeline-edit" onClick={onEdit}>
+              <Button
+                size="sm"
+                variant="ghost"
+                dusk="timeline-edit"
+                onClick={() => openLog(e.type, e)}
+              >
                 <Pencil size={14} />
                 Edit
               </Button>

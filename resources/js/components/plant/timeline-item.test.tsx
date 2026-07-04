@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { CareEvent, Photo } from '@/api/types'
+import { CareLogContext } from './care-log-context'
 import { TimelineItem } from './timeline-item'
 
 const relocation: CareEvent = {
@@ -36,15 +37,11 @@ const linkedPhoto: Photo = {
 
 describe('TimelineItem', () => {
   it('shows a relocation move with its linked photo and routes edit to the handler', async () => {
-    const onEdit = vi.fn()
+    const openLog = vi.fn()
     render(
-      <TimelineItem
-        e={relocation}
-        photos={[linkedPhoto]}
-        onEdit={onEdit}
-        onViewPhoto={vi.fn()}
-        onDelete={vi.fn()}
-      />
+      <CareLogContext.Provider value={{ openLog, viewPhoto: vi.fn() }}>
+        <TimelineItem e={relocation} photos={[linkedPhoto]} onDelete={vi.fn()} />
+      </CareLogContext.Provider>
     )
 
     await userEvent.click(screen.getByRole('button', { name: /Moved/ }))
@@ -53,6 +50,6 @@ describe('TimelineItem', () => {
     expect(screen.getByAltText('after the move')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: /Edit/ }))
-    expect(onEdit).toHaveBeenCalled()
+    expect(openLog).toHaveBeenCalledWith('relocation', relocation)
   })
 })

@@ -35,6 +35,11 @@ class StorePhotoRequest extends FormRequest
         ];
     }
 
+    public function careEventId(): ?int
+    {
+        return $this->filled('care_event_id') ? $this->integer('care_event_id') : null;
+    }
+
     /**
      * @return array{x: int, y: int, width: int, height: int}|null
      */

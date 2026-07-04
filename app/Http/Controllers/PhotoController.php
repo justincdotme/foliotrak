@@ -36,7 +36,7 @@ class PhotoController extends Controller
             file: $request->file('photo'),
             takenOn: $request->date('taken_on'),
             caption: $request->string('caption')->value() ?: null,
-            careEventId: $request->input('care_event_id'),
+            careEventId: $request->careEventId(),
             setAsCover: $request->boolean('set_as_cover'),
             heroCrop: $request->heroCrop(),
             thumbCrop: $request->thumbCrop(),

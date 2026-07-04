@@ -18,9 +18,9 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import type { CareEvent, CareType, Photo } from '@/api/types'
 import { updatePlant } from '@/api/client'
 import { useNotification } from '@/components/app/notification-context'
+import { useCareLog } from '@/components/plant/care-log-context'
 import { handleApiError } from '@/lib/handle-api-error'
 import { useEquipment } from '@/hooks/useEquipment'
 import { usePlant } from '@/hooks/usePlant'
@@ -57,11 +57,10 @@ import { TimelineItem } from '@/components/plant/timeline-item'
 interface PlantDetailPageProps {
   id: number
   go: (to: string) => void
-  openLog: (type: CareType, event?: CareEvent) => void
-  viewPhoto: (photo: Photo) => void
 }
 
-export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageProps) {
+export function PlantDetailPage({ id, go }: PlantDetailPageProps) {
+  const { openLog, viewPhoto } = useCareLog()
   const { data: plant, loading } = usePlant(id)
   const { data: photos } = usePlantPhotos(id)
   const { data: timeline } = useTimeline(id)
@@ -360,8 +359,6 @@ export function PlantDetailPage({ id, go, openLog, viewPhoto }: PlantDetailPageP
                 key={e.id}
                 e={e}
                 photos={photosByEvent[e.id] ?? []}
-                onEdit={() => openLog(e.type, e)}
-                onViewPhoto={viewPhoto}
                 onDelete={async () => {
                   try {
                     await deleteEvent.mutateAsync(e.id)
