@@ -474,3 +474,10 @@ export interface SensorReadingsResponse {
   sensors: SensorSeries[]
   granularity_minutes: number
 }
+
+export interface SensorSnapshot {
+  ambient_temp_c: number
+  ambient_humidity_pct: number
+  sensor_count: number
+  matched_at?: string
+}

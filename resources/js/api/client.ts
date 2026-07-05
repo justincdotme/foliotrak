@@ -19,6 +19,7 @@ import type {
   PlantWithTags,
   Sensor,
   SensorReadingsResponse,
+  SensorSnapshot,
   Settings,
   SpeciesSuggestion,
   Symptom,
@@ -308,3 +309,14 @@ export const getPlantSensorReadings = async (
       params: { range },
     })
   )
+
+export const fetchSensorSnapshot = async (
+  plantId: number,
+  at?: string
+): Promise<SensorSnapshot | null> => {
+  const res = await api.get(`/api/plants/${plantId}/sensor-snapshot`, {
+    params: at ? { at } : undefined,
+  })
+  if (res.status === 204) return null
+  return (res.data as { data: SensorSnapshot }).data
+}

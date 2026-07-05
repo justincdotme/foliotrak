@@ -67,7 +67,7 @@ final class CareEventRuleSets
                 'weight.oz' => ['nullable', 'numeric', 'min:0', 'max:9999'],
                 'weight.g' => ['nullable', 'numeric', 'min:0', 'max:999999'],
                 'ambient_humidity_pct' => self::opt($partial, ['integer', 'min:0', 'max:100']),
-                'ambient_temp' => self::opt($partial, ['numeric', 'min:-50', 'max:60']),
+                'ambient_temp' => self::opt($partial, ['numeric', ...self::tempRange()]),
                 'soil_moisture_relative' => self::opt($partial, [Rule::enum(SoilMoistureLevel::class)]),
                 'soil_moisture_precise' => self::opt($partial, ['integer', 'min:1', 'max:10']),
                 'symptom_ids' => self::opt($partial, ['array']),
@@ -93,6 +93,18 @@ final class CareEventRuleSets
                 'occurred_at' => ['nullable', 'date'],
                 'to_location_id' => ['required', 'integer', Rule::exists('locations', 'id')],
             ];
+    }
+
+    private static function tempRange(): array
+    {
+        $unit = function_exists('config') && app()->bound('config')
+            ? config('foliotrak.temperature_unit', 'F')
+            : 'F';
+
+        $lo = Temperature::fromCelsius(-50)->toDisplay($unit);
+        $hi = Temperature::fromCelsius(60)->toDisplay($unit);
+
+        return ["min:{$lo}", "max:{$hi}"];
     }
 
     private static function opt(bool $partial, array $rules): array
