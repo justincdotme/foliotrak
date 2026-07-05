@@ -7,6 +7,9 @@ vi.mock('@/hooks/useTags', () => ({
   useTags: () => ({ data: [], loading: false, error: null }),
   useCreateTag: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
+vi.mock('@/hooks/useSensors', () => ({
+  useSensors: () => ({ data: [], loading: false, error: null }),
+}))
 vi.mock('@/hooks/useSpeciesSuggest', () => ({
   useSpeciesSuggest: () => ({ results: [], loading: false }),
 }))

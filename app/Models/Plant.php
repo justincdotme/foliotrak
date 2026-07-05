@@ -89,6 +89,14 @@ class Plant extends Model
     }
 
     /**
+     * @return BelongsToMany<Sensor, $this>
+     */
+    public function sensors(): BelongsToMany
+    {
+        return $this->belongsToMany(Sensor::class, 'plant_sensor');
+    }
+
+    /**
      * @return HasMany<Photo, $this>
      */
     public function photos(): HasMany

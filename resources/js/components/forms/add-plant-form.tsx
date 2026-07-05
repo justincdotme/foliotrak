@@ -1,7 +1,8 @@
 import { useState, type ChangeEvent, type SyntheticEvent } from 'react'
 import { Check, ImageIcon, Plus } from 'lucide-react'
-import type { CropArea, SpeciesSuggestion, Tag } from '@/api/types'
+import type { CropArea, PlantSensor, SpeciesSuggestion, Tag } from '@/api/types'
 import { useSpeciesSuggest } from '@/hooks/useSpeciesSuggest'
+import { useSensors } from '@/hooks/useSensors'
 import { useTags } from '@/hooks/useTags'
 import { useCreatePlant } from '@/hooks/usePlantMutations'
 import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
@@ -11,6 +12,7 @@ import { FormError } from '@/components/app/form-error'
 import { InlineCombobox } from '@/components/app/inline-combobox'
 import { Input } from '@/components/ui/input'
 import { LocationCombobox } from '@/components/app/location-combobox'
+import { SensorSelect } from '@/components/app/sensor-select'
 import { TagInlineCreate } from '@/components/app/tag-inline-create'
 import { CropWorkflow } from '@/components/plant/crop-workflow'
 
@@ -20,6 +22,7 @@ interface AddPlantFormProps {
 
 export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const { data: allTags } = useTags()
+  const { data: allSensors } = useSensors()
   const create = useCreatePlant()
   const [common, setCommon] = useState('')
   const [sci, setSci] = useState('')
@@ -28,6 +31,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const [locationId, setLocationId] = useState<number | null>(null)
   const [acquired, setAcquired] = useState('')
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+  const [selectedSensors, setSelectedSensors] = useState<PlantSensor[]>([])
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [cropping, setCropping] = useState(false)
@@ -62,6 +66,12 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const toggleTag = (t: Tag) => {
     setSelectedTags(ts =>
       ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]
+    )
+  }
+
+  const toggleSensor = (s: PlantSensor) => {
+    setSelectedSensors(ss =>
+      ss.find(x => x.id === s.id) ? ss.filter(x => x.id !== s.id) : [...ss, s]
     )
   }
 
@@ -106,6 +116,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
           location_id: locationId,
           acquired_on: acquired || null,
           tag_ids: selectedTags.map(t => t.id),
+          sensor_ids: selectedSensors.map(s => s.id),
         },
         cover: photoFile && heroCrop && thumbCrop ? { file: photoFile, heroCrop, thumbCrop } : null,
       },
@@ -211,6 +222,15 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
             allTags={allTags || []}
             selectedTags={selectedTags}
             onToggle={toggleTag}
+          />
+        </div>
+      </Field>
+      <Field label="Sensors">
+        <div className="flex flex-wrap gap-1.5">
+          <SensorSelect
+            allSensors={allSensors || []}
+            selectedSensors={selectedSensors}
+            onToggle={toggleSensor}
           />
         </div>
       </Field>

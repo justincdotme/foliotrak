@@ -21,6 +21,14 @@ vi.mock('@/hooks/useEquipment', () => ({
   useUpdateEquipment: vi.fn(),
   useDeleteEquipment: vi.fn(),
 }))
+vi.mock('@/hooks/useSensors', () => ({
+  useSensors: vi.fn(),
+  useDiscoverSensors: vi.fn(),
+  useTestConnection: vi.fn(),
+  useCreateSensor: vi.fn(),
+  useUpdateSensor: vi.fn(),
+  useDeleteSensor: vi.fn(),
+}))
 
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
@@ -31,6 +39,14 @@ import {
   useUpdateEquipment,
   useDeleteEquipment,
 } from '@/hooks/useEquipment'
+import {
+  useSensors,
+  useDiscoverSensors,
+  useTestConnection,
+  useCreateSensor,
+  useUpdateSensor,
+  useDeleteSensor,
+} from '@/hooks/useSensors'
 
 const SAVED_KEY = 'z9y8x7w6v5'.repeat(3)
 const NEW_KEY = 'a1b2c3d4e5'.repeat(3)
@@ -69,6 +85,24 @@ function mockEquipmentHooks() {
   vi.mocked(useDeleteEquipment).mockReturnValue({ mutate: vi.fn() } as never)
 }
 
+function mockSensorHooks() {
+  vi.mocked(useSensors).mockReturnValue({ data: [], loading: false, error: null })
+  vi.mocked(useDiscoverSensors).mockReturnValue({
+    data: undefined,
+    isSuccess: false,
+    isFetching: false,
+    refetch: vi.fn(),
+  } as never)
+  vi.mocked(useTestConnection).mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+    data: undefined,
+  } as never)
+  vi.mocked(useCreateSensor).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as never)
+  vi.mocked(useUpdateSensor).mockReturnValue({ mutateAsync: vi.fn() } as never)
+  vi.mocked(useDeleteSensor).mockReturnValue({ mutate: vi.fn() } as never)
+}
+
 function setup(opts: {
   key?: string | null
   loading?: boolean
@@ -102,6 +136,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockTagHooks()
   mockEquipmentHooks()
+  mockSensorHooks()
 })
 
 describe('SettingsPage', () => {

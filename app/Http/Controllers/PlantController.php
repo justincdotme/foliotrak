@@ -31,6 +31,7 @@ class PlantController extends Controller
     private const RELATIONS = [
         'tags',
         'equipment',
+        'sensors',
         'coverPhoto',
         'location',
         'latestObservationEvent.observation.symptoms',
@@ -61,9 +62,10 @@ class PlantController extends Controller
         $this->authorize('create', Plant::class);
 
         $plant = DB::transaction(function () use ($request, $recordEquipmentChange): Plant {
-            $plant = Plant::create($request->safe()->except(['tag_ids', 'equipment_ids']));
+            $plant = Plant::create($request->safe()->except(['tag_ids', 'equipment_ids', 'sensor_ids']));
             $this->syncTags($request, $plant);
             $this->syncEquipment($request, $plant, $recordEquipmentChange);
+            $this->syncSensors($request, $plant);
 
             return $plant;
         });
@@ -85,7 +87,7 @@ class PlantController extends Controller
         $this->authorize('update', $plant);
 
         DB::transaction(function () use ($request, $plant, $recordRelocation, $recordEquipmentChange): void {
-            $plant->update($request->safe()->except(['tag_ids', 'equipment_ids', 'location_id']));
+            $plant->update($request->safe()->except(['tag_ids', 'equipment_ids', 'sensor_ids', 'location_id']));
 
             if ($request->has('location_id')) {
                 $recordRelocation->record($plant, $request->locationId(), userId: $request->user()?->id);
@@ -93,6 +95,7 @@ class PlantController extends Controller
 
             $this->syncTags($request, $plant);
             $this->syncEquipment($request, $plant, $recordEquipmentChange);
+            $this->syncSensors($request, $plant);
         });
 
         return $this->present($plant->load(self::RELATIONS));
@@ -122,6 +125,13 @@ class PlantController extends Controller
     {
         if ($request->has('equipment_ids')) {
             $recordEquipmentChange->record($plant, $request->collect('equipment_ids')->all(), $request->user()?->id);
+        }
+    }
+
+    private function syncSensors(Request $request, Plant $plant): void
+    {
+        if ($request->has('sensor_ids')) {
+            $plant->sensors()->sync($request->collect('sensor_ids')->all());
         }
     }
 

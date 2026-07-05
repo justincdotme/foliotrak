@@ -1,15 +1,17 @@
 import { AlertTriangle, Info } from 'lucide-react'
 import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { PlantWithTags, Tag } from '@/api/types'
+import type { PlantSensor, PlantWithTags, Tag } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { LocationCombobox } from '@/components/app/location-combobox'
 import { Modal } from '@/components/app/modal'
 import { Segmented } from '@/components/app/segmented'
+import { SensorSelect } from '@/components/app/sensor-select'
 import { TagInlineCreate } from '@/components/app/tag-inline-create'
 import { Textarea } from '@/components/ui/textarea'
+import { useSensors } from '@/hooks/useSensors'
 import { useTags } from '@/hooks/useTags'
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
 import { handleApiError } from '@/lib/handle-api-error'
@@ -28,11 +30,13 @@ const STATUS_HELP: Record<string, string> = {
 
 export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const { data: allTags } = useTags()
+  const { data: allSensors } = useSensors()
   const update = useUpdatePlant(plant.id)
   const [locationId, setLocationId] = useState<number | null>(plant.location?.id ?? null)
   const [notes, setNotes] = useState(plant.notes || '')
   const [status, setStatus] = useState(plant.status)
   const [tags, setTags] = useState<Tag[]>(plant.tags)
+  const [sensors, setSensors] = useState<PlantSensor[]>(plant.sensors ?? [])
   const [nickname, setNickname] = useState(plant.nickname || '')
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -42,6 +46,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       setNotes(plant.notes || '')
       setStatus(plant.status)
       setTags(plant.tags)
+      setSensors(plant.sensors ?? [])
       setNickname(plant.nickname || '')
       setFormError(null)
     }
@@ -50,6 +55,9 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
 
   const toggleTag = (t: Tag) =>
     setTags(ts => (ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]))
+
+  const toggleSensor = (s: PlantSensor) =>
+    setSensors(ss => (ss.find(x => x.id === s.id) ? ss.filter(x => x.id !== s.id) : [...ss, s]))
 
   const save = async () => {
     setFormError(null)
@@ -60,6 +68,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
         notes: notes.trim() || null,
         status,
         tag_ids: tags.map(t => t.id),
+        sensor_ids: sensors.map(s => s.id),
       })
       onClose()
     } catch (err) {
@@ -106,6 +115,15 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
         <Field label="Tags">
           <div className="flex flex-wrap gap-1.5">
             <TagInlineCreate allTags={allTags || []} selectedTags={tags} onToggle={toggleTag} />
+          </div>
+        </Field>
+        <Field label="Sensors">
+          <div className="flex flex-wrap gap-1.5">
+            <SensorSelect
+              allSensors={allSensors || []}
+              selectedSensors={sensors}
+              onToggle={toggleSensor}
+            />
           </div>
         </Field>
         <Field label="Status">

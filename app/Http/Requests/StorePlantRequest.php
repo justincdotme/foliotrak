@@ -36,6 +36,8 @@ class StorePlantRequest extends FormRequest
             'tag_ids.*' => ['integer', Rule::exists('plant_tags', 'id')],
             'equipment_ids' => ['sometimes', 'array'],
             'equipment_ids.*' => ['integer', Rule::exists('equipment', 'id')],
+            'sensor_ids' => ['sometimes', 'array'],
+            'sensor_ids.*' => ['integer', Rule::exists('sensors', 'id')],
         ];
     }
 }

@@ -48,6 +48,8 @@ class PlantResource extends JsonResource
             'updated_at' => $this->updated_at?->toISOString(),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'equipment' => EquipmentResource::collection($this->whenLoaded('equipment')),
+            'sensors' => $this->whenLoaded('sensors', fn () => $this->sensors->map(fn ($s) => ['id' => $s->id, 'name' => $s->name, 'color' => $s->color])
+            ),
             'due_for_care' => CareDueResource::collection($this->dueForCare),
             'last_watered_at' => $this->wateringEvents->last()?->occurred_at?->toISOString(),
         ];

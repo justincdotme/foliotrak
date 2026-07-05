@@ -10,6 +10,7 @@ import {
   LogOut,
   Pencil,
   Plus,
+  Radio,
   Settings2,
   Sun,
   Tags,
@@ -18,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import type { ThemeChoice } from '@/hooks/useTheme'
-import type { EquipmentOption, Tag } from '@/api/types'
+import type { DiscoveredSensor, EquipmentOption, Sensor, Tag } from '@/api/types'
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/useTags'
@@ -28,6 +29,14 @@ import {
   useUpdateEquipment,
   useDeleteEquipment,
 } from '@/hooks/useEquipment'
+import {
+  useSensors,
+  useDiscoverSensors,
+  useTestConnection,
+  useCreateSensor,
+  useUpdateSensor,
+  useDeleteSensor,
+} from '@/hooks/useSensors'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -594,6 +603,399 @@ function EquipmentManager() {
   )
 }
 
+function SensorRow({
+  sensor,
+  offline,
+  discoveryLoaded,
+  onUpdate,
+  onDelete,
+}: {
+  sensor: Sensor
+  offline: boolean
+  discoveryLoaded: boolean
+  onUpdate: (id: number, payload: { name?: string; location?: string | null }) => Promise<unknown>
+  onDelete: (id: number) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(sensor.name)
+  const [location, setLocation] = useState(sensor.location ?? '')
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  const save = async () => {
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      setError('Name is required.')
+      return
+    }
+    try {
+      await onUpdate(sensor.id, {
+        name: trimmedName,
+        location: location.trim() || null,
+      })
+      setEditing(false)
+      setError(null)
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 422) {
+        const messages = err.response.data?.errors?.name
+        setError(Array.isArray(messages) ? messages[0] : 'Could not save.')
+      } else {
+        setError('Could not save. Try again.')
+      }
+    }
+  }
+
+  const cancel = () => {
+    setName(sensor.name)
+    setLocation(sensor.location ?? '')
+    setEditing(false)
+    setError(null)
+  }
+
+  return (
+    <div className="flex items-center gap-2 py-1.5">
+      <span className="h-3 w-3 rounded-full shrink-0" style={{ background: sensor.color }} />
+      {editing ? (
+        <div className="flex-1 space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Input
+              ref={inputRef}
+              value={name}
+              onChange={e => {
+                setName(e.target.value)
+                setError(null)
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') save()
+                if (e.key === 'Escape') cancel()
+              }}
+              placeholder="Name"
+              className="h-7 text-[13px] flex-1"
+              aria-invalid={error ? true : undefined}
+            />
+            <Input
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') save()
+                if (e.key === 'Escape') cancel()
+              }}
+              placeholder="Location"
+              className="h-7 text-[13px] w-28"
+            />
+            <button type="button" onClick={save} className="p-1 text-primary hover:text-primary/80">
+              <Check size={14} />
+            </button>
+            <button type="button" onClick={cancel} className="p-1 text-text-muted hover:text-text">
+              <X size={14} />
+            </button>
+          </div>
+          {error && <span className="text-[11px] text-overdue">{error}</span>}
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[13px] truncate">{sensor.name}</span>
+              {discoveryLoaded && offline && (
+                <span className="text-[10px] px-1 py-0.5 rounded bg-text-subtle/15 text-text-muted">
+                  offline
+                </span>
+              )}
+            </div>
+            <div className="text-[11px] text-text-muted truncate">
+              {sensor.mac}
+              {sensor.location && <> &middot; {sensor.location}</>}
+              {sensor.plant_count > 0 && (
+                <>
+                  {' '}
+                  &middot; {sensor.plant_count} plant{sensor.plant_count !== 1 ? 's' : ''}
+                </>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="p-1 text-text-muted hover:text-text"
+            aria-label={`Edit ${sensor.name}`}
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(sensor.id)}
+            className="p-1 text-text-muted hover:text-overdue"
+            aria-label={`Delete ${sensor.name}`}
+          >
+            <Trash2 size={13} />
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+function DiscoverRow({
+  device,
+  onRegister,
+}: {
+  device: DiscoveredSensor
+  onRegister: (mac: string, deviceName: string | null) => void
+}) {
+  return (
+    <div className="flex items-center gap-2 py-1.5">
+      <Radio size={14} className="shrink-0 text-text-subtle" />
+      <div className="flex-1 min-w-0">
+        <span className="text-[13px] truncate block">{device.device_name ?? device.mac}</span>
+        <span className="text-[11px] text-text-muted">{device.mac}</span>
+      </div>
+      <Button size="sm" onClick={() => onRegister(device.mac, device.device_name)}>
+        Register
+      </Button>
+    </div>
+  )
+}
+
+function RegisterForm({
+  mac,
+  deviceName,
+  onClose,
+}: {
+  mac: string
+  deviceName: string | null
+  onClose: () => void
+}) {
+  const createSensor = useCreateSensor()
+  const [name, setName] = useState('')
+  const [location, setLocation] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  const submit = async () => {
+    const trimmed = name.trim()
+    if (!trimmed) {
+      setError('Name is required.')
+      return
+    }
+    try {
+      await createSensor.mutateAsync({
+        mac,
+        device_name: deviceName,
+        name: trimmed,
+        location: location.trim() || null,
+      })
+      onClose()
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 422) {
+        const messages = err.response.data?.errors?.name ?? err.response.data?.errors?.mac
+        setError(Array.isArray(messages) ? messages[0] : 'Could not register.')
+      } else {
+        setError('Could not register sensor. Try again.')
+      }
+    }
+  }
+
+  return (
+    <div className="border border-border rounded p-3 space-y-2">
+      <div className="text-[12px] text-text-muted">Registering {mac}</div>
+      <Input
+        ref={inputRef}
+        value={name}
+        onChange={e => {
+          setName(e.target.value)
+          setError(null)
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Enter') submit()
+          if (e.key === 'Escape') onClose()
+        }}
+        placeholder="Name (required)"
+        className="h-8 text-[13px]"
+      />
+      <Input
+        value={location}
+        onChange={e => setLocation(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') submit()
+          if (e.key === 'Escape') onClose()
+        }}
+        placeholder="Location (optional)"
+        className="h-8 text-[13px]"
+      />
+      {error && <div className="text-[11px] text-overdue">{error}</div>}
+      <div className="flex gap-2">
+        <Button size="sm" onClick={submit} disabled={createSensor.isPending || !name.trim()}>
+          Save
+        </Button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[13px] text-text-muted hover:text-text"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SensorManager() {
+  const { data: sensors, loading } = useSensors()
+  const discovery = useDiscoverSensors()
+  const testConn = useTestConnection()
+  const updateSensor = useUpdateSensor()
+  const deleteSensorMut = useDeleteSensor()
+  const [deleteTarget, setDeleteTarget] = useState<Sensor | null>(null)
+  const [registering, setRegistering] = useState<{ mac: string; deviceName: string | null } | null>(
+    null
+  )
+
+  const discoveredMacs = discovery.data?.data ?? []
+  const discoveryLoaded = discovery.isSuccess
+
+  const registeredMacs = new Set((sensors ?? []).map(s => s.mac))
+  const unregistered = discoveredMacs.filter(d => !registeredMacs.has(d.mac))
+
+  const offlineMacs = new Set(
+    discoveryLoaded
+      ? (sensors ?? []).filter(s => !discoveredMacs.some(d => d.mac === s.mac)).map(s => s.mac)
+      : []
+  )
+
+  const handleUpdate = (id: number, payload: { name?: string; location?: string | null }) =>
+    updateSensor.mutateAsync({ id, payload })
+
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      deleteSensorMut.mutate(deleteTarget.id)
+      setDeleteTarget(null)
+    }
+  }
+
+  const statusColor =
+    testConn.data?.status === 'connected'
+      ? 'text-ok'
+      : testConn.data
+        ? 'text-overdue'
+        : 'text-text-muted'
+
+  const statusLabel = testConn.data
+    ? testConn.data.status === 'connected'
+      ? `Connected (${testConn.data.sensors_seen ?? 0} sensor${testConn.data.sensors_seen !== 1 ? 's' : ''} seen)`
+      : (testConn.data.error ?? testConn.data.status.replace('_', ' '))
+    : null
+
+  return (
+    <div className="space-y-4">
+      {/* Gateway connection */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => testConn.mutate()}
+            disabled={testConn.isPending}
+          >
+            {testConn.isPending ? 'Testing...' : 'Test Connection'}
+          </Button>
+          {statusLabel && <span className={`text-[12px] ${statusColor}`}>{statusLabel}</span>}
+        </div>
+      </div>
+
+      {/* Sensor registry */}
+      {loading ? (
+        <Spinner />
+      ) : (
+        <>
+          {(sensors ?? []).length === 0 && (
+            <p className="text-[13px] text-text-muted">
+              No sensors registered yet. Use Discover to find sensors on your gateway.
+            </p>
+          )}
+          <div className="divide-y divide-border">
+            {(sensors ?? []).map(s => (
+              <SensorRow
+                key={s.id}
+                sensor={s}
+                offline={offlineMacs.has(s.mac)}
+                discoveryLoaded={discoveryLoaded}
+                onUpdate={handleUpdate}
+                onDelete={id => {
+                  const found = (sensors ?? []).find(x => x.id === id)
+                  if (found) setDeleteTarget(found)
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Discovery */}
+          <div className="pt-2 border-t border-border">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => discovery.refetch()}
+              disabled={discovery.isFetching}
+            >
+              {discovery.isFetching ? 'Scanning...' : 'Discover Sensors'}
+            </Button>
+            {discovery.error && (
+              <div className="mt-1 text-[11px] text-overdue">Could not reach gateway.</div>
+            )}
+            {discoveryLoaded && discovery.data?.error && (
+              <p className="mt-2 text-[12px] text-overdue">
+                {discovery.data.error}. Connect the gateway first.
+              </p>
+            )}
+            {discoveryLoaded && !discovery.data?.error && unregistered.length === 0 && (
+              <p className="mt-2 text-[12px] text-text-muted">No unregistered sensors found.</p>
+            )}
+            {unregistered.length > 0 && (
+              <div className="mt-2 divide-y divide-border">
+                {unregistered.map(d => (
+                  <DiscoverRow
+                    key={d.mac}
+                    device={d}
+                    onRegister={(mac, deviceName) => setRegistering({ mac, deviceName })}
+                  />
+                ))}
+              </div>
+            )}
+            {registering && (
+              <div className="mt-2">
+                <RegisterForm
+                  mac={registering.mac}
+                  deviceName={registering.deviceName}
+                  onClose={() => setRegistering(null)}
+                />
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      <ConfirmDelete
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        label={
+          deleteTarget
+            ? `"${deleteTarget.name}" and all its readings will be permanently deleted.`
+            : undefined
+        }
+      />
+    </div>
+  )
+}
+
 export function SettingsPage({ theme, setTheme, onLogout }: SettingsPageProps) {
   const { data: settings, loading, error } = useSettings()
   const { user } = useCurrentUser()
@@ -627,6 +1029,10 @@ export function SettingsPage({ theme, setTheme, onLogout }: SettingsPageProps) {
       <Card className="p-4">
         <SectionTitle icon={Settings2}>Equipment</SectionTitle>
         <EquipmentManager />
+      </Card>
+      <Card className="p-4">
+        <SectionTitle icon={Radio}>Sensors</SectionTitle>
+        <SensorManager />
       </Card>
       <Card className="p-4">
         <SectionTitle icon={Sun}>Appearance</SectionTitle>
