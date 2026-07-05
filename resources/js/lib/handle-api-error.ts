@@ -25,3 +25,20 @@ export function handleApiError<T extends FieldValues = FieldValues>(
 
   return data?.message || 'Something went wrong. Please try again.'
 }
+
+export function extractValidationError(
+  error: unknown,
+  fields: string | string[],
+  fallback = 'Something went wrong. Please try again.'
+): string {
+  if (!isAxiosError(error) || !error.response) return fallback
+  const { status, data } = error.response
+  if (status === 422 && data?.errors) {
+    const fieldList = Array.isArray(fields) ? fields : [fields]
+    for (const field of fieldList) {
+      const messages = data.errors[field]
+      if (Array.isArray(messages) && messages[0]) return messages[0]
+    }
+  }
+  return fallback
+}

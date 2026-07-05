@@ -5,6 +5,7 @@ import { SectionTitle } from '@/components/app/section-title'
 import { Spinner } from '@/components/app/spinner'
 import { TypeIcon } from '@/components/app/type-icon'
 import { WaterDrop } from '@/components/app/water-drop'
+import { waterLabel } from '@/lib/care-labels'
 import { CARE_META } from '@/lib/domain'
 import { relDay } from '@/lib/format'
 import { useDashboard } from '@/hooks/useDashboard'
@@ -48,17 +49,6 @@ function DueRow({ item, onClick }: { item: DueForCare; onClick: () => void }) {
       </div>
     </button>
   )
-}
-
-function waterLabel(due: DueForCare) {
-  if (due.status === 'overdue')
-    return { text: `Water ${Math.abs(due.daysLeft)}d overdue`, color: 'var(--overdue)' }
-  if (due.status === 'due-soon')
-    return {
-      text: due.daysLeft <= 0 ? 'Water today' : 'Water due soon',
-      color: 'var(--due-soon)',
-    }
-  return { text: `Water in ${due.daysLeft}d`, color: 'var(--text-muted)' }
 }
 
 export function DashboardPage({ go }: DashboardPageProps) {

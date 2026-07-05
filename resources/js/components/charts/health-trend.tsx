@@ -8,10 +8,9 @@ import {
   Line,
 } from 'recharts'
 import { HealthBadge } from '@/components/app/health-badge'
-import { HEALTH_VAR } from '@/lib/domain'
 import { fmtDate } from '@/lib/format'
 import { ChartShell, TipBox } from './chart-shell'
-import { axis } from './chart-utils'
+import { axis, fillFromHealth } from './chart-utils'
 import type { TrendPoint } from '@/api/types'
 
 interface HealthTrendProps {
@@ -61,7 +60,7 @@ export function HealthTrend({ data }: HealthTrendProps) {
                   cx={props.cx}
                   cy={props.cy}
                   r={5}
-                  fill={HEALTH_VAR[v]}
+                  fill={fillFromHealth(v)}
                   stroke="var(--surface)"
                   strokeWidth={2}
                 />

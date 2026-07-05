@@ -14,6 +14,7 @@ import { HealthBadge } from '@/components/app/health-badge'
 import { fmtDate, fmtDateY } from '@/lib/format'
 import { ChartShell, TipBox } from './chart-shell'
 import { axis } from './chart-utils'
+import { CARE_META } from '@/lib/domain'
 import type { TrendPoint, CareEvent } from '@/api/types'
 
 interface TimelineOverlayProps {
@@ -128,28 +129,28 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
           <Scatter
             data={markers.watering}
             dataKey="y"
-            fill="var(--info)"
+            fill={CARE_META.watering.color}
             shape="circle"
             isAnimationActive={false}
           />
           <Scatter
             data={markers.fertilizing}
             dataKey="y"
-            fill="var(--accent)"
+            fill={CARE_META.fertilizing.color}
             shape="diamond"
             isAnimationActive={false}
           />
           <Scatter
             data={markers.repotting}
             dataKey="y"
-            fill="var(--series-4)"
+            fill={CARE_META.repotting.color}
             shape="square"
             isAnimationActive={false}
           />
           <Scatter
             data={markers.relocation}
             dataKey="y"
-            fill="var(--text-muted)"
+            fill={CARE_META.relocation.color}
             shape="triangle"
             isAnimationActive={false}
           />
@@ -162,22 +163,22 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
           Health
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full" style={{ background: 'var(--info)' }} />
+          <span className="w-2 h-2 rounded-full" style={{ background: CARE_META.watering.color }} />
           Watering
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rotate-45" style={{ background: 'var(--accent)' }} />
+          <span className="w-2 h-2 rotate-45" style={{ background: CARE_META.fertilizing.color }} />
           Fertilizing
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2" style={{ background: 'var(--series-4)' }} />
+          <span className="w-2 h-2" style={{ background: CARE_META.repotting.color }} />
           Repotting
         </span>
         <span className="flex items-center gap-1">
           <span
             className="w-2 h-2"
             style={{
-              background: 'var(--text-muted)',
+              background: CARE_META.relocation.color,
               clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
             }}
           />

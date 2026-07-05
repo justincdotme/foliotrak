@@ -1,5 +1,5 @@
 import { HEALTH_LABELS, HEALTH_VAR } from '@/lib/domain'
-import { cn } from '@/lib/utils'
+import { TintedPill } from './tinted-pill'
 
 interface HealthBadgeProps {
   value: number | null
@@ -19,18 +19,9 @@ export function HealthBadge({ value, showLabel = true, size = 'sm' }: HealthBadg
   }
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full font-medium',
-        size === 'sm' ? 'h-6 px-2 text-[12px]' : 'h-7 px-2.5 text-[13px]'
-      )}
-      style={{
-        background: `color-mix(in srgb, ${c} 18%, transparent)`,
-        color: c,
-      }}
-    >
+    <TintedPill color={c} size={size}>
       <span className="w-2 h-2 rounded-full" style={{ background: c }} />
       {value}/5{showLabel && ` · ${HEALTH_LABELS[value]}`}
-    </span>
+    </TintedPill>
   )
 }
