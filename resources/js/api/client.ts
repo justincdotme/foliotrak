@@ -4,8 +4,10 @@ import type {
   CareEvent,
   CropArea,
   DashboardData,
+  DiscoveredSensor,
   EquipmentOption,
   FertilizerFormOption,
+  GatewayStatus,
   GroupInsights,
   Location,
   LocationSummary,
@@ -15,6 +17,8 @@ import type {
   PlantStatus,
   PlantTimeline,
   PlantWithTags,
+  Sensor,
+  SensorReadingsResponse,
   Settings,
   SpeciesSuggestion,
   Symptom,
@@ -41,6 +45,7 @@ export interface PlantPayload {
   cover_photo_id?: number | null
   tag_ids?: number[]
   equipment_ids?: number[]
+  sensor_ids?: number[]
 }
 
 export const listPlants = async (): Promise<PlantWithTags[]> =>
@@ -259,3 +264,47 @@ export const listLocations = async (): Promise<Location[]> =>
 
 export const createLocation = async (name: string): Promise<Location> =>
   unwrap(await api.post<{ data: Location }>('/api/locations', { name }))
+
+export interface SensorPayload {
+  mac: string
+  device_name?: string | null
+  name: string
+  location?: string | null
+}
+
+export interface SensorUpdatePayload {
+  name?: string
+  color?: string
+  location?: string | null
+}
+
+export const listSensors = async (): Promise<Sensor[]> =>
+  unwrap(await api.get<{ data: Sensor[] }>('/api/sensors'))
+
+export const createSensor = async (payload: SensorPayload): Promise<Sensor> =>
+  unwrap(await api.post<{ data: Sensor }>('/api/sensors', payload))
+
+export const updateSensor = async (id: number, payload: SensorUpdatePayload): Promise<Sensor> =>
+  unwrap(await api.patch<{ data: Sensor }>(`/api/sensors/${id}`, payload))
+
+export const deleteSensor = async (id: number): Promise<void> => {
+  await api.delete(`/api/sensors/${id}`)
+}
+
+// Discovery reports gateway failures as a sibling `error` key on a 200, so the
+// raw body is returned instead of unwrapping `data`.
+export const discoverSensors = async (): Promise<{ data: DiscoveredSensor[]; error?: string }> =>
+  (await api.get<{ data: DiscoveredSensor[]; error?: string }>('/api/sensors/discover')).data
+
+export const testSensorConnection = async (): Promise<GatewayStatus> =>
+  unwrap(await api.post<{ data: GatewayStatus }>('/api/sensors/test-connection'))
+
+export const getPlantSensorReadings = async (
+  plantId: number,
+  range: 'day' | 'week' | 'month'
+): Promise<SensorReadingsResponse> =>
+  unwrap(
+    await api.get<{ data: SensorReadingsResponse }>(`/api/plants/${plantId}/sensor-readings`, {
+      params: { range },
+    })
+  )

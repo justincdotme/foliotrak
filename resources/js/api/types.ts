@@ -61,6 +61,7 @@ export interface EquipmentOption {
 export interface PlantWithTags extends Plant {
   tags: Tag[]
   equipment: EquipmentOption[]
+  sensors?: PlantSensor[]
 }
 
 export interface Photo {
@@ -413,4 +414,63 @@ export function gramsToWeight(grams: number | null): WeightInput {
 
 export function weightToGrams(weight: WeightInput): number {
   return Math.round((weight.lb * 453.592 + weight.oz * 28.3495 + weight.g) * 10) / 10
+}
+
+export interface PlantSensor {
+  id: number
+  name: string
+  color: string
+}
+
+export interface Sensor {
+  id: number
+  mac: string
+  device_name: string | null
+  name: string
+  color: string
+  location: string | null
+  plant_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface DiscoveredSensorReading {
+  temperature: number
+  humidity: number
+  battery: number | null
+  rssi: number | null
+  recorded_at: string
+}
+
+export interface DiscoveredSensor {
+  mac: string
+  device_name: string | null
+  last_reading: DiscoveredSensorReading | null
+  registered: boolean
+}
+
+export interface GatewayStatus {
+  status: 'connected' | 'unreachable' | 'auth_failed' | 'not_configured'
+  collector_running?: boolean
+  sensors_seen?: number
+  uptime_seconds?: number
+  error?: string
+}
+
+export interface SensorSeriesReading {
+  temperature_f: number
+  humidity: number
+  recorded_at: string
+}
+
+export interface SensorSeries {
+  id: number
+  name: string
+  color: string
+  readings: SensorSeriesReading[]
+}
+
+export interface SensorReadingsResponse {
+  sensors: SensorSeries[]
+  granularity_minutes: number
 }

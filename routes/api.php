@@ -12,6 +12,7 @@ use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\PlantController;
 use App\Http\Controllers\PlantRecommendationController;
 use App\Http\Controllers\PlantTimelineController;
+use App\Http\Controllers\SensorController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\SymptomController;
@@ -54,4 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('settings', [SettingsController::class, 'show']);
     Route::patch('settings', [SettingsController::class, 'update']);
+
+    Route::get('sensors/discover', [SensorController::class, 'discover']);
+    Route::post('sensors/test-connection', [SensorController::class, 'testConnection']);
+    Route::apiResource('sensors', SensorController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('plants/{plant}/sensor-readings', [SensorController::class, 'plantReadings']);
 });

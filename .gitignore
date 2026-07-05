@@ -69,3 +69,6 @@ Thumbs.db
 /tests/Browser/screenshots
 /tests/Browser/console
 /tests/Browser/source
+
+# Gondola gateway SQLite database (not part of this project)
+readings.db

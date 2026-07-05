@@ -93,6 +93,10 @@ container. A bare `git commit` on the host bypasses the checks, so prefer
 - **Weight storage**: Canonical grams; API layer splits to lb/oz/g for UI.
 - **UI language**: Insights never assert causation; use "coincided with", "may indicate", etc.
 
+## Sensor Integration
+
+Optional ambient environment tracking via BLE sensors and a LAN gateway. Pulls temperature and humidity readings on a schedule and charts them per plant. See [docs/SENSORS.md](docs/SENSORS.md) for setup and configuration.
+
 ## Production hardening
 
 `.env.example` ships local-development defaults. Before exposing the app beyond a
