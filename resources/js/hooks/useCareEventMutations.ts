@@ -8,6 +8,7 @@ import type {
   RepottingPayload,
   WateringPayload,
 } from '@/api/client'
+import { plantInvalidationKeys } from '@/lib/invalidation'
 
 // One place to wire every care-event write for a plant, so each invalidates the
 // timeline (the events feed) and the plant (its server-derived condition) the
@@ -15,9 +16,7 @@ import type {
 export function useCareEventMutations(plantId: number) {
   const queryClient = useQueryClient()
   const onSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['timeline', plantId] })
-    queryClient.invalidateQueries({ queryKey: ['plant', plantId] })
-    queryClient.invalidateQueries({ queryKey: ['plants'] })
+    plantInvalidationKeys(plantId).forEach(queryKey => queryClient.invalidateQueries({ queryKey }))
   }
 
   return {

@@ -131,6 +131,28 @@ describe('useUpdatePlant', () => {
   })
 })
 
+describe('useUpdatePlant - onSuccess invalidation', () => {
+  it('invalidates recommendations and dashboard in addition to plant/plants/timeline', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children)
+    qc.setQueryData(['recommendations', 1], { gate: 'ready' })
+    qc.setQueryData(['dashboard'], { due_for_care: [] })
+
+    server.use(
+      http.patch('/api/plants/:id', () => HttpResponse.json(plantDetailFixture, { status: 200 }))
+    )
+    const { result } = renderHook(() => useUpdatePlant(1), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ common_name: 'Updated Pothos' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(qc.getQueryState(['recommendations', 1])?.isInvalidated).toBe(true)
+    expect(qc.getQueryState(['dashboard'])?.isInvalidated).toBe(true)
+  })
+})
+
 describe('useUploadPhoto', () => {
   it('uploads a photo and resolves the real created shape', async () => {
     const requests: Array<{ plantId: string; photo: File | null }> = []

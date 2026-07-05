@@ -85,3 +85,65 @@ describe('useDeleteTag', () => {
     expect(requests[0]).toMatchObject({ tagId: '12' })
   })
 })
+
+describe('useCreateTag - invalidation', () => {
+  it('invalidates plants and insights group data after creating a tag', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children)
+    qc.setQueryData(['plants'], [])
+    qc.setQueryData(['insights', 'group', { tag: 1 }], { comparison: [] })
+
+    server.use(http.post('/api/tags', () => HttpResponse.json(tagCreatedFixture, { status: 201 })))
+    const { result } = renderHook(() => useCreateTag(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync('Succulents')
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(qc.getQueryState(['plants'])?.isInvalidated).toBe(true)
+    expect(qc.getQueryState(['insights', 'group', { tag: 1 }])?.isInvalidated).toBe(true)
+  })
+})
+
+describe('useUpdateTag - invalidation', () => {
+  it('invalidates plants and insights group data after renaming a tag', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children)
+    qc.setQueryData(['plants'], [])
+    qc.setQueryData(['insights', 'group', { tag: 1 }], { comparison: [] })
+
+    server.use(
+      http.patch('/api/tags/:id', () => HttpResponse.json(tagUpdatedFixture, { status: 200 }))
+    )
+    const { result } = renderHook(() => useUpdateTag(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ id: 12, payload: { name: 'Succulents (updated)' } })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(qc.getQueryState(['plants'])?.isInvalidated).toBe(true)
+    expect(qc.getQueryState(['insights', 'group', { tag: 1 }])?.isInvalidated).toBe(true)
+  })
+})
+
+describe('useDeleteTag - invalidation', () => {
+  it('invalidates plants and insights group data after deleting a tag', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children)
+    qc.setQueryData(['plants'], [])
+    qc.setQueryData(['insights', 'group', { tag: 1 }], { comparison: [] })
+
+    server.use(http.delete('/api/tags/:id', () => new HttpResponse(null, { status: 204 })))
+    const { result } = renderHook(() => useDeleteTag(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync(12)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(qc.getQueryState(['plants'])?.isInvalidated).toBe(true)
+    expect(qc.getQueryState(['insights', 'group', { tag: 1 }])?.isInvalidated).toBe(true)
+  })
+})

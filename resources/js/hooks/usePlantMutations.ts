@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { CropArea, PlantWithTags } from '@/api/types'
 import type { PhotoUpload, PlantPayload } from '@/api/client'
 import { createPlant, deletePhoto, setCoverPhoto, updatePlant, uploadPhoto } from '@/api/client'
+import { plantInvalidationKeys } from '@/lib/invalidation'
 
 export interface CreatePlantInput {
   payload: PlantPayload
@@ -51,9 +52,9 @@ export function useUpdatePlant(plantId: number) {
       queryClient.setQueryData<PlantWithTags[]>(['plants'], old =>
         old?.map(p => (p.id === updatedPlant.id ? updatedPlant : p))
       )
-      queryClient.invalidateQueries({ queryKey: ['plant', plantId] })
-      queryClient.invalidateQueries({ queryKey: ['plants'] })
-      queryClient.invalidateQueries({ queryKey: ['timeline', plantId] })
+      plantInvalidationKeys(plantId).forEach(queryKey =>
+        queryClient.invalidateQueries({ queryKey })
+      )
     },
   })
 }
