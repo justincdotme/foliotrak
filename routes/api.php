@@ -60,4 +60,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('sensors/test-connection', [SensorController::class, 'testConnection']);
     Route::apiResource('sensors', SensorController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('plants/{plant}/sensor-readings', [SensorController::class, 'plantReadings']);
+    Route::get('plants/{plant}/sensor-snapshot', [SensorController::class, 'snapshot']);
 });

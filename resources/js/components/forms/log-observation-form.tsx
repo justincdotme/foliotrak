@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AlertTriangle, ClipboardList, Droplets, HeartPulse, Thermometer } from 'lucide-react'
 import type { CareEvent, GrowthRate } from '@/api/types'
 import { weightToGrams } from '@/api/types'
+import { fetchSensorSnapshot } from '@/api/client'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
 import { useSymptoms } from '@/hooks/useCareLookups'
@@ -89,6 +90,8 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
     customs: (detail?.symptoms ?? []).filter(s => s.is_custom).map(s => s.label),
   })
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const touchedRef = useRef<Set<string>>(new Set())
+  const [sensorFilled, setSensorFilled] = useState<Set<string>>(new Set())
 
   const healthStr = watch('overall_health')
   const lightStr = watch('light_level')
@@ -97,6 +100,57 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
   const health = healthStr ? Number(healthStr) : null
   const grams = weightToGrams(weight)
   const problemCount = symptomData.ids.length + symptomData.customs.length
+
+  const occurredAt = watch('occurred_at')
+
+  useEffect(() => {
+    if (event) return
+
+    let ignore = false
+    const timer = setTimeout(() => {
+      fetchSensorSnapshot(plantId, toIso(occurredAt))
+        .then(snapshot => {
+          if (ignore || !snapshot) return
+          const filled = new Set<string>()
+
+          if (!touchedRef.current.has('ambient_humidity_pct')) {
+            setValue('ambient_humidity_pct', String(Math.round(snapshot.ambient_humidity_pct)))
+            filled.add('ambient_humidity_pct')
+          }
+          if (!touchedRef.current.has('ambient_temp')) {
+            const temp =
+              tempUnit === 'F'
+                ? Math.round(((snapshot.ambient_temp_c * 9) / 5 + 32) * 10) / 10
+                : snapshot.ambient_temp_c
+            setValue('ambient_temp', String(temp))
+            filled.add('ambient_temp')
+          }
+          setSensorFilled(filled)
+        })
+        .catch(() => {})
+    }, 500)
+
+    return () => {
+      ignore = true
+      clearTimeout(timer)
+    }
+  }, [occurredAt, plantId, event, tempUnit, setValue])
+
+  const withTouch = (name: 'ambient_humidity_pct' | 'ambient_temp') => {
+    const reg = register(name)
+    return {
+      ...reg,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        touchedRef.current.add(name)
+        setSensorFilled(prev => {
+          const next = new Set(prev)
+          next.delete(name)
+          return next
+        })
+        return reg.onChange(e)
+      },
+    }
+  }
 
   const { submit, formError } = useCareFormSubmit({
     createFn: createObservation.mutateAsync,
@@ -162,7 +216,10 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
         </Field>
         <hr className="border-border" />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Humidity" hint="%, ambient">
+          <Field
+            label="Humidity"
+            hint={sensorFilled.has('ambient_humidity_pct') ? '%, from sensor' : '%, ambient'}
+          >
             <div className="relative">
               <Droplets
                 size={16}
@@ -176,14 +233,21 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
                 placeholder="55"
                 className="pl-8"
                 aria-label="Ambient humidity percent"
-                {...register('ambient_humidity_pct')}
+                {...withTouch('ambient_humidity_pct')}
               />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
                 %
               </span>
             </div>
           </Field>
-          <Field label="Temperature" hint={`°${tempUnit}, ambient`}>
+          <Field
+            label="Temperature"
+            hint={
+              sensorFilled.has('ambient_temp')
+                ? `°${tempUnit}, from sensor`
+                : `°${tempUnit}, ambient`
+            }
+          >
             <div className="relative">
               <Thermometer
                 size={16}
@@ -196,7 +260,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
                 placeholder={tempUnit === 'F' ? '72' : '22'}
                 className="pl-8"
                 aria-label={`Ambient temperature in degrees ${tempUnit === 'F' ? 'Fahrenheit' : 'Celsius'}`}
-                {...register('ambient_temp')}
+                {...withTouch('ambient_temp')}
               />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
                 {`°${tempUnit}`}

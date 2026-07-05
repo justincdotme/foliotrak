@@ -196,4 +196,78 @@ class SensorController extends Controller
             ],
         ]);
     }
+
+    public function snapshot(Request $request, Plant $plant): JsonResponse|Response
+    {
+        $this->authorize('view', $plant);
+
+        $request->validate([
+            'at' => ['sometimes', 'date'],
+        ]);
+
+        $at = $request->has('at')
+            ? Carbon::parse($request->query('at'))
+            : Carbon::now();
+
+        $sensorIds = $plant->sensors()->pluck('sensors.id');
+
+        if ($sensorIds->isEmpty()) {
+            return response()->noContent();
+        }
+
+        $readings = collect();
+
+        foreach ($sensorIds as $sensorId) {
+            $before = SensorReading::query()
+                ->where('sensor_id', $sensorId)
+                ->where('recorded_at', '<=', $at)
+                ->orderByDesc('recorded_at')
+                ->first();
+
+            $after = SensorReading::query()
+                ->where('sensor_id', $sensorId)
+                ->where('recorded_at', '>', $at)
+                ->orderBy('recorded_at')
+                ->first();
+
+            $candidates = collect([$before, $after])->filter();
+
+            if ($candidates->isEmpty()) {
+                continue;
+            }
+
+            /** @var SensorReading $closest */
+            $closest = $candidates->sortBy(function (SensorReading $r) use ($at): float {
+                /** @var Carbon $recordedAt */
+                $recordedAt = $r->recorded_at;
+
+                return abs($recordedAt->diffInSeconds($at));
+            })->first();
+
+            /** @var Carbon $recordedAt */
+            $recordedAt = $closest->recorded_at;
+
+            if (abs($recordedAt->diffInSeconds($at)) > 3600) {
+                continue;
+            }
+
+            $readings->push($closest);
+        }
+
+        if ($readings->isEmpty()) {
+            return response()->noContent();
+        }
+
+        $response = [
+            'ambient_temp_c' => (float) number_format($readings->avg('temperature'), 1, '.', ''),
+            'ambient_humidity_pct' => (float) number_format($readings->avg('humidity'), 1, '.', ''),
+            'sensor_count' => $readings->count(),
+        ];
+
+        if ($readings->count() === 1) {
+            $response['matched_at'] = $readings->first()->recorded_at->format('Y-m-d\TH:i:s\Z');
+        }
+
+        return response()->json(['data' => $response], options: JSON_PRESERVE_ZERO_FRACTION);
+    }
 }
