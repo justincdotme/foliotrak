@@ -20,4 +20,8 @@ describe('fillFromHealth', () => {
     expect(fillFromHealth(2.5)).toBe('var(--health-3)')
     expect(fillFromHealth(3.6)).toBe('var(--health-4)')
   })
+
+  it('uses a custom fallback when provided without affecting valid lookups', () => {
+    expect(fillFromHealth(3, 'var(--text-subtle)')).toBe('var(--health-3)')
+  })
 })

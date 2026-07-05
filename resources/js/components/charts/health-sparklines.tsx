@@ -1,5 +1,5 @@
 import { LineChart, Line } from 'recharts'
-import { HEALTH_VAR } from '@/lib/domain'
+import { fillFromHealth } from './chart-utils'
 import type { GroupComparison } from '@/api/types'
 
 interface HealthSparklinesProps {
@@ -35,19 +35,15 @@ export function HealthSparklines({ comparison }: HealthSparklinesProps) {
                   cy?: number
                   index?: number
                   payload?: { v: number }
-                }) => {
-                  const v = props.payload?.v ?? 0
-                  const key = Math.min(5, Math.max(1, Math.round(v)))
-                  return (
-                    <circle
-                      key={props.index}
-                      cx={props.cx}
-                      cy={props.cy}
-                      r={3}
-                      fill={HEALTH_VAR[key] ?? 'var(--primary)'}
-                    />
-                  )
-                }}
+                }) => (
+                  <circle
+                    key={props.index}
+                    cx={props.cx}
+                    cy={props.cy}
+                    r={3}
+                    fill={fillFromHealth(props.payload?.v ?? 0)}
+                  />
+                )}
                 isAnimationActive={false}
               />
             </LineChart>

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { isAxiosError } from 'axios'
 import {
   AlertTriangle,
   Bell,
@@ -40,6 +39,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
+import { extractValidationError } from '@/lib/handle-api-error'
 import { ConfirmDelete } from '@/components/app/confirm-delete'
 import { SectionTitle } from '@/components/app/section-title'
 import { Segmented } from '@/components/app/segmented'
@@ -64,14 +64,6 @@ const keySchema = z.object({
 })
 
 type KeyValues = z.infer<typeof keySchema>
-
-function serverError(err: unknown): string {
-  if (isAxiosError(err) && err.response?.status === 422) {
-    const errors = err.response.data?.errors?.pushover_user_key
-    if (Array.isArray(errors) && errors[0]) return errors[0]
-  }
-  return 'Could not save. Please try again.'
-}
 
 function PushoverKeyForm({
   initialKey,
@@ -102,7 +94,13 @@ function PushoverKeyForm({
       clearTimeout(flash.current)
       flash.current = setTimeout(() => setSaved(false), 1600)
     } catch (err) {
-      setError('pushover_user_key', { message: serverError(err) })
+      setError('pushover_user_key', {
+        message: extractValidationError(
+          err,
+          'pushover_user_key',
+          'Could not save. Please try again.'
+        ),
+      })
     }
   }
 
@@ -179,12 +177,7 @@ function TagRow({
       setEditing(false)
       setError(null)
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 422) {
-        const messages = err.response.data?.errors?.name
-        setError(Array.isArray(messages) ? messages[0] : 'That name is taken.')
-      } else {
-        setError('Could not rename. Try again.')
-      }
+      setError(extractValidationError(err, 'name', 'That name is taken.'))
     }
   }
 
@@ -273,12 +266,7 @@ function TagManager() {
       setAdding(false)
       setCreateError(null)
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 422) {
-        const messages = err.response.data?.errors?.name
-        setCreateError(Array.isArray(messages) ? messages[0] : 'That name is taken.')
-      } else {
-        setCreateError('Could not create tag. Try again.')
-      }
+      setCreateError(extractValidationError(err, 'name', 'That name is taken.'))
     }
   }
 
@@ -405,12 +393,7 @@ function EquipmentRow({
       setEditing(false)
       setError(null)
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 422) {
-        const messages = err.response.data?.errors?.label
-        setError(Array.isArray(messages) ? messages[0] : 'That name is taken.')
-      } else {
-        setError('Could not rename. Try again.')
-      }
+      setError(extractValidationError(err, 'label', 'That name is taken.'))
     }
   }
 
@@ -496,12 +479,7 @@ function EquipmentManager() {
       setAdding(false)
       setCreateError(null)
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 422) {
-        const messages = err.response.data?.errors?.label
-        setCreateError(Array.isArray(messages) ? messages[0] : 'That name is taken.')
-      } else {
-        setCreateError('Could not create equipment. Try again.')
-      }
+      setCreateError(extractValidationError(err, 'label', 'That name is taken.'))
     }
   }
 
@@ -640,12 +618,7 @@ function SensorRow({
       setEditing(false)
       setError(null)
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 422) {
-        const messages = err.response.data?.errors?.name
-        setError(Array.isArray(messages) ? messages[0] : 'Could not save.')
-      } else {
-        setError('Could not save. Try again.')
-      }
+      setError(extractValidationError(err, 'name', 'Could not save.'))
     }
   }
 
@@ -795,12 +768,7 @@ function RegisterForm({
       })
       onClose()
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 422) {
-        const messages = err.response.data?.errors?.name ?? err.response.data?.errors?.mac
-        setError(Array.isArray(messages) ? messages[0] : 'Could not register.')
-      } else {
-        setError('Could not register sensor. Try again.')
-      }
+      setError(extractValidationError(err, ['name', 'mac'], 'Could not register.'))
     }
   }
 

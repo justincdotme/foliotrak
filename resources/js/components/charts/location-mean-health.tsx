@@ -1,17 +1,10 @@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, LabelList } from 'recharts'
 import { ChartShell } from './chart-shell'
-import { HEALTH_VAR } from '@/lib/domain'
-import { axis } from './chart-utils'
+import { axis, fillFromHealth } from './chart-utils'
 import type { LocationSummary } from '@/api/types'
 
 interface LocationMeanHealthBarProps {
   data: LocationSummary[]
-}
-
-function healthColor(v: number | null): string {
-  if (v == null) return 'var(--text-subtle)'
-  const key = Math.min(5, Math.max(1, Math.round(v)))
-  return HEALTH_VAR[key] ?? 'var(--text-subtle)'
 }
 
 export function LocationMeanHealthBar({ data }: LocationMeanHealthBarProps) {
@@ -31,7 +24,11 @@ export function LocationMeanHealthBar({ data }: LocationMeanHealthBarProps) {
           <YAxis type="category" dataKey="location_name" width={90} {...axis} />
           <Bar dataKey="mean_health" isAnimationActive={false}>
             {rows.map((d, i) => (
-              <Cell key={i} fill={healthColor(d.mean_health)} fillOpacity={0.82} />
+              <Cell
+                key={i}
+                fill={fillFromHealth(d.mean_health ?? 0, 'var(--text-subtle)')}
+                fillOpacity={0.82}
+              />
             ))}
             <LabelList
               dataKey="sample_size"

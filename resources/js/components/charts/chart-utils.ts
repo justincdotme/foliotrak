@@ -74,9 +74,9 @@ export function regression(
   return { slope, intercept }
 }
 
-export function fillFromHealth(y: number): string {
+export function fillFromHealth(y: number, fallback = 'var(--primary)'): string {
   const key = Math.min(5, Math.max(1, Math.round(y)))
-  return HEALTH_VAR[key] ?? 'var(--primary)'
+  return HEALTH_VAR[key] ?? fallback
 }
 
 export interface HeatCell {
