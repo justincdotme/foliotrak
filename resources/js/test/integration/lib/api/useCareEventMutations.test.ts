@@ -178,3 +178,27 @@ describe('useCareEventMutations - uploadEventPhoto', () => {
     expect(requests[0]?.formData.get('care_event_id')).toBe('42')
   })
 })
+
+describe('useCareEventMutations - onSuccess invalidation', () => {
+  it('invalidates recommendations and dashboard in addition to timeline/plant/plants', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children)
+    qc.setQueryData(['recommendations', 5], { gate: 'ready' })
+    qc.setQueryData(['dashboard'], { due_for_care: [] })
+
+    server.use(
+      http.post('/api/plants/:id/care-events', () =>
+        HttpResponse.json({ data: wateringFixture }, { status: 201 })
+      )
+    )
+    const { result } = renderHook(() => useCareEventMutations(5), { wrapper })
+    await act(async () => {
+      await result.current.createWatering.mutateAsync({ occurred_at: '2026-06-28T18:45:00Z' })
+    })
+    await waitFor(() => expect(result.current.createWatering.isSuccess).toBe(true))
+
+    expect(qc.getQueryState(['recommendations', 5])?.isInvalidated).toBe(true)
+    expect(qc.getQueryState(['dashboard'])?.isInvalidated).toBe(true)
+  })
+})

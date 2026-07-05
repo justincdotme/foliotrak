@@ -13,6 +13,8 @@ export function useCreateTag() {
     mutationFn: (name: string) => createTag(name),
     onSuccess: (created: Tag) => {
       qc.setQueryData<Tag[]>(['tags'], old => [...(old ?? []), created])
+      qc.invalidateQueries({ queryKey: ['plants'] })
+      qc.invalidateQueries({ queryKey: ['insights', 'group'] })
     },
   })
 }
@@ -26,6 +28,8 @@ export function useUpdateTag() {
       qc.setQueryData<Tag[]>(['tags'], old =>
         (old ?? []).map(t => (t.id === updated.id ? updated : t))
       )
+      qc.invalidateQueries({ queryKey: ['plants'] })
+      qc.invalidateQueries({ queryKey: ['insights', 'group'] })
     },
   })
 }
@@ -36,6 +40,8 @@ export function useDeleteTag() {
     mutationFn: (id: number) => deleteTag(id),
     onSuccess: (_data, id) => {
       qc.setQueryData<Tag[]>(['tags'], old => (old ?? []).filter(t => t.id !== id))
+      qc.invalidateQueries({ queryKey: ['plants'] })
+      qc.invalidateQueries({ queryKey: ['insights', 'group'] })
     },
   })
 }
