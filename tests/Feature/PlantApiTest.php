@@ -10,6 +10,7 @@ use App\Models\CareEventType;
 use App\Models\Location;
 use App\Models\Photo;
 use App\Models\Plant;
+use App\Models\Sensor;
 use App\Models\Tag;
 use App\Models\User;
 use Database\Seeders\CareLookupSeeder;
@@ -217,6 +218,24 @@ class PlantApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.tags.0.name', 'New')
             ->assertJsonCount(1, 'data.tags');
+    }
+
+    public function test_shows_sensor_location_and_syncs_sensor_ids_on_update(): void
+    {
+        $this->actAsHousehold();
+        $plant = Plant::factory()->create();
+        $sensor = Sensor::create([
+            'mac' => 'AA:BB:CC:DD:EE:01',
+            'name' => 'Desk sensor',
+            'color' => 'var(--series-1)',
+            'location' => 'Living room',
+        ]);
+
+        $this->patchJson("/api/plants/{$plant->id}", ['sensor_ids' => [$sensor->id]])
+            ->assertOk()
+            ->assertJsonCount(1, 'data.sensors')
+            ->assertJsonPath('data.sensors.0.name', 'Desk sensor')
+            ->assertJsonPath('data.sensors.0.location', 'Living room');
     }
 
     public function test_filters_plants_by_tag(): void

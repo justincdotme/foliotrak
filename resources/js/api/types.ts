@@ -420,6 +420,7 @@ export interface PlantSensor {
   id: number
   name: string
   color: string
+  location: string | null
 }
 
 export interface Sensor {
