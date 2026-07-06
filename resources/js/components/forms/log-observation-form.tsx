@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertTriangle, ClipboardList, Droplets, HeartPulse, Thermometer } from 'lucide-react'
+import {
+  AlertTriangle,
+  ClipboardList,
+  Droplets,
+  HeartPulse,
+  Radar,
+  Thermometer,
+} from 'lucide-react'
 import type { CareEvent, GrowthRate } from '@/api/types'
 import { weightToGrams } from '@/api/types'
 import { fetchSensorSnapshot } from '@/api/client'
@@ -218,7 +225,15 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
         <div className="grid grid-cols-2 gap-3">
           <Field
             label="Humidity"
-            hint={sensorFilled.has('ambient_humidity_pct') ? '%, from sensor' : '%, ambient'}
+            hint={
+              sensorFilled.has('ambient_humidity_pct') ? (
+                <span className="inline-flex items-center gap-1" title="From sensor">
+                  % <Radar size={12} />
+                </span>
+              ) : (
+                '%, ambient'
+              )
+            }
           >
             <div className="relative">
               <Droplets
@@ -243,9 +258,13 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
           <Field
             label="Temperature"
             hint={
-              sensorFilled.has('ambient_temp')
-                ? `°${tempUnit}, from sensor`
-                : `°${tempUnit}, ambient`
+              sensorFilled.has('ambient_temp') ? (
+                <span className="inline-flex items-center gap-1" title="From sensor">
+                  °{tempUnit} <Radar size={12} />
+                </span>
+              ) : (
+                `°${tempUnit}, ambient`
+              )
             }
           >
             <div className="relative">
