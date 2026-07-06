@@ -6,8 +6,6 @@ namespace App\Support;
 
 use App\Models\CareEvent;
 use App\Models\Plant;
-use App\Models\Symptom;
-use Illuminate\Support\Carbon;
 
 /**
  * Walks a plant's observation history to detect symptom episodes: periods where a
@@ -17,6 +15,8 @@ use Illuminate\Support\Carbon;
 final class SymptomEpisodeResolver
 {
     /**
+     * @param Plant $plant
+     *
      * @return list<array{symptom_key: string, symptom_label: string, category: string, appeared_at: string, cleared_at: string|null, duration_days: int|null, health_at_appear: int|null, health_at_clear: int|null}>
      */
     public static function forPlant(Plant $plant): array
@@ -34,38 +34,38 @@ final class SymptomEpisodeResolver
         }
 
         /** @var array<string, array{appeared_at: Carbon, health_at_appear: int|null, symptom: Symptom}> $active */
-        $active = [];
+        $active   = [];
         $episodes = [];
 
         foreach ($events as $event) {
-            $observation = $event->observation;
+            $observation     = $event->observation;
             $currentSymptoms = $observation !== null ? $observation->symptoms : collect();
-            $currentByKey = $currentSymptoms->keyBy('key');
-            $health = $observation !== null ? $observation->overall_health : null;
-            $health = $health !== null ? (int) $health : null;
+            $currentByKey    = $currentSymptoms->keyBy('key');
+            $health          = $observation !== null ? $observation->overall_health : null;
+            $health          = $health !== null ? (int) $health : null;
 
             foreach ($currentSymptoms as $symptom) {
                 if (! array_key_exists($symptom->key, $active)) {
                     $active[$symptom->key] = [
-                        'appeared_at' => $event->occurred_at,
+                        'appeared_at'      => $event->occurred_at,
                         'health_at_appear' => $health,
-                        'symptom' => $symptom,
+                        'symptom'          => $symptom,
                     ];
                 }
             }
 
             foreach (array_keys($active) as $activeKey) {
                 if (! $currentByKey->has($activeKey)) {
-                    $entry = $active[$activeKey];
+                    $entry      = $active[$activeKey];
                     $episodes[] = [
-                        'symptom_key' => $activeKey,
-                        'symptom_label' => $entry['symptom']->label,
-                        'category' => $entry['symptom']->category->value,
-                        'appeared_at' => $entry['appeared_at']->toDateString(),
-                        'cleared_at' => $event->occurred_at->toDateString(),
-                        'duration_days' => (int) $entry['appeared_at']->diffInDays($event->occurred_at),
+                        'symptom_key'      => $activeKey,
+                        'symptom_label'    => $entry['symptom']->label,
+                        'category'         => $entry['symptom']->category->value,
+                        'appeared_at'      => $entry['appeared_at']->toDateString(),
+                        'cleared_at'       => $event->occurred_at->toDateString(),
+                        'duration_days'    => (int) $entry['appeared_at']->diffInDays($event->occurred_at),
                         'health_at_appear' => $entry['health_at_appear'],
-                        'health_at_clear' => $health,
+                        'health_at_clear'  => $health,
                     ];
                     unset($active[$activeKey]);
                 }
@@ -74,14 +74,14 @@ final class SymptomEpisodeResolver
 
         foreach ($active as $key => $entry) {
             $episodes[] = [
-                'symptom_key' => $key,
-                'symptom_label' => $entry['symptom']->label,
-                'category' => $entry['symptom']->category->value,
-                'appeared_at' => $entry['appeared_at']->toDateString(),
-                'cleared_at' => null,
-                'duration_days' => null,
+                'symptom_key'      => $key,
+                'symptom_label'    => $entry['symptom']->label,
+                'category'         => $entry['symptom']->category->value,
+                'appeared_at'      => $entry['appeared_at']->toDateString(),
+                'cleared_at'       => null,
+                'duration_days'    => null,
                 'health_at_appear' => $entry['health_at_appear'],
-                'health_at_clear' => null,
+                'health_at_clear'  => null,
             ];
         }
 

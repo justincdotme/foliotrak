@@ -20,6 +20,7 @@ class PlantRecommendationApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,14 +29,7 @@ class PlantRecommendationApiTest extends TestCase
         $this->travelTo(Carbon::parse('2026-06-26 09:00:00'));
     }
 
-    private function actAsHousehold(): User
-    {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
-
-        return $user;
-    }
-
+    /** @return void */
     public function test_recommendations_require_authentication(): void
     {
         $plant = Plant::factory()->create();
@@ -43,6 +37,7 @@ class PlantRecommendationApiTest extends TestCase
         $this->getJson("/api/plants/{$plant->id}/recommendations")->assertUnauthorized();
     }
 
+    /** @return void */
     public function test_unknown_plant_returns_not_found(): void
     {
         $this->actAsHousehold();
@@ -50,6 +45,7 @@ class PlantRecommendationApiTest extends TestCase
         $this->getJson('/api/plants/9999/recommendations')->assertNotFound();
     }
 
+    /** @return void */
     public function test_a_plant_under_four_weeks_returns_the_countdown_state(): void
     {
         $this->actAsHousehold();
@@ -66,6 +62,7 @@ class PlantRecommendationApiTest extends TestCase
             ->assertJsonPath('data.watering', null);
     }
 
+    /** @return void */
     public function test_past_the_gate_without_health_observations_returns_no_health_data(): void
     {
         $this->actAsHousehold();
@@ -80,6 +77,7 @@ class PlantRecommendationApiTest extends TestCase
             ->assertJsonPath('data.position_insights', []);
     }
 
+    /** @return void */
     public function test_a_seasoned_plant_returns_a_watering_recommendation_with_its_sample_size(): void
     {
         $this->actAsHousehold();
@@ -103,10 +101,11 @@ class PlantRecommendationApiTest extends TestCase
             ->assertJsonPath('data.position_insights', []);
     }
 
+    /** @return void */
     public function test_a_move_with_readings_on_each_side_is_reported_as_a_position_insight(): void
     {
         $this->actAsHousehold();
-        $shelf = Location::factory()->create(['name' => 'shelf']);
+        $shelf   = Location::factory()->create(['name' => 'shelf']);
         $kitchen = Location::factory()->create(['name' => 'kitchen window']);
 
         $plant = Plant::factory()->create();
@@ -127,10 +126,11 @@ class PlantRecommendationApiTest extends TestCase
             ->assertJsonPath('data.position_insights.0.health_after.sample_size', 2);
     }
 
+    /** @return void */
     public function test_health_by_location_groups_observations_by_location_at_observation_time(): void
     {
         $this->actAsHousehold();
-        $shelf = Location::factory()->create(['name' => 'shelf']);
+        $shelf   = Location::factory()->create(['name' => 'shelf']);
         $kitchen = Location::factory()->create(['name' => 'kitchen window']);
 
         $plant = Plant::factory()->create(['location_id' => $kitchen->id]);
@@ -154,15 +154,16 @@ class PlantRecommendationApiTest extends TestCase
             ->assertJsonPath('data.health_by_location.1.median_health', 4.5);
     }
 
+    /** @return void */
     public function test_symptom_episodes_are_included_in_the_response(): void
     {
         $this->actAsHousehold();
 
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::where('key', 'spider_mites')->firstOrFail();
 
         $event1 = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(10)]);
-        $obs1 = Observation::factory()->create(['care_event_id' => $event1->id, 'overall_health' => 3]);
+        $obs1   = Observation::factory()->create(['care_event_id' => $event1->id, 'overall_health' => 3]);
         $obs1->symptoms()->attach($symptom->id);
 
         $event2 = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(3)]);
@@ -181,7 +182,22 @@ class PlantRecommendationApiTest extends TestCase
     }
 
     /**
-     * @param  list<int>  $daysAgo
+     * @return User
+     */
+    private function actAsHousehold(): User
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        return $user;
+    }
+
+    /**
+     * @param Plant        $plant
+     * @param integer[]    $daysAgo
+     * @param integer|null $amountMl
+     *
+     * @return void
      */
     private function water(Plant $plant, array $daysAgo, ?int $amountMl = null): void
     {
@@ -192,7 +208,10 @@ class PlantRecommendationApiTest extends TestCase
     }
 
     /**
-     * @param  list<array{0: int, 1: int}>  $observations  pairs of [days ago, overall health]
+     * @param Plant       $plant
+     * @param integer[][] $observations Pairs of [days ago, overall health].
+     *
+     * @return void
      */
     private function observe(Plant $plant, array $observations): void
     {

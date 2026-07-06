@@ -5,10 +5,10 @@ declare(strict_types=1);
 use App\Models\User;
 use Laravel\Dusk\Browser;
 
-it('navigates between pages via the desktop top bar', function () {
+it('navigates between pages via the desktop top bar', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->resize(1280, 800)
@@ -30,10 +30,10 @@ it('navigates between pages via the desktop top bar', function () {
     });
 });
 
-it('navigates to the dashboard from the logo', function () {
+it('navigates to the dashboard from the logo', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->resize(1280, 800)
@@ -46,10 +46,10 @@ it('navigates to the dashboard from the logo', function () {
     });
 });
 
-it('shows add plant and navigates to settings via the user menu', function () {
+it('shows add plant and navigates to settings via the user menu', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->resize(1280, 800)
@@ -67,10 +67,10 @@ it('shows add plant and navigates to settings via the user menu', function () {
     });
 });
 
-it('navigates between pages via the mobile tab bar', function () {
+it('navigates between pages via the mobile tab bar', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->resize(375, 812)
@@ -96,10 +96,10 @@ it('navigates between pages via the mobile tab bar', function () {
     });
 });
 
-it('shows the add plant action in the mobile header', function () {
+it('shows the add plant action in the mobile header', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->resize(375, 812)
@@ -110,10 +110,10 @@ it('shows the add plant action in the mobile header', function () {
     });
 });
 
-it('toggles the theme and persists the choice across reload', function () {
+it('toggles the theme and persists the choice across reload', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->resize(1280, 800)
@@ -140,10 +140,10 @@ it('toggles the theme and persists the choice across reload', function () {
     });
 });
 
-it('renders mobile chrome at phone and tablet portrait viewports', function () {
+it('renders mobile chrome at phone and tablet portrait viewports', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->resize(375, 812)
@@ -169,10 +169,10 @@ it('renders mobile chrome at phone and tablet portrait viewports', function () {
     });
 });
 
-it('renders desktop chrome at tablet landscape and desktop viewports', function () {
+it('renders desktop chrome at tablet landscape and desktop viewports', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->resize(1024, 768)

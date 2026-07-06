@@ -13,13 +13,21 @@ use Illuminate\Http\Response;
 
 class LocationController extends Controller
 {
+    /**
+     * @return AnonymousResourceCollection
+     */
     public function index(): AnonymousResourceCollection
     {
         return LocationResource::collection(
-            Location::query()->orderBy('name')->get()
+            Location::query()->orderBy('name')->get(),
         );
     }
 
+    /**
+     * @param StoreLocationRequest $request
+     *
+     * @return JsonResponse
+     */
     public function store(StoreLocationRequest $request): JsonResponse
     {
         $location = Location::create([

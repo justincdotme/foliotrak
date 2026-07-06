@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Support\Correlation;
 
-use App\Models\Plant;
 use Illuminate\Support\Collection;
 
 /**
@@ -17,11 +16,15 @@ interface Factor
 {
     /**
      * The x-axis label for the correlation pair (for example `watering_interval_days`).
+     *
+     * @return string
      */
     public function key(): string;
 
     /**
      * The y-axis label, the outcome the factor is related to (for example `overall_health`).
+     *
+     * @return string
      */
     public function outcomeKey(): string;
 
@@ -37,7 +40,8 @@ interface Factor
     /**
      * Pooled paired samples across the plants, one entry per aligned (input, health) reading.
      *
-     * @param  Collection<int, Plant>  $plants
+     * @param Collection<int, Plant> $plants
+     *
      * @return list<array{x: float, y: float}>
      */
     public function pairs(Collection $plants): array;

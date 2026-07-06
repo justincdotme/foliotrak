@@ -12,14 +12,19 @@ use function Pest\Laravel\actingAs;
 
 uses(RefreshDatabase::class);
 
+/**
+ * @param Plant $plant
+ *
+ * @return Collection
+ */
 function equipmentEvents(Plant $plant): Collection
 {
     return $plant->careEvents()->whereHas('careEventType', fn ($t) => $t->where('key', 'equipment'))
         ->with('equipmentChange')->get();
 }
 
-it('records an added event when equipment is attached via the plant update', function () {
-    $plant = Plant::factory()->create();
+it('records an added event when equipment is attached via the plant update', function (): void {
+    $plant      = Plant::factory()->create();
     $humidifier = Equipment::create(['key' => 'humidifier', 'label' => 'Humidifier', 'sort_order' => 1]);
 
     actingAs(User::factory()->create())
@@ -33,9 +38,9 @@ it('records an added event when equipment is attached via the plant update', fun
     expect($plant->fresh()->equipment)->toHaveCount(1);
 });
 
-it('records a removed event when equipment is detached', function () {
+it('records a removed event when equipment is detached', function (): void {
     $plant = Plant::factory()->create();
-    $fan = Equipment::create(['key' => 'fan', 'label' => 'Fan', 'sort_order' => 1]);
+    $fan   = Equipment::create(['key' => 'fan', 'label' => 'Fan', 'sort_order' => 1]);
     $plant->equipment()->attach($fan->id);
     $user = User::factory()->create();
 
@@ -47,9 +52,9 @@ it('records a removed event when equipment is detached', function () {
     expect($events[0]->equipmentChange->equipment_label)->toBe('Fan');
 });
 
-it('writes nothing when the equipment set is unchanged', function () {
+it('writes nothing when the equipment set is unchanged', function (): void {
     $plant = Plant::factory()->create();
-    $fan = Equipment::create(['key' => 'fan', 'label' => 'Fan', 'sort_order' => 1]);
+    $fan   = Equipment::create(['key' => 'fan', 'label' => 'Fan', 'sort_order' => 1]);
     $plant->equipment()->attach($fan->id);
 
     actingAs(User::factory()->create())
@@ -59,10 +64,10 @@ it('writes nothing when the equipment set is unchanged', function () {
     expect(equipmentEvents($plant))->toHaveCount(0);
 });
 
-it('keeps the label in history after the equipment type is deleted', function () {
+it('keeps the label in history after the equipment type is deleted', function (): void {
     $plant = Plant::factory()->create();
-    $mat = Equipment::create(['key' => 'mat', 'label' => 'Heat Mat', 'sort_order' => 1]);
-    $user = User::factory()->create();
+    $mat   = Equipment::create(['key' => 'mat', 'label' => 'Heat Mat', 'sort_order' => 1]);
+    $user  = User::factory()->create();
     actingAs($user)->patchJson("/api/plants/{$plant->id}", ['equipment_ids' => [$mat->id]]);
 
     $mat->delete();
@@ -72,10 +77,10 @@ it('keeps the label in history after the equipment type is deleted', function ()
     expect($event->equipmentChange->equipment_label)->toBe('Heat Mat');
 });
 
-it('surfaces equipment events in the plant timeline read endpoint', function () {
+it('surfaces equipment events in the plant timeline read endpoint', function (): void {
     $plant = Plant::factory()->create();
-    $fan = Equipment::create(['key' => 'fan', 'label' => 'Fan', 'sort_order' => 1]);
-    $user = User::factory()->create();
+    $fan   = Equipment::create(['key' => 'fan', 'label' => 'Fan', 'sort_order' => 1]);
+    $user  = User::factory()->create();
     actingAs($user)->patchJson("/api/plants/{$plant->id}", ['equipment_ids' => [$fan->id]]);
 
     actingAs($user)->getJson("/api/plants/{$plant->id}/timeline")

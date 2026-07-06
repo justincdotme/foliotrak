@@ -16,33 +16,11 @@ use Tests\TestCase;
 
 class CareScheduleTest extends TestCase
 {
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
         $this->travelTo(Carbon::parse('2026-06-26 09:00:00'));
-    }
-
-    private function plantWateredDaysAgo(?int $override, int ...$daysAgo): Plant
-    {
-        $plant = new Plant(['watering_interval_days_override' => $override]);
-        $plant->setRelation('wateringEvents', new Collection(array_map(
-            fn (int $days): CareEvent => new CareEvent(['occurred_at' => now()->subDays($days)]),
-            $daysAgo,
-        )));
-        $plant->setRelation('fertilizingEvents', new Collection);
-
-        return $plant;
-    }
-
-    /**
-     * @param  list<string>  $occurredAt
-     */
-    #[DataProvider('medianCases')]
-    public function test_derives_the_median_gap_in_whole_days(array $occurredAt, ?int $expected): void
-    {
-        $dates = array_map(fn (string $value): Carbon => Carbon::parse($value), $occurredAt);
-
-        $this->assertSame($expected, CareSchedule::medianGapDays($dates));
     }
 
     /**
@@ -71,6 +49,21 @@ class CareScheduleTest extends TestCase
         yield 'unsorted input is sorted before measuring' => [['2026-01-15', '2026-01-01', '2026-01-08'], 7];
     }
 
+    /**
+     * @param list<string> $occurredAt
+     * @param integer|null $expected
+     *
+     * @return void
+     */
+    #[DataProvider('medianCases')]
+    public function test_derives_the_median_gap_in_whole_days(array $occurredAt, ?int $expected): void
+    {
+        $dates = array_map(fn (string $value): Carbon => Carbon::parse($value), $occurredAt);
+
+        $this->assertSame($expected, CareSchedule::medianGapDays($dates));
+    }
+
+    /** @return void */
     public function test_no_schedule_below_the_28_day_gate_without_an_override(): void
     {
         // Three waterings in a clean 7-day rhythm, but the first is only 22 days
@@ -80,6 +73,7 @@ class CareScheduleTest extends TestCase
         $this->assertNull(CareSchedule::for($plant, ScheduledCareType::Watering));
     }
 
+    /** @return void */
     public function test_the_median_fires_once_the_first_event_is_28_days_old(): void
     {
         $schedule = CareSchedule::for($this->plantWateredDaysAgo(null, 28, 21, 14), ScheduledCareType::Watering);
@@ -88,6 +82,7 @@ class CareScheduleTest extends TestCase
         $this->assertSame(7, $schedule->intervalDays);
     }
 
+    /** @return void */
     public function test_an_override_wins_below_the_gate(): void
     {
         $schedule = CareSchedule::for($this->plantWateredDaysAgo(5, 8), ScheduledCareType::Watering);
@@ -96,6 +91,7 @@ class CareScheduleTest extends TestCase
         $this->assertSame(5, $schedule->intervalDays);
     }
 
+    /** @return void */
     public function test_an_override_wins_over_a_gated_median(): void
     {
         $schedule = CareSchedule::for($this->plantWateredDaysAgo(3, 36, 29, 22, 15, 8), ScheduledCareType::Watering);
@@ -103,6 +99,7 @@ class CareScheduleTest extends TestCase
         $this->assertSame(3, $schedule?->intervalDays);
     }
 
+    /** @return void */
     public function test_no_schedule_without_an_interval_or_without_an_anchor(): void
     {
         // One event forms no gap and there is no override.
@@ -112,11 +109,12 @@ class CareScheduleTest extends TestCase
         $this->assertNull(CareSchedule::for($this->plantWateredDaysAgo(7), ScheduledCareType::Watering));
     }
 
+    /** @return void */
     public function test_the_start_date_anchors_a_schedule_with_no_events(): void
     {
         $plant = new Plant([
             'watering_interval_days_override' => 7,
-            'watering_schedule_start_date' => '2026-06-24',
+            'watering_schedule_start_date'    => '2026-06-24',
         ]);
         $plant->setRelation('wateringEvents', new Collection);
         $plant->setRelation('fertilizingEvents', new Collection);
@@ -128,6 +126,7 @@ class CareScheduleTest extends TestCase
         $this->assertSame(DueStatus::Ok, $due?->status);
     }
 
+    /** @return void */
     public function test_due_counts_midnight_normalized_calendar_days(): void
     {
         // Watered 5.5 days ago on a 7-day override: the due moment is 20:30
@@ -145,6 +144,7 @@ class CareScheduleTest extends TestCase
         $this->assertSame(DueStatus::DueSoon, $due?->status);
     }
 
+    /** @return void */
     public function test_an_overdue_schedule_reports_negative_days_left(): void
     {
         $due = CareSchedule::for($this->plantWateredDaysAgo(null, 36, 29, 22, 15, 8), ScheduledCareType::Watering)?->due();
@@ -155,5 +155,23 @@ class CareScheduleTest extends TestCase
         $this->assertSame(DueStatus::Overdue, $due?->status);
         $this->assertTrue($due !== null && $due->isDue());
         $this->assertSame(1, $due?->daysOverdue());
+    }
+
+    /**
+     * @param integer|null $override
+     * @param integer      ...$daysAgo
+     *
+     * @return Plant
+     */
+    private function plantWateredDaysAgo(?int $override, int ...$daysAgo): Plant
+    {
+        $plant = new Plant(['watering_interval_days_override' => $override]);
+        $plant->setRelation('wateringEvents', new Collection(array_map(
+            fn (int $days): CareEvent => new CareEvent(['occurred_at' => now()->subDays($days)]),
+            $daysAgo,
+        )));
+        $plant->setRelation('fertilizingEvents', new Collection);
+
+        return $plant;
     }
 }

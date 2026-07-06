@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Controllers\CareEventController;
 use App\Http\Controllers\CareEventTypeController;
 use App\Http\Controllers\DashboardController;
@@ -20,11 +22,9 @@ use App\Http\Controllers\TagController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::get('/user', fn (Request $request) => $request->user())->middleware('auth:sanctum');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function (): void {
     Route::apiResource('plants', PlantController::class);
     Route::apiResource('tags', TagController::class)->only(['index', 'store', 'update', 'destroy']);
 

@@ -18,13 +18,22 @@ class CareEventController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * @param CareEventService $service
+     */
     public function __construct(private readonly CareEventService $service) {}
 
+    /**
+     * @param StoreCareEventRequest $request
+     * @param Plant                 $plant
+     *
+     * @return JsonResponse|Response
+     */
     public function store(StoreCareEventRequest $request, Plant $plant): JsonResponse|Response
     {
         $this->authorize('update', $plant);
 
-        $type = $request->string('type')->value();
+        $type  = $request->string('type')->value();
         $event = $this->service->create($plant, $type, $request->safe()->except('type'), $request->user()?->id);
 
         if ($event === null) {
@@ -36,6 +45,12 @@ class CareEventController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    /**
+     * @param UpdateCareEventRequest $request
+     * @param CareEvent              $event
+     *
+     * @return CareEventResource
+     */
     public function update(UpdateCareEventRequest $request, CareEvent $event): CareEventResource
     {
         $this->authorize('update', $event->plant);
@@ -46,10 +61,15 @@ class CareEventController extends Controller
         $this->service->update($event, $request->safe()->all());
 
         return CareEventResource::make(
-            $event->fresh()->load(['careEventType', ...CareEventResource::detailRelations($typeKey)])
+            $event->fresh()->load(['careEventType', ...CareEventResource::detailRelations($typeKey)]),
         );
     }
 
+    /**
+     * @param CareEvent $event
+     *
+     * @return Response
+     */
     public function destroy(CareEvent $event): Response
     {
         $this->authorize('delete', $event->plant);

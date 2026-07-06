@@ -17,6 +17,7 @@ class SpeciesSuggestTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -26,41 +27,47 @@ class SpeciesSuggestTest extends TestCase
         Http::preventStrayRequests();
     }
 
-    private function actAsHousehold(): void
-    {
-        Sanctum::actingAs(User::factory()->create());
-    }
-
     /**
-     * @return array<string, mixed>
+     * @return array<string, array{string}>
      */
-    private function monsteraMatch(): array
+    public static function tooShortQueries(): array
     {
         return [
-            'usageKey' => 2868241,
-            'scientificName' => 'Monstera deliciosa Liebm.',
-            'canonicalName' => 'Monstera deliciosa',
-            'rank' => 'SPECIES',
-            'status' => 'ACCEPTED',
-            'confidence' => 95,
-            'matchType' => 'FUZZY',
-            'family' => 'Araceae',
+            'one char'  => ['a'],
+            'two chars' => ['mo'],
         ];
     }
 
     /**
-     * @param  array<string, mixed>  $match
+     * @return array<string, array{string}>
      */
-    private function fakeGbifMatch(array $match): void
+    public static function gbifOutages(): array
     {
-        Http::fake(['api.gbif.org/*' => Http::response($match)]);
+        return [
+            'server error' => ['500'],
+            'rate limited' => ['429'],
+            'timeout'      => ['timeout'],
+        ];
     }
 
+    /**
+     * @return array<string, array{int}>
+     */
+    public static function outOfRangeLimits(): array
+    {
+        return [
+            'below minimum' => [0],
+            'above maximum' => [21],
+        ];
+    }
+
+    /** @return void */
     public function test_suggesting_requires_authentication(): void
     {
         $this->getJson('/api/species/suggest?q=monstera')->assertUnauthorized();
     }
 
+    /** @return void */
     public function test_requires_a_query(): void
     {
         $this->actAsHousehold();
@@ -69,34 +76,29 @@ class SpeciesSuggestTest extends TestCase
             ->assertJsonValidationErrorFor('q');
     }
 
+    /**
+     * @param string $query
+     *
+     * @return void
+     */
     #[DataProvider('tooShortQueries')]
     public function test_rejects_queries_shorter_than_three_characters(string $query): void
     {
         $this->actAsHousehold();
-        $this->getJson('/api/species/suggest?q='.$query)
+        $this->getJson('/api/species/suggest?q=' . $query)
             ->assertUnprocessable()
             ->assertJsonValidationErrorFor('q');
     }
 
-    /**
-     * @return array<string, array{string}>
-     */
-    public static function tooShortQueries(): array
-    {
-        return [
-            'one char' => ['a'],
-            'two chars' => ['mo'],
-        ];
-    }
-
+    /** @return void */
     public function test_serves_a_local_hit_without_calling_gbif(): void
     {
         $this->actAsHousehold();
         SpeciesCache::factory()->create([
-            'gbif_key' => '2868241',
+            'gbif_key'        => '2868241',
             'scientific_name' => 'Monstera deliciosa Liebm.',
-            'canonical_name' => 'Monstera deliciosa',
-            'cached_at' => now(),
+            'canonical_name'  => 'Monstera deliciosa',
+            'cached_at'       => now(),
         ]);
         $this->fakeGbifMatch($this->monsteraMatch());
 
@@ -108,6 +110,7 @@ class SpeciesSuggestTest extends TestCase
         Http::assertNothingSent();
     }
 
+    /** @return void */
     public function test_misses_locally_then_fetches_from_gbif_and_backfills(): void
     {
         $this->actAsHousehold();
@@ -130,6 +133,7 @@ class SpeciesSuggestTest extends TestCase
         $this->assertNotNull(SpeciesCache::query()->where('gbif_key', '2868241')->value('cached_at'));
     }
 
+    /** @return void */
     public function test_corrects_a_typo_through_gbif_fuzzy_match(): void
     {
         $this->actAsHousehold();
@@ -141,21 +145,22 @@ class SpeciesSuggestTest extends TestCase
             ->assertJsonPath('data.0.scientific_name', 'Monstera deliciosa Liebm.');
     }
 
+    /** @return void */
     public function test_does_not_cache_empty_results(): void
     {
         $this->actAsHousehold();
         Http::fake([
             'api.gbif.org/v1/species/match*' => Http::response([
-                'matchType' => 'NONE',
+                'matchType'  => 'NONE',
                 'confidence' => 0,
-                'synonym' => false,
+                'synonym'    => false,
             ]),
             'api.gbif.org/v1/species/search*' => Http::response([
-                'offset' => 0,
-                'limit' => 5,
+                'offset'       => 0,
+                'limit'        => 5,
                 'endOfRecords' => true,
-                'count' => 0,
-                'results' => [],
+                'count'        => 0,
+                'results'      => [],
             ]),
         ]);
 
@@ -167,23 +172,24 @@ class SpeciesSuggestTest extends TestCase
         $this->assertSame(0, SpeciesCache::query()->count());
     }
 
+    /** @return void */
     public function test_low_confidence_match_is_treated_as_no_match(): void
     {
         $this->actAsHousehold();
         Http::fake([
             'api.gbif.org/v1/species/match*' => Http::response([
-                'usageKey' => 99,
+                'usageKey'       => 99,
                 'scientificName' => 'Dubious match',
-                'rank' => 'SPECIES',
-                'confidence' => 50,
-                'matchType' => 'FUZZY',
+                'rank'           => 'SPECIES',
+                'confidence'     => 50,
+                'matchType'      => 'FUZZY',
             ]),
             'api.gbif.org/v1/species/search*' => Http::response([
-                'offset' => 0,
-                'limit' => 5,
+                'offset'       => 0,
+                'limit'        => 5,
                 'endOfRecords' => true,
-                'count' => 0,
-                'results' => [],
+                'count'        => 0,
+                'results'      => [],
             ]),
         ]);
 
@@ -191,6 +197,11 @@ class SpeciesSuggestTest extends TestCase
         $this->assertSame(0, SpeciesCache::query()->count());
     }
 
+    /**
+     * @param string $kind
+     *
+     * @return void
+     */
     #[DataProvider('gbifOutages')]
     public function test_returns_503_when_gbif_is_unavailable(string $kind): void
     {
@@ -206,26 +217,15 @@ class SpeciesSuggestTest extends TestCase
             ->assertJsonPath('code', 'search_degraded');
     }
 
-    /**
-     * @return array<string, array{string}>
-     */
-    public static function gbifOutages(): array
-    {
-        return [
-            'server error' => ['500'],
-            'rate limited' => ['429'],
-            'timeout' => ['timeout'],
-        ];
-    }
-
+    /** @return void */
     public function test_a_stale_hit_is_refreshed_from_gbif(): void
     {
         $this->actAsHousehold();
         SpeciesCache::factory()->create([
-            'gbif_key' => '2868241',
+            'gbif_key'        => '2868241',
             'scientific_name' => 'Monstera deliciosa Liebm.',
-            'family' => 'Stale family',
-            'cached_at' => now()->subDays(100),
+            'family'          => 'Stale family',
+            'cached_at'       => now()->subDays(100),
         ]);
         $this->fakeGbifMatch($this->monsteraMatch());
 
@@ -238,13 +238,14 @@ class SpeciesSuggestTest extends TestCase
         $this->assertTrue($refreshed->cached_at->isAfter(now()->subMinute()));
     }
 
+    /** @return void */
     public function test_a_stale_hit_is_served_when_gbif_is_unavailable(): void
     {
         $this->actAsHousehold();
         SpeciesCache::factory()->create([
-            'gbif_key' => '2868241',
+            'gbif_key'        => '2868241',
             'scientific_name' => 'Monstera deliciosa Liebm.',
-            'cached_at' => now()->subDays(100),
+            'cached_at'       => now()->subDays(100),
         ]);
         Http::fake(['api.gbif.org/*' => Http::failedConnection()]);
 
@@ -254,18 +255,19 @@ class SpeciesSuggestTest extends TestCase
             ->assertJsonPath('data.0.gbif_key', '2868241');
     }
 
+    /** @return void */
     public function test_case_and_whitespace_variants_hit_the_same_local_row(): void
     {
         $this->actAsHousehold();
         SpeciesCache::factory()->create([
-            'gbif_key' => '2868241',
+            'gbif_key'        => '2868241',
             'scientific_name' => 'Monstera deliciosa Liebm.',
-            'cached_at' => now(),
+            'cached_at'       => now(),
         ]);
         $this->fakeGbifMatch($this->monsteraMatch());
 
         foreach (['MONSTERA', '  monstera  ', 'Monstera'] as $variant) {
-            $this->getJson('/api/species/suggest?q='.urlencode($variant))
+            $this->getJson('/api/species/suggest?q=' . urlencode($variant))
                 ->assertOk()
                 ->assertJsonPath('data.0.gbif_key', '2868241');
         }
@@ -273,32 +275,34 @@ class SpeciesSuggestTest extends TestCase
         Http::assertNothingSent();
     }
 
+    /** @return void */
     public function test_unicode_is_normalized_so_decomposed_input_matches_composed_names(): void
     {
         $this->actAsHousehold();
         // Stored name uses a composed (NFC) o-umlaut.
         SpeciesCache::factory()->create([
-            'gbif_key' => '999',
+            'gbif_key'        => '999',
             'scientific_name' => "Crassula ovata Sch\u{00F6}nland",
-            'cached_at' => now(),
+            'cached_at'       => now(),
         ]);
         $this->fakeGbifMatch($this->monsteraMatch());
 
         // Query the same name with a decomposed (NFD) o + combining diaeresis.
-        $this->getJson('/api/species/suggest?q='.urlencode("scho\u{0308}nland"))
+        $this->getJson('/api/species/suggest?q=' . urlencode("scho\u{0308}nland"))
             ->assertOk()
             ->assertJsonPath('data.0.gbif_key', '999');
 
         Http::assertNothingSent();
     }
 
+    /** @return void */
     public function test_a_null_cached_at_is_treated_as_stale_and_refreshed(): void
     {
         $this->actAsHousehold();
         SpeciesCache::factory()->create([
-            'gbif_key' => '2868241',
+            'gbif_key'        => '2868241',
             'scientific_name' => 'Monstera deliciosa Liebm.',
-            'cached_at' => null,
+            'cached_at'       => null,
         ]);
         $this->fakeGbifMatch($this->monsteraMatch());
 
@@ -309,14 +313,16 @@ class SpeciesSuggestTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    /** @return void */
     public function test_respects_the_requested_limit(): void
     {
         $this->actAsHousehold();
+
         for ($i = 0; $i < 6; $i++) {
             SpeciesCache::factory()->create([
-                'gbif_key' => "k{$i}",
+                'gbif_key'        => "k{$i}",
                 'scientific_name' => "Ficus species{$i}",
-                'cached_at' => now(),
+                'cached_at'       => now(),
             ]);
         }
         $this->fakeGbifMatch($this->monsteraMatch());
@@ -328,6 +334,11 @@ class SpeciesSuggestTest extends TestCase
         Http::assertNothingSent();
     }
 
+    /**
+     * @param integer $limit
+     *
+     * @return void
+     */
     #[DataProvider('outOfRangeLimits')]
     public function test_rejects_an_out_of_range_limit(int $limit): void
     {
@@ -337,26 +348,16 @@ class SpeciesSuggestTest extends TestCase
             ->assertJsonValidationErrorFor('limit');
     }
 
-    /**
-     * @return array<string, array{int}>
-     */
-    public static function outOfRangeLimits(): array
-    {
-        return [
-            'below minimum' => [0],
-            'above maximum' => [21],
-        ];
-    }
-
+    /** @return void */
     public function test_stale_refresh_preserves_existing_common_names(): void
     {
         $this->actAsHousehold();
         SpeciesCache::factory()->create([
-            'gbif_key' => '2868241',
+            'gbif_key'        => '2868241',
             'scientific_name' => 'Monstera deliciosa Liebm.',
-            'common_name' => 'Swiss cheese plant',
-            'common_names' => ['Swiss cheese plant', 'Split-leaf philodendron'],
-            'cached_at' => now()->subDays(100),
+            'common_name'     => 'Swiss cheese plant',
+            'common_names'    => ['Swiss cheese plant', 'Split-leaf philodendron'],
+            'cached_at'       => now()->subDays(100),
         ]);
         $this->fakeGbifMatch($this->monsteraMatch());
 
@@ -367,15 +368,16 @@ class SpeciesSuggestTest extends TestCase
         $this->assertSame(['Swiss cheese plant', 'Split-leaf philodendron'], $refreshed->common_names);
     }
 
+    /** @return void */
     public function test_local_hit_includes_common_names_in_response(): void
     {
         $this->actAsHousehold();
         SpeciesCache::factory()->create([
-            'gbif_key' => '2868241',
+            'gbif_key'        => '2868241',
             'scientific_name' => 'Monstera deliciosa Liebm.',
-            'common_name' => 'Swiss cheese plant',
-            'common_names' => ['Swiss cheese plant', 'Split-leaf philodendron'],
-            'cached_at' => now(),
+            'common_name'     => 'Swiss cheese plant',
+            'common_names'    => ['Swiss cheese plant', 'Split-leaf philodendron'],
+            'cached_at'       => now(),
         ]);
         $this->fakeGbifMatch($this->monsteraMatch());
 
@@ -385,27 +387,28 @@ class SpeciesSuggestTest extends TestCase
             ->assertJsonPath('data.0.common_names', ['Swiss cheese plant', 'Split-leaf philodendron']);
     }
 
+    /** @return void */
     public function test_falls_back_to_gbif_search_for_common_name_queries(): void
     {
         $this->actAsHousehold();
         Http::fake([
             'api.gbif.org/v1/species/match*' => Http::response([
-                'matchType' => 'NONE',
+                'matchType'  => 'NONE',
                 'confidence' => 0,
-                'synonym' => false,
+                'synonym'    => false,
             ]),
             'api.gbif.org/v1/species/search*' => Http::response([
-                'offset' => 0,
-                'limit' => 5,
+                'offset'       => 0,
+                'limit'        => 5,
                 'endOfRecords' => true,
-                'results' => [
+                'results'      => [
                     [
-                        'key' => 7911643,
-                        'scientificName' => 'Zamioculcas zamiifolia (Lodd.) Engl.',
-                        'canonicalName' => 'Zamioculcas zamiifolia',
-                        'rank' => 'SPECIES',
+                        'key'             => 7911643,
+                        'scientificName'  => 'Zamioculcas zamiifolia (Lodd.) Engl.',
+                        'canonicalName'   => 'Zamioculcas zamiifolia',
+                        'rank'            => 'SPECIES',
                         'taxonomicStatus' => 'ACCEPTED',
-                        'family' => 'Araceae',
+                        'family'          => 'Araceae',
                         'vernacularNames' => [
                             ['vernacularName' => 'ZZ Plant', 'language' => 'eng'],
                         ],
@@ -422,11 +425,12 @@ class SpeciesSuggestTest extends TestCase
 
         Http::assertSentCount(2);
         $this->assertDatabaseHas('species_cache', [
-            'gbif_key' => '7911643',
+            'gbif_key'    => '7911643',
             'common_name' => 'ZZ Plant',
         ]);
     }
 
+    /** @return void */
     public function test_does_not_cascade_to_search_when_lookup_is_blocked(): void
     {
         $this->actAsHousehold();
@@ -440,35 +444,36 @@ class SpeciesSuggestTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    /** @return void */
     public function test_tries_gbif_search_when_local_results_have_no_relevant_match(): void
     {
         $this->actAsHousehold();
         SpeciesCache::factory()->create([
-            'gbif_key' => '999',
+            'gbif_key'        => '999',
             'scientific_name' => 'Bobgunnia madagascariensis (Desv.) J.H.Kirkbr. & Wiersema',
-            'canonical_name' => 'Bobgunnia madagascariensis',
-            'common_name' => 'Snake Bean Plant',
-            'common_names' => ['Snake Bean Plant'],
-            'cached_at' => now(),
+            'canonical_name'  => 'Bobgunnia madagascariensis',
+            'common_name'     => 'Snake Bean Plant',
+            'common_names'    => ['Snake Bean Plant'],
+            'cached_at'       => now(),
         ]);
         Http::fake([
             'api.gbif.org/v1/species/match*' => Http::response([
-                'matchType' => 'NONE',
+                'matchType'  => 'NONE',
                 'confidence' => 0,
-                'synonym' => false,
+                'synonym'    => false,
             ]),
             'api.gbif.org/v1/species/search*' => Http::response([
-                'offset' => 0,
-                'limit' => 5,
+                'offset'       => 0,
+                'limit'        => 5,
                 'endOfRecords' => true,
-                'results' => [
+                'results'      => [
                     [
-                        'key' => 222,
-                        'scientificName' => 'Dracaena trifasciata (Prain) Mabb.',
-                        'canonicalName' => 'Dracaena trifasciata',
-                        'rank' => 'SPECIES',
+                        'key'             => 222,
+                        'scientificName'  => 'Dracaena trifasciata (Prain) Mabb.',
+                        'canonicalName'   => 'Dracaena trifasciata',
+                        'rank'            => 'SPECIES',
                         'taxonomicStatus' => 'ACCEPTED',
-                        'family' => 'Asparagaceae',
+                        'family'          => 'Asparagaceae',
                         'vernacularNames' => [
                             ['vernacularName' => 'Snake Plant', 'language' => 'eng'],
                         ],
@@ -485,21 +490,22 @@ class SpeciesSuggestTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    /** @return void */
     public function test_common_name_search_empty_result_returns_empty(): void
     {
         $this->actAsHousehold();
         Http::fake([
             'api.gbif.org/v1/species/match*' => Http::response([
-                'matchType' => 'NONE',
+                'matchType'  => 'NONE',
                 'confidence' => 0,
-                'synonym' => false,
+                'synonym'    => false,
             ]),
             'api.gbif.org/v1/species/search*' => Http::response([
-                'offset' => 0,
-                'limit' => 5,
+                'offset'       => 0,
+                'limit'        => 5,
                 'endOfRecords' => true,
-                'count' => 0,
-                'results' => [],
+                'count'        => 0,
+                'results'      => [],
             ]),
         ]);
 
@@ -508,5 +514,38 @@ class SpeciesSuggestTest extends TestCase
             ->assertJsonCount(0, 'data');
 
         Http::assertSentCount(2);
+    }
+
+    /** @return void */
+    private function actAsHousehold(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function monsteraMatch(): array
+    {
+        return [
+            'usageKey'       => 2868241,
+            'scientificName' => 'Monstera deliciosa Liebm.',
+            'canonicalName'  => 'Monstera deliciosa',
+            'rank'           => 'SPECIES',
+            'status'         => 'ACCEPTED',
+            'confidence'     => 95,
+            'matchType'      => 'FUZZY',
+            'family'         => 'Araceae',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $match
+     *
+     * @return void
+     */
+    private function fakeGbifMatch(array $match): void
+    {
+        Http::fake(['api.gbif.org/*' => Http::response($match)]);
     }
 }

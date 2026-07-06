@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use App\Models\CareEvent;
 use App\Support\CareEventRuleSets;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCareEventRequest extends FormRequest
 {
+    /**
+     * @return boolean
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function rules(): array
     {
         /** @var CareEvent $event */

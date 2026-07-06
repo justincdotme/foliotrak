@@ -13,8 +13,9 @@ use App\Models\Symptom;
 final class SymptomResolver
 {
     /**
-     * @param  list<int>  $symptomIds
-     * @param  list<string>  $customLabels
+     * @param list<int>    $symptomIds
+     * @param list<string> $customLabels
+     *
      * @return list<int>
      */
     public static function resolveIds(array $symptomIds, array $customLabels): array

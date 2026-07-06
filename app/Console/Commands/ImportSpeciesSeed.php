@@ -16,13 +16,19 @@ use Illuminate\Console\Command;
  */
 class ImportSpeciesSeed extends Command
 {
+    /** @var string */
     protected $signature = 'species:import-seed {path=storage/app/seed/species.ndjson.gz} {--chunk=1000}';
 
+    /** @var string */
     protected $description = 'Load a GBIF species seed dump (NDJSON) into the cache and search index';
 
+    /**
+     * @return integer
+     */
     public function handle(): int
     {
         $path = (string) $this->argument('path');
+
         if (! str_starts_with($path, '/')) {
             $path = base_path($path);
         }
@@ -34,7 +40,7 @@ class ImportSpeciesSeed extends Command
         }
 
         $gzipped = str_ends_with($path, '.gz');
-        $handle = $gzipped ? gzopen($path, 'rb') : fopen($path, 'rb');
+        $handle  = $gzipped ? gzopen($path, 'rb') : fopen($path, 'rb');
 
         if ($handle === false) {
             $this->error("Could not open: {$path}");
@@ -43,22 +49,25 @@ class ImportSpeciesSeed extends Command
         }
 
         $chunkSize = max(1, (int) $this->option('chunk'));
-        $buffer = [];
-        $imported = 0;
-        $skipped = 0;
+        $buffer    = [];
+        $imported  = 0;
+        $skipped   = 0;
 
         while (! ($gzipped ? gzeof($handle) : feof($handle))) {
             $line = $gzipped ? gzgets($handle) : fgets($handle);
+
             if ($line === false) {
                 break;
             }
 
             $line = trim($line);
+
             if ($line === '') {
                 continue;
             }
 
             $row = $this->toRow($line);
+
             if ($row === null) {
                 $skipped++;
 
@@ -66,6 +75,7 @@ class ImportSpeciesSeed extends Command
             }
 
             $buffer[] = $row;
+
             if (count($buffer) >= $chunkSize) {
                 $this->flush($buffer);
                 $imported += count($buffer);
@@ -90,16 +100,22 @@ class ImportSpeciesSeed extends Command
     }
 
     /**
+     * Parse a JSON line into a cache row.
+     *
+     * @param string $line
+     *
      * @return array<string, mixed>|null
      */
     private function toRow(string $line): ?array
     {
         $data = json_decode($line, true);
+
         if (! is_array($data)) {
             return null;
         }
 
         $row = SpeciesRow::fromArray($data);
+
         if ($row === null) {
             return null;
         }
@@ -107,21 +123,23 @@ class ImportSpeciesSeed extends Command
         $now = now()->toDateTimeString();
 
         return [
-            'gbif_key' => $row->gbifKey,
+            'gbif_key'        => $row->gbifKey,
             'scientific_name' => $row->scientificName,
-            'canonical_name' => $row->canonicalName,
-            'common_name' => $row->commonName,
-            'common_names' => $row->commonNames !== null ? json_encode($row->commonNames) : null,
-            'rank' => $row->rank,
-            'family' => $row->family,
-            'cached_at' => $now,
-            'created_at' => $now,
-            'updated_at' => $now,
+            'canonical_name'  => $row->canonicalName,
+            'common_name'     => $row->commonName,
+            'common_names'    => $row->commonNames !== null ? json_encode($row->commonNames) : null,
+            'rank'            => $row->rank,
+            'family'          => $row->family,
+            'cached_at'       => $now,
+            'created_at'      => $now,
+            'updated_at'      => $now,
         ];
     }
 
     /**
-     * @param  list<array<string, mixed>>  $rows
+     * @param list<array<string, mixed>> $rows
+     *
+     * @return void
      */
     private function flush(array $rows): void
     {

@@ -15,11 +15,13 @@ use Illuminate\Support\Carbon;
  */
 final class PositionInsight
 {
+    /** Days before and after a move to sample health. */
     private const WINDOW_DAYS = 28;
 
     /**
-     * @param  list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}>  $moves
-     * @param  list<array{date: Carbon, health: int}>  $healthObservations
+     * @param list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}> $moves
+     * @param list<array{date: Carbon, health: int}>                                                                    $healthObservations
+     *
      * @return list<array{moved_on: string, from_location: array{id: int, name: string}|null, to_location: array{id: int, name: string}|null, health_before: array{median: float|null, sample_size: int}, health_after: array{median: float|null, sample_size: int}}>
      */
     public static function forMoves(array $moves, array $healthObservations): array
@@ -28,7 +30,7 @@ final class PositionInsight
 
         foreach ($moves as $move) {
             $movedAt = $move['date'];
-            $before = self::summary(
+            $before  = self::summary(
                 $healthObservations,
                 fn (Carbon $d): bool => $d >= $movedAt->copy()->subDays(self::WINDOW_DAYS) && $d < $movedAt,
             );
@@ -42,11 +44,11 @@ final class PositionInsight
             }
 
             $insights[] = [
-                'moved_on' => $movedAt->format('Y-m-d'),
+                'moved_on'      => $movedAt->format('Y-m-d'),
                 'from_location' => $move['from'],
-                'to_location' => $move['to'],
+                'to_location'   => $move['to'],
                 'health_before' => $before,
-                'health_after' => $after,
+                'health_after'  => $after,
             ];
         }
 
@@ -54,8 +56,9 @@ final class PositionInsight
     }
 
     /**
-     * @param  list<array{date: Carbon, health: int}>  $observations
-     * @param  Closure(Carbon): bool  $within
+     * @param list<array{date: Carbon, health: int}> $observations
+     * @param Closure(Carbon): bool                  $within
+     *
      * @return array{median: float|null, sample_size: int}
      */
     private static function summary(array $observations, Closure $within): array

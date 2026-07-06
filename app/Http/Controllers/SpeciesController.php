@@ -11,6 +11,12 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SpeciesController extends Controller
 {
+    /**
+     * @param SpeciesSuggestRequest $request
+     * @param PlantSearchService    $search
+     *
+     * @return AnonymousResourceCollection
+     */
     public function suggest(SpeciesSuggestRequest $request, PlantSearchService $search): AnonymousResourceCollection
     {
         $species = $search->search(

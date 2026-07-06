@@ -10,6 +10,7 @@ use Illuminate\Support\ServiceProvider;
 
 class SensorServiceProvider extends ServiceProvider
 {
+    /** @return void */
     public function register(): void
     {
         $this->app->singleton(SensorReadingSource::class, GondolaAdapter::class);

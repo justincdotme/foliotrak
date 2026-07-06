@@ -13,26 +13,54 @@ use App\Models\User;
  */
 class PlantPolicy
 {
+    /**
+     * @param User $user
+     *
+     * @return boolean
+     */
     public function viewAny(User $user): bool
     {
         return true;
     }
 
+    /**
+     * @param User  $user
+     * @param Plant $plant
+     *
+     * @return boolean
+     */
     public function view(User $user, Plant $plant): bool
     {
         return true;
     }
 
+    /**
+     * @param User $user
+     *
+     * @return boolean
+     */
     public function create(User $user): bool
     {
         return true;
     }
 
+    /**
+     * @param User  $user
+     * @param Plant $plant
+     *
+     * @return boolean
+     */
     public function update(User $user, Plant $plant): bool
     {
         return true;
     }
 
+    /**
+     * @param User  $user
+     * @param Plant $plant
+     *
+     * @return boolean
+     */
     public function delete(User $user, Plant $plant): bool
     {
         return true;

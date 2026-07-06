@@ -10,10 +10,15 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
@@ -26,6 +31,11 @@ class AuthController extends Controller
         return response()->json(['message' => 'Invalid credentials'], 401);
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
     public function logout(Request $request): JsonResponse
     {
         Auth::guard('web')->logout();

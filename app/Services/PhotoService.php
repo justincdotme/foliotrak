@@ -14,11 +14,22 @@ use Illuminate\Support\Facades\Storage;
 
 final class PhotoService
 {
+    /**
+     * @param ImageProcessor $processor
+     */
     public function __construct(private readonly ImageProcessor $processor) {}
 
     /**
-     * @param  array{x: int, y: int, width: int, height: int}|null  $heroCrop
-     * @param  array{x: int, y: int, width: int, height: int}|null  $thumbCrop
+     * @param Plant                                               $plant
+     * @param UploadedFile                                        $file
+     * @param Carbon|null                                         $takenOn
+     * @param string|null                                         $caption
+     * @param integer|null                                        $careEventId
+     * @param boolean                                             $setAsCover
+     * @param array{x: int, y: int, width: int, height: int}|null $heroCrop
+     * @param array{x: int, y: int, width: int, height: int}|null $thumbCrop
+     *
+     * @return Photo
      */
     public function create(
         Plant $plant,
@@ -33,13 +44,13 @@ final class PhotoService
         $paths = $this->resolvePaths($file, $heroCrop, $thumbCrop);
 
         $photo = $plant->photos()->create([
-            'disk' => 'photos',
-            'path' => $paths['path'],
-            'thumb_path' => $paths['thumb_path'],
+            'disk'              => 'photos',
+            'path'              => $paths['path'],
+            'thumb_path'        => $paths['thumb_path'],
             'original_filename' => $file->getClientOriginalName(),
-            'taken_on' => $takenOn ?? now(),
-            'caption' => $caption,
-            'care_event_id' => $careEventId,
+            'taken_on'          => $takenOn ?? now(),
+            'caption'           => $caption,
+            'care_event_id'     => $careEventId,
         ]);
 
         if ($setAsCover) {
@@ -49,11 +60,16 @@ final class PhotoService
         return $photo;
     }
 
+    /**
+     * @param Photo $photo
+     *
+     * @return void
+     */
     public function delete(Photo $photo): void
     {
-        $plant = $photo->plant;
-        $disk = $photo->disk;
-        $path = $photo->path;
+        $plant     = $photo->plant;
+        $disk      = $photo->disk;
+        $path      = $photo->path;
         $thumbPath = $photo->thumb_path;
 
         DB::transaction(function () use ($plant, $photo): void {
@@ -72,8 +88,10 @@ final class PhotoService
     }
 
     /**
-     * @param  array{x: int, y: int, width: int, height: int}|null  $heroCrop
-     * @param  array{x: int, y: int, width: int, height: int}|null  $thumbCrop
+     * @param UploadedFile                                        $file
+     * @param array{x: int, y: int, width: int, height: int}|null $heroCrop
+     * @param array{x: int, y: int, width: int, height: int}|null $thumbCrop
+     *
      * @return array{path: string, thumb_path: string|null}
      */
     private function resolvePaths(UploadedFile $file, ?array $heroCrop, ?array $thumbCrop): array
@@ -82,13 +100,13 @@ final class PhotoService
             $processed = $this->processor->processCoverPhoto($file, $heroCrop, $thumbCrop);
 
             return [
-                'path' => $processed['hero_path'],
+                'path'       => $processed['hero_path'],
                 'thumb_path' => $processed['thumb_path'],
             ];
         }
 
         return [
-            'path' => $file->store('', 'photos'),
+            'path'       => $file->store('', 'photos'),
             'thumb_path' => null,
         ];
     }

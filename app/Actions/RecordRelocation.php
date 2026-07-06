@@ -18,6 +18,15 @@ use Illuminate\Support\Facades\DB;
  */
 final class RecordRelocation
 {
+    /**
+     * @param Plant        $plant
+     * @param integer|null $toLocationId
+     * @param Carbon|null  $occurredAt
+     * @param string|null  $note
+     * @param integer|null $userId
+     *
+     * @return CareEvent|null
+     */
     public function record(
         Plant $plant,
         ?int $toLocationId,
@@ -39,7 +48,7 @@ final class RecordRelocation
 
             $event->relocation()->create([
                 'from_location_id' => $fromLocationId,
-                'to_location_id' => $toLocationId,
+                'to_location_id'   => $toLocationId,
             ]);
 
             return $event;

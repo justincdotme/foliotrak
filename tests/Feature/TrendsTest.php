@@ -17,6 +17,7 @@ class TrendsTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -25,6 +26,7 @@ class TrendsTest extends TestCase
         $this->travelTo(Carbon::parse('2026-06-26 09:00:00'));
     }
 
+    /** @return void */
     public function test_light_returns_dated_value_pairs_from_light_level(): void
     {
         $plant = Plant::factory()->create();
@@ -40,6 +42,7 @@ class TrendsTest extends TestCase
         $this->assertSame(7, $result[0]['value']);
     }
 
+    /** @return void */
     public function test_light_returns_null_value_when_observation_detail_row_is_absent(): void
     {
         $plant = Plant::factory()->create();
@@ -54,6 +57,7 @@ class TrendsTest extends TestCase
         $this->assertNull($result[0]['value']);
     }
 
+    /** @return void */
     public function test_leaf_size_returns_dated_float_pairs_from_leaf_size_mm(): void
     {
         $plant = Plant::factory()->create();
@@ -69,6 +73,7 @@ class TrendsTest extends TestCase
         $this->assertSame(45.5, $result[0]['value']);
     }
 
+    /** @return void */
     public function test_leaf_size_returns_null_when_leaf_size_is_not_recorded(): void
     {
         $plant = Plant::factory()->create();

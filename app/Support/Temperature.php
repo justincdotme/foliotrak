@@ -6,18 +6,37 @@ namespace App\Support;
 
 final class Temperature
 {
+    /**
+     * @param float $celsius
+     */
     private function __construct(public readonly float $celsius) {}
 
+    /**
+     * @param float $celsius
+     *
+     * @return self
+     */
     public static function fromCelsius(float $celsius): self
     {
         return new self($celsius);
     }
 
+    /**
+     * @param float  $value
+     * @param string $unit
+     *
+     * @return self
+     */
     public static function fromDisplay(float $value, string $unit): self
     {
         return new self($unit === 'F' ? ($value - 32) * 5 / 9 : $value);
     }
 
+    /**
+     * @param string $unit
+     *
+     * @return float
+     */
     public function toDisplay(string $unit): float
     {
         return round($unit === 'F' ? $this->celsius * 9 / 5 + 32 : $this->celsius, 1);

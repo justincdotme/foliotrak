@@ -10,8 +10,10 @@ use ZipArchive;
 
 class RefreshSpeciesSeedTest extends TestCase
 {
+    /** @var string */
     private string $workdir;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -19,26 +21,28 @@ class RefreshSpeciesSeedTest extends TestCase
         // The build downloads from a URL; a local --source must never touch the network.
         Http::preventStrayRequests();
 
-        $this->workdir = sys_get_temp_dir().'/refresh-seed-'.bin2hex(random_bytes(6));
+        $this->workdir = sys_get_temp_dir() . '/refresh-seed-' . bin2hex(random_bytes(6));
         mkdir($this->workdir, 0775, true);
     }
 
+    /** @return void */
     protected function tearDown(): void
     {
-        array_map('unlink', glob($this->workdir.'/*') ?: []);
+        array_map('unlink', glob($this->workdir . '/*') ?: []);
         @rmdir($this->workdir);
 
         parent::tearDown();
     }
 
+    /** @return void */
     public function test_builds_the_seed_from_a_local_archive(): void
     {
-        $output = $this->workdir.'/species.ndjson.gz';
+        $output = $this->workdir . '/species.ndjson.gz';
 
         $this->artisan('species:refresh-seed', [
             '--source' => $this->buildArchive(),
             '--output' => $output,
-            '--fresh' => true,
+            '--fresh'  => true,
         ])->assertSuccessful();
 
         $this->assertFileExists($output);
@@ -46,9 +50,10 @@ class RefreshSpeciesSeedTest extends TestCase
         $this->assertSame('Monstera deliciosa Liebm.', $records[2868241]['scientific_name']);
     }
 
+    /** @return void */
     public function test_reuses_a_recent_seed_without_rebuilding(): void
     {
-        $output = $this->workdir.'/species.ndjson.gz';
+        $output = $this->workdir . '/species.ndjson.gz';
         file_put_contents($output, gzencode('untouched'));
 
         $this->artisan('species:refresh-seed', [
@@ -60,15 +65,19 @@ class RefreshSpeciesSeedTest extends TestCase
         $this->assertSame('untouched', gzdecode((string) file_get_contents($output)));
     }
 
+    /** @return void */
     public function test_fails_when_a_local_source_is_missing(): void
     {
         $this->artisan('species:refresh-seed', [
-            '--source' => $this->workdir.'/nope.zip',
-            '--output' => $this->workdir.'/out.ndjson.gz',
-            '--fresh' => true,
+            '--source' => $this->workdir . '/nope.zip',
+            '--output' => $this->workdir . '/out.ndjson.gz',
+            '--fresh'  => true,
         ])->assertFailed();
     }
 
+    /**
+     * @return string
+     */
     private function buildArchive(): string
     {
         $meta = <<<'XML'
@@ -86,8 +95,8 @@ class RefreshSpeciesSeedTest extends TestCase
         </archive>
         XML;
 
-        $archive = $this->workdir.'/backbone.zip';
-        $zip = new ZipArchive;
+        $archive = $this->workdir . '/backbone.zip';
+        $zip     = new ZipArchive;
         $zip->open($archive, ZipArchive::CREATE);
         $zip->addFromString('meta.xml', $meta);
         $zip->addFromString('Taxon.tsv', "2868241\taccepted\tPlantae\tMonstera deliciosa Liebm.\tspecies\n");
@@ -97,16 +106,20 @@ class RefreshSpeciesSeedTest extends TestCase
     }
 
     /**
+     * @param string $path
+     *
      * @return array<int, array<string, mixed>>
      */
     private function readOutput(string $path): array
     {
         $handle = gzopen($path, 'rb');
-        $byKey = [];
+        $byKey  = [];
+
         while (! gzeof($handle)) {
             $line = trim((string) gzgets($handle));
+
             if ($line !== '') {
-                $record = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+                $record                     = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
                 $byKey[$record['gbif_key']] = $record;
             }
         }

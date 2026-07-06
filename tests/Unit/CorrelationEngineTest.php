@@ -11,6 +11,60 @@ use PHPUnit\Framework\TestCase;
 
 class CorrelationEngineTest extends TestCase
 {
+    /**
+     * @param string $key
+     *
+     * @return Factor
+     */
+    private static function monotonicFactor(string $key): Factor
+    {
+        return new class($key) implements Factor
+        {
+            /**
+             * @param string $name
+             */
+            public function __construct(private string $name) {}
+
+            /**
+             * @return string
+             */
+            public function key(): string
+            {
+                return $this->name;
+            }
+
+            /**
+             * @return string
+             */
+            public function outcomeKey(): string
+            {
+                return 'overall_health';
+            }
+
+            /**
+             * @return array<string, string>
+             */
+            public function relations(): array
+            {
+                return [];
+            }
+
+            /**
+             * @param Collection $plants
+             *
+             * @return array<integer, array<string, float>>
+             */
+            public function pairs(Collection $plants): array
+            {
+                return [
+                    ['x' => 1.0, 'y' => 1.0], ['x' => 2.0, 'y' => 2.0], ['x' => 3.0, 'y' => 3.0],
+                    ['x'                           => 4.0, 'y' => 4.0], ['x' => 5.0, 'y' => 5.0], ['x' => 6.0, 'y' => 6.0],
+                ];
+            }
+        };
+    }
+
+    /** @return void */
     public function test_a_strong_factor_is_reported_with_its_shape_and_passes_the_false_discovery_check(): void
     {
         $pairs = CorrelationEngine::forPlants(collect(), [self::monotonicFactor('strong')]);
@@ -27,25 +81,40 @@ class CorrelationEngineTest extends TestCase
         $this->assertArrayHasKey('lower', $pair['confidence_band']);
     }
 
+    /** @return void */
     public function test_a_factor_below_the_minimum_sample_size_is_omitted(): void
     {
         $tiny = new class implements Factor
         {
+            /**
+             * @return string
+             */
             public function key(): string
             {
                 return 'tiny';
             }
 
+            /**
+             * @return string
+             */
             public function outcomeKey(): string
             {
                 return 'overall_health';
             }
 
+            /**
+             * @return array<string, string>
+             */
             public function relations(): array
             {
                 return [];
             }
 
+            /**
+             * @param Collection $plants
+             *
+             * @return array<integer, array<string, float>>
+             */
             public function pairs(Collection $plants): array
             {
                 return [['x' => 1.0, 'y' => 1.0], ['x' => 2.0, 'y' => 2.0], ['x' => 3.0, 'y' => 3.0], ['x' => 4.0, 'y' => 4.0]];
@@ -55,25 +124,40 @@ class CorrelationEngineTest extends TestCase
         $this->assertSame([], CorrelationEngine::forPlants(collect(), [$tiny]));
     }
 
+    /** @return void */
     public function test_false_discovery_control_separates_a_strong_pair_from_a_noisy_one(): void
     {
         $noisy = new class implements Factor
         {
+            /**
+             * @return string
+             */
             public function key(): string
             {
                 return 'noisy';
             }
 
+            /**
+             * @return string
+             */
             public function outcomeKey(): string
             {
                 return 'overall_health';
             }
 
+            /**
+             * @return array<string, string>
+             */
             public function relations(): array
             {
                 return [];
             }
 
+            /**
+             * @param Collection $plants
+             *
+             * @return array<integer, array<string, float>>
+             */
             public function pairs(Collection $plants): array
             {
                 return [['x' => 1.0, 'y' => 3.0], ['x' => 2.0, 'y' => 1.0], ['x' => 3.0, 'y' => 5.0], ['x' => 4.0, 'y' => 2.0], ['x' => 5.0, 'y' => 4.0]];
@@ -88,39 +172,9 @@ class CorrelationEngineTest extends TestCase
         $this->assertFalse($byKey['noisy']['significant_after_fdr']);
     }
 
+    /** @return void */
     public function test_no_factors_or_no_samples_yields_no_pairs(): void
     {
         $this->assertSame([], CorrelationEngine::forPlants(collect(), []));
-    }
-
-    private static function monotonicFactor(string $key): Factor
-    {
-        return new class($key) implements Factor
-        {
-            public function __construct(private string $name) {}
-
-            public function key(): string
-            {
-                return $this->name;
-            }
-
-            public function outcomeKey(): string
-            {
-                return 'overall_health';
-            }
-
-            public function relations(): array
-            {
-                return [];
-            }
-
-            public function pairs(Collection $plants): array
-            {
-                return [
-                    ['x' => 1.0, 'y' => 1.0], ['x' => 2.0, 'y' => 2.0], ['x' => 3.0, 'y' => 3.0],
-                    ['x' => 4.0, 'y' => 4.0], ['x' => 5.0, 'y' => 5.0], ['x' => 6.0, 'y' => 6.0],
-                ];
-            }
-        };
     }
 }

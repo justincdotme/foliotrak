@@ -9,19 +9,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @property int      $care_event_id
  * @property int|null $from_location_id
  * @property int|null $to_location_id
  */
 #[Fillable(['care_event_id', 'from_location_id', 'to_location_id'])]
 class RelocationDetail extends Model
 {
-    protected $primaryKey = 'care_event_id';
-
+    /** @var boolean Disable auto-increment */
     public $incrementing = false;
 
-    protected $keyType = 'int';
-
+    /** @var boolean Disable timestamps */
     public $timestamps = false;
+
+    /** @var string Primary key column */
+    protected $primaryKey = 'care_event_id';
+
+    /** @var string Primary key type */
+    protected $keyType = 'int';
 
     /**
      * @return BelongsTo<CareEvent, $this>

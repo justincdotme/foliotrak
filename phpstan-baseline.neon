@@ -1,0 +1,1627 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Parameter \#2 \$dto of method App\\Console\\Commands\\IngestSensorReadings\:\:persist\(\) expects App\\DTOs\\SensorReading, App\\Contracts\\SensorReading given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/IngestSensorReadings.php
+
+		-
+			message: '#^Method App\\Contracts\\SensorReadingSource\:\:discoverSensors\(\) has invalid return type App\\Contracts\\SensorDevice\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Contracts/SensorReadingSource.php
+
+		-
+			message: '#^Method App\\Contracts\\SensorReadingSource\:\:readingsSince\(\) has invalid return type App\\Contracts\\SensorReading\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Contracts/SensorReadingSource.php
+
+		-
+			message: '#^Parameter \#1 \$plants of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Plant\>, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Plant\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/GroupInsightsController.php
+
+		-
+			message: '#^Parameter \#3 \$dueForCare of class App\\Http\\Resources\\PlantResource constructor expects array\<int, App\\Http\\Resources\\CareDue\>, list\<App\\Support\\Care\\CareDue\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/PlantController.php
+
+		-
+			message: '#^Parameter \#4 \$dueForCare of class App\\Http\\Resources\\PlantTimelineResource constructor expects array\<int, App\\Http\\Resources\\CareDue\>, list\<App\\Support\\Care\\CareDue\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/PlantTimelineController.php
+
+		-
+			message: '#^Access to property \$deviceName on an unknown class App\\Contracts\\SensorDevice\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/SensorController.php
+
+		-
+			message: '#^Access to property \$lastReading on an unknown class App\\Contracts\\SensorDevice\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/SensorController.php
+
+		-
+			message: '#^Access to property \$mac on an unknown class App\\Contracts\\SensorDevice\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/SensorController.php
+
+		-
+			message: '#^Iterating over an object of an unknown class App\\Http\\Controllers\\Collection\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/SensorController.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$sensorReadings contains unknown class App\\Http\\Controllers\\Collection\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/SensorController.php
+
+		-
+			message: '#^Access to property \$careEventType on an unknown class App\\Http\\Requests\\CareEvent\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Requests/UpdateCareEventRequest.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$event contains unknown class App\\Http\\Requests\\CareEvent\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Requests/UpdateCareEventRequest.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$daysLeft\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareDueResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$dueDate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareDueResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$intervalDays\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareDueResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareDueResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareDueResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\CareDue\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/CareDueResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$careEventType\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$care_event_type_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$equipmentChange\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$fertilizing\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$logged_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$note\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$observation\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$occurred_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$plant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$relocation\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$repotting\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$watering\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\CareEventResource\:\:getRelation\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\CareEventResource\:\:relationLoaded\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\CareEvent\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/CareEventResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventTypeResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventTypeResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventTypeResource\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventTypeResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventTypeResource\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventTypeResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventTypeResource\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CareEventTypeResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\CareEventType\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/CareEventTypeResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\EquipmentChangeDetailResource\:\:\$action\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentChangeDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\EquipmentChangeDetailResource\:\:\$care_event_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentChangeDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\EquipmentChangeDetailResource\:\:\$equipment_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentChangeDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\EquipmentChangeDetailResource\:\:\$equipment_label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentChangeDetailResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\EquipmentChangeDetail\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentChangeDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\EquipmentResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\EquipmentResource\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\EquipmentResource\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\EquipmentResource\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Equipment\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/EquipmentResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizerFormResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizerFormResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizerFormResource\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizerFormResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizerFormResource\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizerFormResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizerFormResource\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizerFormResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\FertilizerForm\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/FertilizerFormResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$amount_ml\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$brand\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$care_event_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$dose_pct\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$fertilizerForm\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$fertilizer_form_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$npk_k\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$npk_n\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$npk_p\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\FertilizingDetailResource\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\FertilizingDetail\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/FertilizingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LocationResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LocationResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\LocationResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/LocationResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Location\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/LocationResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\NutrientComponentResource\:\:\$note\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/NutrientComponentResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\NutrientComponentResource\:\:\$nutrient\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Resources/NutrientComponentResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\NutrientComponentResource\:\:\$nutrient_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/NutrientComponentResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\FertilizingNutrient\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/NutrientComponentResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\NutrientResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/NutrientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\NutrientResource\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/NutrientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\NutrientResource\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/NutrientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\NutrientResource\:\:\$symbol\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/NutrientResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Nutrient\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/NutrientResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$ambient_humidity_pct\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$ambient_temp_c\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$care_event_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$growth_note\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$growth_rate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$health_note\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$leaf_size_mm\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$light_level\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$overall_health\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$soil_moisture_precise\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$soil_moisture_relative\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$weight_grams\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Observation\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$caption\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$care_event_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$original_filename\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$plant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$taken_on\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$thumb_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\PhotoResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Photo\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/PhotoResource.php
+
+		-
+			message: '#^Parameter \$dueForCare of method App\\Http\\Resources\\PlantResource\:\:__construct\(\) has invalid type App\\Http\\Resources\\CareDue\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/PlantResource.php
+
+		-
+			message: '#^Property App\\Http\\Resources\\PlantResource\:\:\$dueForCare has unknown class App\\Http\\Resources\\CareDue as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/PlantResource.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Resources/PlantResource.php
+
+		-
+			message: '#^Parameter \$dueForCare of method App\\Http\\Resources\\PlantTimelineResource\:\:__construct\(\) has invalid type App\\Http\\Resources\\CareDue\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/PlantTimelineResource.php
+
+		-
+			message: '#^Property App\\Http\\Resources\\PlantTimelineResource\:\:\$dueForCare has unknown class App\\Http\\Resources\\CareDue as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/PlantTimelineResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/RecommendationResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\RelocationDetailResource\:\:\$care_event_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/RelocationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\RelocationDetailResource\:\:\$fromLocation\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/RelocationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\RelocationDetailResource\:\:\$toLocation\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/RelocationDetailResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\RelocationDetail\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/RelocationDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\RepottingDetailResource\:\:\$care_event_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/RepottingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\RepottingDetailResource\:\:\$fertilizer_added\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/RepottingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\RepottingDetailResource\:\:\$pot_size_unit\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/RepottingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\RepottingDetailResource\:\:\$pot_size_value\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/RepottingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\RepottingDetailResource\:\:\$soil_recipe\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/RepottingDetailResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\RepottingDetail\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/RepottingDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$device_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$location\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$mac\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Sensor\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SymptomResource\:\:\$category\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SymptomResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SymptomResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SymptomResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SymptomResource\:\:\$is_custom\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SymptomResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SymptomResource\:\:\$key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SymptomResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SymptomResource\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SymptomResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SymptomResource\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SymptomResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Symptom\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/SymptomResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TagResource\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TagResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TagResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TagResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\TagResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/TagResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\Tag\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/TagResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:getAttribute\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\User\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WateringDetailResource\:\:\$amount_ml\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WateringDetailResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\WateringDetailResource\:\:\$care_event_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/WateringDetailResource.php
+
+		-
+			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\WateringDetail\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Resources/WateringDetailResource.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\CareEventFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/CareEvent.php
+
+		-
+			message: '#^Type App\\Models\\CareEventFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\CareEventFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/CareEvent.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\LocationFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Location.php
+
+		-
+			message: '#^Type App\\Models\\LocationFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\LocationFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/Location.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\ObservationFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Observation.php
+
+		-
+			message: '#^Type App\\Models\\ObservationFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\ObservationFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/Observation.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\PhotoFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Photo.php
+
+		-
+			message: '#^Type App\\Models\\PhotoFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\PhotoFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/Photo.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\PlantFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Plant.php
+
+		-
+			message: '#^Type App\\Models\\PlantFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\PlantFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/Plant.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\SpeciesCacheFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/SpeciesCache.php
+
+		-
+			message: '#^Type App\\Models\\SpeciesCacheFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\SpeciesCacheFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/SpeciesCache.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\SymptomFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Symptom.php
+
+		-
+			message: '#^Type App\\Models\\SymptomFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\SymptomFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/Symptom.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\TagFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Tag.php
+
+		-
+			message: '#^Type App\\Models\\TagFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\TagFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/Tag.php
+
+		-
+			message: '#^PHPDoc tag @use has invalid type App\\Models\\UserFactory\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Type App\\Models\\UserFactory in generic type Illuminate\\Database\\Eloquent\\Factories\\HasFactory\<App\\Models\\UserFactory\> in PHPDoc tag @use is not subtype of template type TFactory of Illuminate\\Database\\Eloquent\\Factories\\Factory of trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to property \$occurred_at on an unknown class App\\Support\\Care\\CareEvent\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Support/Care/CareSchedule.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Support\\Care\\CareEvent\>\:\:map\(\) expects callable\(App\\Support\\Care\\CareEvent, int\)\: Illuminate\\Support\\Carbon, Closure\(App\\Models\\CareEvent\)\: Illuminate\\Support\\Carbon given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/Care/CareSchedule.php
+
+		-
+			message: '#^Method App\\Support\\Care\\ScheduledCareType\:\:events\(\) has invalid return type App\\Support\\Care\\CareEvent\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Care/ScheduledCareType.php
+
+		-
+			message: '#^Method App\\Support\\Care\\ScheduledCareType\:\:events\(\) should return Illuminate\\Database\\Eloquent\\Collection\<int, App\\Support\\Care\\CareEvent\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\CareEvent\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Support/Care/ScheduledCareType.php
+
+		-
+			message: '#^Type App\\Support\\Care\\CareEvent in generic type Illuminate\\Database\\Eloquent\\Collection\<int, App\\Support\\Care\\CareEvent\> in PHPDoc tag @return is not subtype of template type TModel of Illuminate\\Database\\Eloquent\\Model of class Illuminate\\Database\\Eloquent\\Collection\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: app/Support/Care/ScheduledCareType.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\Factor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/Factor.php
+
+		-
+			message: '#^Access to property \$observationEvents on an unknown class App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/HumidityFactor.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\HumidityFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/HumidityFactor.php
+
+		-
+			message: '#^Access to property \$observationEvents on an unknown class App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/LightLevelFactor.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\LightLevelFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/LightLevelFactor.php
+
+		-
+			message: '#^Parameter \#1 \$plant of static method App\\Support\\SymptomEpisodeResolver\:\:forPlant\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/Correlation/PestResolutionFactor.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\PestResolutionFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/PestResolutionFactor.php
+
+		-
+			message: '#^Access to property \$observationEvents on an unknown class App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/SoilMoistureFactor.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\SoilMoistureFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/SoilMoistureFactor.php
+
+		-
+			message: '#^Access to property \$observationEvents on an unknown class App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/WateringIntervalFactor.php
+
+		-
+			message: '#^Access to property \$wateringEvents on an unknown class App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/WateringIntervalFactor.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\WateringIntervalFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/WateringIntervalFactor.php
+
+		-
+			message: '#^Call to method key\(\) on an unknown class App\\Support\\Factor\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/CorrelationEngine.php
+
+		-
+			message: '#^Call to method outcomeKey\(\) on an unknown class App\\Support\\Factor\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/CorrelationEngine.php
+
+		-
+			message: '#^Call to method pairs\(\) on an unknown class App\\Support\\Factor\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/CorrelationEngine.php
+
+		-
+			message: '#^Call to method relations\(\) on an unknown class App\\Support\\Factor\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/CorrelationEngine.php
+
+		-
+			message: '#^Method App\\Support\\CorrelationEngine\:\:defaultFactors\(\) has invalid return type App\\Support\\Factor\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/CorrelationEngine.php
+
+		-
+			message: '#^Method App\\Support\\CorrelationEngine\:\:defaultFactors\(\) should return list\<App\\Support\\Factor\> but returns array\{App\\Support\\Correlation\\WateringIntervalFactor, App\\Support\\Correlation\\HumidityFactor, App\\Support\\Correlation\\LightLevelFactor, App\\Support\\Correlation\\SoilMoistureFactor, App\\Support\\Correlation\\PestResolutionFactor\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Support/CorrelationEngine.php
+
+		-
+			message: '#^Parameter \$factors of method App\\Support\\CorrelationEngine\:\:forPlants\(\) has invalid type App\\Support\\Factor\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/CorrelationEngine.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\CorrelationEngine\:\:forPlants\(\) has invalid type App\\Support\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/CorrelationEngine.php
+
+		-
+			message: '#^Method App\\Support\\RecommendationEngine\:\:recentSoilReadings\(\) has invalid return type App\\Support\\SoilMoistureLevel\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/RecommendationEngine.php
+
+		-
+			message: '#^Method App\\Support\\RecommendationEngine\:\:recentSoilReadings\(\) should return list\<array\{precise\: int\|null, relative\: App\\Support\\SoilMoistureLevel\|null\}\> but returns list\<array\{precise\: int\|null, relative\: App\\Enums\\SoilMoistureLevel\|null\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Support/RecommendationEngine.php
+
+		-
+			message: '#^Call to method diffInDays\(\) on an unknown class App\\Support\\Carbon\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/SymptomEpisodeResolver.php
+
+		-
+			message: '#^Call to method toDateString\(\) on an unknown class App\\Support\\Carbon\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Support/SymptomEpisodeResolver.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$active contains unknown class App\\Support\\Carbon\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/SymptomEpisodeResolver.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$active contains unknown class App\\Support\\Symptom\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/SymptomEpisodeResolver.php
+
+		-
+			message: '#^Call to method numericValue\(\) on an unknown class App\\Support\\SoilMoistureLevel\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/WateringScheduleRecommender.php
+
+		-
+			message: '#^Parameter \$reading of method App\\Support\\WateringScheduleRecommender\:\:soilNumeric\(\) has invalid type App\\Support\\SoilMoistureLevel\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/WateringScheduleRecommender.php
+
+		-
+			message: '#^Parameter \$soilReadings of method App\\Support\\WateringScheduleRecommender\:\:recommend\(\) has invalid type App\\Support\\SoilMoistureLevel\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/WateringScheduleRecommender.php
+
+		-
+			message: '#^Parameter \$soilReadings of method App\\Support\\WateringScheduleRecommender\:\:withSoilAdjustment\(\) has invalid type App\\Support\\SoilMoistureLevel\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/WateringScheduleRecommender.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type DateTime\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: database/factories/PlantFactory.php
+
+		-
+			message: '#^PHPDoc tag @extends has invalid type Database\\Factories\\User\.$#'
+			identifier: class.notFound
+			count: 1
+			path: database/factories/UserFactory.php
+
+		-
+			message: '#^Type Database\\Factories\\User in generic type Illuminate\\Database\\Eloquent\\Factories\\Factory\<Database\\Factories\\User\> in PHPDoc tag @extends is not subtype of template type TModel of Illuminate\\Database\\Eloquent\\Model of class Illuminate\\Database\\Eloquent\\Factories\\Factory\.$#'
+			identifier: generics.notSubtype
+			count: 1
+			path: database/factories/UserFactory.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: database/seeders/DatabaseSeeder.php
+
+		-
+			message: '#^Access to property \$email on an unknown class Database\\Factories\\User\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/Browser/AuthTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: tests/Browser/AuthTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: tests/Browser/CareLoggingTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/CareLoggingTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: tests/Browser/CoverPhotoTest.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: tests/Browser/CoverPhotoTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 7
+			path: tests/Browser/PlantsListTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/PlantsListTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/ScheduleStartDateTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/ScheduleStartDateTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: tests/Browser/ShellNavigationTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: tests/Browser/SmokeTest.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: tests/DuskTestCase.php
+
+		-
+			message: '#^Access to property \$email on an unknown class Database\\Factories\\User\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/Feature/AuthTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of method Illuminate\\Foundation\\Testing\\TestCase\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/AuthTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/AuthTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\CareEventApiTest\:\:actAsHousehold\(\) should return App\\Models\\User but returns Database\\Factories\\User\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/CareEventApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/CareEventApiTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\CareEventWriteResourceTest\:\:actAsHousehold\(\) should return App\\Models\\User but returns Database\\Factories\\User\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/CareEventWriteResourceTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/CareEventWriteResourceTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/Feature/CareLookupApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$plants of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Plant\>, Illuminate\\Support\\Collection\<int, App\\Models\\Plant\> given\.$#'
+			identifier: argument.type
+			count: 6
+			path: tests/Feature/CorrelationFactorsTest.php
+
+		-
+			message: '#^Parameter \#2 \$factors of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects list\<App\\Support\\Factor\>\|null, array\{App\\Support\\Correlation\\HumidityFactor\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/CorrelationFactorsTest.php
+
+		-
+			message: '#^Parameter \#2 \$factors of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects list\<App\\Support\\Factor\>\|null, array\{App\\Support\\Correlation\\LightLevelFactor\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/CorrelationFactorsTest.php
+
+		-
+			message: '#^Parameter \#2 \$factors of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects list\<App\\Support\\Factor\>\|null, array\{App\\Support\\Correlation\\SoilMoistureFactor\} given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Feature/CorrelationFactorsTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\DashboardApiTest\:\:actAsHousehold\(\) should return App\\Models\\User but returns Database\\Factories\\User\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/DashboardApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/DashboardApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of function Pest\\Laravel\\actingAs expects Illuminate\\Contracts\\Auth\\Authenticatable, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/Feature/EquipmentApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of function Pest\\Laravel\\actingAs expects Illuminate\\Contracts\\Auth\\Authenticatable, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 6
+			path: tests/Feature/EquipmentChangeTimelineTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\GroupInsightsApiTest\:\:actAsHousehold\(\) should return App\\Models\\User but returns Database\\Factories\\User\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/GroupInsightsApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/GroupInsightsApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Feature/LocationApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$plants of method App\\Support\\Correlation\\PestResolutionFactor\:\:pairs\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Correlation\\Plant\>, Illuminate\\Support\\Collection\<int, App\\Models\\Plant\> given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/Feature/PestResolutionFactorTest.php
+
+		-
+			message: '#^Parameter \#1 \$plants of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Plant\>, Illuminate\\Support\\Collection\<int, App\\Models\\Plant\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/PestResolutionFactorTest.php
+
+		-
+			message: '#^Parameter \#2 \$factors of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects list\<App\\Support\\Factor\>\|null, array\{App\\Support\\Correlation\\PestResolutionFactor\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/PestResolutionFactorTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/PhotoApiTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\PlantApiTest\:\:actAsHousehold\(\) should return App\\Models\\User but returns Database\\Factories\\User\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/PlantApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/PlantApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/PlantConditionApiTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\PlantRecommendationApiTest\:\:actAsHousehold\(\) should return App\\Models\\User but returns Database\\Factories\\User\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/PlantRecommendationApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/PlantRecommendationApiTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\PlantTimelineApiTest\:\:actAsHousehold\(\) should return App\\Models\\User but returns Database\\Factories\\User\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/PlantTimelineApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/PlantTimelineApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/RelocationApiTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\SendCareRemindersTest\:\:userWithKey\(\) should return App\\Models\\User but returns Database\\Factories\\User\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/SendCareRemindersTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\SensorSnapshotTest\:\:\$user \(App\\Models\\User\) does not accept Database\\Factories\\User\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/SensorSnapshotTest.php
+
+		-
+			message: '#^Call to method refresh\(\) on an unknown class Database\\Factories\\User\.$#'
+			identifier: class.notFound
+			count: 2
+			path: tests/Feature/SettingsApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 4
+			path: tests/Feature/SettingsApiTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/SpeciesSuggestTest.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Laravel\\Sanctum\\Sanctum\<Laravel\\Sanctum\\PersonalAccessToken\>\:\:actingAs\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable\|Laravel\\Sanctum\\HasApiTokens, Database\\Factories\\User given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/TagApiTest.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between App\\Support\\Care\\CareDue and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: tests/Unit/Care/CareDueTest.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type App\\Support\\Care\\CareDue\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: tests/Unit/Care/CareDueTest.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Support\\Care\\CareDue\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: tests/Unit/Care/CareDueTest.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between App\\Support\\Care\\CareDue and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: tests/Unit/Care/CareScheduleTest.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type App\\Support\\Care\\CareDue\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: tests/Unit/Care/CareScheduleTest.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Support\\Care\\CareDue\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 7
+			path: tests/Unit/Care/CareScheduleTest.php
+
+		-
+			message: '#^Access to property \$occurred_at on an unknown class App\\Support\\Care\\CareEvent\.$#'
+			identifier: class.notFound
+			count: 2
+			path: tests/Unit/Care/ScheduledCareTypeTest.php
+
+		-
+			message: '#^Access to property \$id on an unknown class Database\\Factories\\User\.$#'
+			identifier: class.notFound
+			count: 4
+			path: tests/Unit/CareEventSpineTest.php
+
+		-
+			message: '#^Parameter \#2 \$factors of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects list\<App\\Support\\Factor\>\|null, array\{App\\Support\\Correlation\\Factor, App\\Support\\Correlation\\Factor@anonymous/tests/Unit/CorrelationEngineTest\.php\:130\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/CorrelationEngineTest.php
+
+		-
+			message: '#^Parameter \#2 \$factors of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects list\<App\\Support\\Factor\>\|null, array\{App\\Support\\Correlation\\Factor@anonymous/tests/Unit/CorrelationEngineTest\.php\:87\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/CorrelationEngineTest.php
+
+		-
+			message: '#^Parameter \#2 \$factors of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects list\<App\\Support\\Factor\>\|null, array\{App\\Support\\Correlation\\Factor\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/CorrelationEngineTest.php
+
+		-
+			message: '#^Return type \(array\<string, string\>\) of method App\\Support\\Correlation\\Factor@anonymous/tests/Unit/CorrelationEngineTest\.php\:130\:\:relations\(\) should be compatible with return type \(list\<string\>\) of method App\\Support\\Correlation\\Factor\:\:relations\(\)$#'
+			identifier: method.childReturnType
+			count: 1
+			path: tests/Unit/CorrelationEngineTest.php
+
+		-
+			message: '#^Return type \(array\<string, string\>\) of method App\\Support\\Correlation\\Factor@anonymous/tests/Unit/CorrelationEngineTest\.php\:21\:\:relations\(\) should be compatible with return type \(list\<string\>\) of method App\\Support\\Correlation\\Factor\:\:relations\(\)$#'
+			identifier: method.childReturnType
+			count: 1
+			path: tests/Unit/CorrelationEngineTest.php
+
+		-
+			message: '#^Return type \(array\<string, string\>\) of method App\\Support\\Correlation\\Factor@anonymous/tests/Unit/CorrelationEngineTest\.php\:87\:\:relations\(\) should be compatible with return type \(list\<string\>\) of method App\\Support\\Correlation\\Factor\:\:relations\(\)$#'
+			identifier: method.childReturnType
+			count: 1
+			path: tests/Unit/CorrelationEngineTest.php
+
+		-
+			message: '#^Parameter \#6 \$soilReadings of static method App\\Support\\WateringScheduleRecommender\:\:recommend\(\) expects list\<array\{precise\: int\|null, relative\: App\\Support\\SoilMoistureLevel\|null\}\>, array\{array\{precise\: 5, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}, array\{precise\: 5, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}, array\{precise\: 5, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/WateringScheduleRecommenderTest.php
+
+		-
+			message: '#^Parameter \#6 \$soilReadings of static method App\\Support\\WateringScheduleRecommender\:\:recommend\(\) expects list\<array\{precise\: int\|null, relative\: App\\Support\\SoilMoistureLevel\|null\}\>, array\{array\{precise\: null, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}, array\{precise\: null, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}, array\{precise\: null, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/WateringScheduleRecommenderTest.php

@@ -17,18 +17,20 @@ class CareEventSpineTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(CareLookupSeeder::class);
     }
 
+    /** @return void */
     public function test_build_creates_spine_row_with_explicit_occurred_at(): void
     {
-        $plant = Plant::factory()->create();
-        $user = User::factory()->create();
+        $plant      = Plant::factory()->create();
+        $user       = User::factory()->create();
         $occurredAt = '2026-06-20T08:30:00Z';
-        $note = 'Test watering';
+        $note       = 'Test watering';
 
         $spine = CareEventSpine::build(
             plant: $plant,
@@ -39,19 +41,20 @@ class CareEventSpineTest extends TestCase
         );
 
         $this->assertDatabaseHas('care_events', [
-            'id' => $spine->id,
-            'plant_id' => $plant->id,
+            'id'                 => $spine->id,
+            'plant_id'           => $plant->id,
             'care_event_type_id' => CareEventType::idFor('watering'),
-            'logged_by_user_id' => $user->id,
-            'note' => $note,
+            'logged_by_user_id'  => $user->id,
+            'note'               => $note,
         ]);
         $this->assertTrue($spine->fresh()->occurred_at->equalTo(Carbon::parse($occurredAt)));
     }
 
+    /** @return void */
     public function test_build_defaults_occurred_at_to_now_when_null(): void
     {
-        $plant = Plant::factory()->create();
-        $user = User::factory()->create();
+        $plant      = Plant::factory()->create();
+        $user       = User::factory()->create();
         $beforeCall = now()->floorSeconds();
 
         $spine = CareEventSpine::build(
@@ -69,14 +72,14 @@ class CareEventSpineTest extends TestCase
             $refreshed->occurred_at,
             $this->logicalAnd(
                 $this->greaterThanOrEqual($beforeCall),
-                $this->lessThanOrEqual($afterCall)
-            )
+                $this->lessThanOrEqual($afterCall),
+            ),
         );
         $this->assertDatabaseHas('care_events', [
-            'id' => $spine->id,
-            'plant_id' => $plant->id,
+            'id'                => $spine->id,
+            'plant_id'          => $plant->id,
             'logged_by_user_id' => $user->id,
-            'note' => null,
+            'note'              => null,
         ]);
     }
 }

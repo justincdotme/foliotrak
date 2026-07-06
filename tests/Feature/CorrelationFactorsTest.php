@@ -21,6 +21,7 @@ class CorrelationFactorsTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,19 +29,33 @@ class CorrelationFactorsTest extends TestCase
         $this->seed(CareLookupSeeder::class);
     }
 
+    /**
+     * @return array<string, array{class-string}>
+     */
+    public static function belowMinimumSampleFactors(): array
+    {
+        return [
+            'humidity'      => [HumidityFactor::class],
+            'light_level'   => [LightLevelFactor::class],
+            'soil_moisture' => [SoilMoistureFactor::class],
+        ];
+    }
+
+    /** @return void */
     public function test_humidity_factor_emits_pairs_from_ambient_humidity_and_health(): void
     {
         $plant = Plant::factory()->create();
 
         // Five valid observations plus two that should be skipped (null fields).
         $fixtures = [[40, 1], [50, 2], [60, 3], [70, 4], [80, 5]];
+
         foreach ($fixtures as $i => [$humidity, $health]) {
             $event = CareEvent::factory()->ofType('observation')->for($plant)->create([
                 'occurred_at' => now()->subDays(10 - $i),
             ]);
             Observation::factory()->create([
-                'care_event_id' => $event->id,
-                'overall_health' => $health,
+                'care_event_id'        => $event->id,
+                'overall_health'       => $health,
                 'ambient_humidity_pct' => $humidity,
             ]);
         }
@@ -48,16 +63,16 @@ class CorrelationFactorsTest extends TestCase
         // Null humidity: should be skipped.
         $nullHumidity = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(2)]);
         Observation::factory()->create([
-            'care_event_id' => $nullHumidity->id,
-            'overall_health' => 3,
+            'care_event_id'        => $nullHumidity->id,
+            'overall_health'       => 3,
             'ambient_humidity_pct' => null,
         ]);
 
         // Null health: should be skipped.
         $nullHealth = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(1)]);
         Observation::factory()->create([
-            'care_event_id' => $nullHealth->id,
-            'overall_health' => null,
+            'care_event_id'        => $nullHealth->id,
+            'overall_health'       => null,
             'ambient_humidity_pct' => 55,
         ]);
 
@@ -71,42 +86,45 @@ class CorrelationFactorsTest extends TestCase
         $this->assertSame(5, $pair['sample_size']);
 
         $points = collect($pair['points'])->sortBy('x')->values();
+
         foreach ($fixtures as $idx => [$humidity, $health]) {
             $this->assertSame((float) $humidity, $points[$idx]['x']);
             $this->assertSame((float) $health, $points[$idx]['y']);
         }
     }
 
+    /** @return void */
     public function test_light_level_factor_emits_pairs_from_light_level_and_health(): void
     {
         $plant = Plant::factory()->create();
 
         $fixtures = [[1, 5], [3, 4], [5, 3], [7, 2], [9, 1]];
+
         foreach ($fixtures as $i => [$lightLevel, $health]) {
             $event = CareEvent::factory()->ofType('observation')->for($plant)->create([
                 'occurred_at' => now()->subDays(10 - $i),
             ]);
             Observation::factory()->create([
-                'care_event_id' => $event->id,
+                'care_event_id'  => $event->id,
                 'overall_health' => $health,
-                'light_level' => $lightLevel,
+                'light_level'    => $lightLevel,
             ]);
         }
 
         // Null light_level: should be skipped.
         $nullLight = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(2)]);
         Observation::factory()->create([
-            'care_event_id' => $nullLight->id,
+            'care_event_id'  => $nullLight->id,
             'overall_health' => 3,
-            'light_level' => null,
+            'light_level'    => null,
         ]);
 
         // Null health: should be skipped.
         $nullHealth = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(1)]);
         Observation::factory()->create([
-            'care_event_id' => $nullHealth->id,
+            'care_event_id'  => $nullHealth->id,
             'overall_health' => null,
-            'light_level' => 5,
+            'light_level'    => 5,
         ]);
 
         $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
@@ -119,26 +137,29 @@ class CorrelationFactorsTest extends TestCase
         $this->assertSame(5, $pair['sample_size']);
 
         $points = collect($pair['points'])->sortBy('x')->values();
+
         foreach ($fixtures as $idx => [$lightLevel, $health]) {
             $this->assertSame((float) $lightLevel, $points[$idx]['x']);
             $this->assertSame((float) $health, $points[$idx]['y']);
         }
     }
 
+    /** @return void */
     public function test_soil_moisture_factor_uses_precise_value_when_present(): void
     {
         $plant = Plant::factory()->create();
 
         // soil_moisture_precise takes priority over soil_moisture_relative.
         $fixtures = [[1, 5], [3, 4], [5, 3], [7, 2], [9, 1]];
+
         foreach ($fixtures as $i => [$precise, $health]) {
             $event = CareEvent::factory()->ofType('observation')->for($plant)->create([
                 'occurred_at' => now()->subDays(10 - $i),
             ]);
             Observation::factory()->create([
-                'care_event_id' => $event->id,
-                'overall_health' => $health,
-                'soil_moisture_precise' => $precise,
+                'care_event_id'          => $event->id,
+                'overall_health'         => $health,
+                'soil_moisture_precise'  => $precise,
                 'soil_moisture_relative' => SoilMoistureLevel::Wet, // present but must be ignored
             ]);
         }
@@ -153,12 +174,14 @@ class CorrelationFactorsTest extends TestCase
         $this->assertSame(5, $pair['sample_size']);
 
         $points = collect($pair['points'])->sortBy('x')->values();
+
         foreach ($fixtures as $idx => [$precise, $health]) {
             $this->assertSame((float) $precise, $points[$idx]['x']);
             $this->assertSame((float) $health, $points[$idx]['y']);
         }
     }
 
+    /** @return void */
     public function test_soil_moisture_factor_falls_back_to_relative_enum_mapping_when_precise_is_null(): void
     {
         $plant = Plant::factory()->create();
@@ -177,9 +200,9 @@ class CorrelationFactorsTest extends TestCase
                 'occurred_at' => now()->subDays(10 - $i),
             ]);
             Observation::factory()->create([
-                'care_event_id' => $event->id,
-                'overall_health' => $health,
-                'soil_moisture_precise' => null,
+                'care_event_id'          => $event->id,
+                'overall_health'         => $health,
+                'soil_moisture_precise'  => null,
                 'soil_moisture_relative' => $relative,
             ]);
         }
@@ -192,12 +215,14 @@ class CorrelationFactorsTest extends TestCase
 
         // Sort by y (health) descending to align with fixture order by occurred_at.
         $points = collect($result[0]['points'])->sortByDesc('y')->values();
+
         foreach ($fixtures as $idx => [, $expectedX, $health]) {
             $this->assertSame($expectedX, $points[$idx]['x']);
             $this->assertSame((float) $health, $points[$idx]['y']);
         }
     }
 
+    /** @return void */
     public function test_soil_moisture_factor_skips_observations_with_both_moisture_values_null(): void
     {
         $plant = Plant::factory()->create();
@@ -208,9 +233,9 @@ class CorrelationFactorsTest extends TestCase
                 'occurred_at' => now()->subDays(10 - $i),
             ]);
             Observation::factory()->create([
-                'care_event_id' => $event->id,
-                'overall_health' => 3,
-                'soil_moisture_precise' => 5,
+                'care_event_id'          => $event->id,
+                'overall_health'         => 3,
+                'soil_moisture_precise'  => 5,
                 'soil_moisture_relative' => null,
             ]);
         }
@@ -221,9 +246,9 @@ class CorrelationFactorsTest extends TestCase
                 'occurred_at' => now()->subDays($i + 1),
             ]);
             Observation::factory()->create([
-                'care_event_id' => $event->id,
-                'overall_health' => 4,
-                'soil_moisture_precise' => null,
+                'care_event_id'          => $event->id,
+                'overall_health'         => 4,
+                'soil_moisture_precise'  => null,
                 'soil_moisture_relative' => null,
             ]);
         }
@@ -236,19 +261,9 @@ class CorrelationFactorsTest extends TestCase
     }
 
     /**
-     * @return array<string, array{class-string}>
-     */
-    public static function belowMinimumSampleFactors(): array
-    {
-        return [
-            'humidity' => [HumidityFactor::class],
-            'light_level' => [LightLevelFactor::class],
-            'soil_moisture' => [SoilMoistureFactor::class],
-        ];
-    }
-
-    /**
-     * @param  class-string  $factorClass
+     * @param string $factorClass
+     *
+     * @return void
      */
     #[DataProvider('belowMinimumSampleFactors')]
     public function test_factor_is_omitted_when_sample_count_is_below_minimum(string $factorClass): void
@@ -260,10 +275,10 @@ class CorrelationFactorsTest extends TestCase
                 'occurred_at' => now()->subDays(10 - $i),
             ]);
             Observation::factory()->create([
-                'care_event_id' => $event->id,
-                'overall_health' => 3,
-                'ambient_humidity_pct' => 55,
-                'light_level' => 6,
+                'care_event_id'         => $event->id,
+                'overall_health'        => 3,
+                'ambient_humidity_pct'  => 55,
+                'light_level'           => 6,
                 'soil_moisture_precise' => 5,
             ]);
         }

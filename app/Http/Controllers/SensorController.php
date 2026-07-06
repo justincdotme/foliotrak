@@ -17,31 +17,44 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
+use Throwable;
 
 class SensorController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * Number of color palette entries
+     *
+     * @var int
+     */
     private const PALETTE_SIZE = 8;
 
+    /**
+     * @return AnonymousResourceCollection
+     */
     public function index(): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Sensor::class);
 
         return SensorResource::collection(
-            Sensor::query()->withCount('plants')->orderBy('name')->get()
+            Sensor::query()->withCount('plants')->orderBy('name')->get(),
         );
     }
 
+    /**
+     * @param StoreSensorRequest $request
+     *
+     * @return JsonResponse
+     */
     public function store(StoreSensorRequest $request): JsonResponse
     {
         $this->authorize('create', Sensor::class);
 
         $data = $request->validated();
 
-        $index = Sensor::query()->count() % self::PALETTE_SIZE;
-        $data['color'] = 'var(--series-'.($index + 1).')';
+        $index         = Sensor::query()->count() % self::PALETTE_SIZE;
+        $data['color'] = 'var(--series-' . ($index + 1) . ')';
 
         $sensor = Sensor::create($data);
         $sensor->loadCount('plants');
@@ -51,6 +64,12 @@ class SensorController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    /**
+     * @param UpdateSensorRequest $request
+     * @param Sensor              $sensor
+     *
+     * @return SensorResource
+     */
     public function update(UpdateSensorRequest $request, Sensor $sensor): SensorResource
     {
         $this->authorize('update', $sensor);
@@ -61,6 +80,11 @@ class SensorController extends Controller
         return SensorResource::make($sensor);
     }
 
+    /**
+     * @param Sensor $sensor
+     *
+     * @return Response
+     */
     public function destroy(Sensor $sensor): Response
     {
         $this->authorize('delete', $sensor);
@@ -70,25 +94,30 @@ class SensorController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * @param SensorReadingSource $source
+     *
+     * @return JsonResponse
+     */
     public function discover(SensorReadingSource $source): JsonResponse
     {
         $this->authorize('viewAny', Sensor::class);
 
         $baseUrl = config('sensors.base_url');
-        $apiKey = config('sensors.api_key');
+        $apiKey  = config('sensors.api_key');
 
         if (empty($baseUrl) || empty($apiKey)) {
             return response()->json([
-                'data' => [],
+                'data'  => [],
                 'error' => 'Gateway URL or API key not set',
             ]);
         }
 
         try {
             $devices = $source->discoverSensors();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json([
-                'data' => [],
+                'data'  => [],
                 'error' => $e->getMessage(),
             ]);
         }
@@ -99,13 +128,13 @@ class SensorController extends Controller
             $reading = $device->lastReading;
 
             return [
-                'mac' => $device->mac,
-                'device_name' => $device->deviceName,
+                'mac'          => $device->mac,
+                'device_name'  => $device->deviceName,
                 'last_reading' => $reading ? [
                     'temperature' => $reading->temperature,
-                    'humidity' => $reading->humidity,
-                    'battery' => $reading->battery,
-                    'rssi' => $reading->rssi,
+                    'humidity'    => $reading->humidity,
+                    'battery'     => $reading->battery,
+                    'rssi'        => $reading->rssi,
                     'recorded_at' => $reading->recordedAt->format('Y-m-d\TH:i:s\Z'),
                 ] : null,
                 'registered' => in_array($device->mac, $registeredMacs, true),
@@ -115,18 +144,23 @@ class SensorController extends Controller
         return response()->json(['data' => $discovered]);
     }
 
+    /**
+     * @param SensorReadingSource $source
+     *
+     * @return JsonResponse
+     */
     public function testConnection(SensorReadingSource $source): JsonResponse
     {
         $this->authorize('viewAny', Sensor::class);
 
         $baseUrl = config('sensors.base_url');
-        $apiKey = config('sensors.api_key');
+        $apiKey  = config('sensors.api_key');
 
         if (empty($baseUrl) || empty($apiKey)) {
             return response()->json([
                 'data' => [
                     'status' => 'not_configured',
-                    'error' => 'Gateway URL or API key not set',
+                    'error'  => 'Gateway URL or API key not set',
                 ],
             ]);
         }
@@ -135,22 +169,28 @@ class SensorController extends Controller
 
         return response()->json([
             'data' => array_filter([
-                'status' => $status->status,
+                'status'            => $status->status,
                 'collector_running' => $status->collectorRunning,
-                'sensors_seen' => $status->sensorsSeen,
-                'uptime_seconds' => $status->uptimeSeconds,
-                'error' => $status->error,
+                'sensors_seen'      => $status->sensorsSeen,
+                'uptime_seconds'    => $status->uptimeSeconds,
+                'error'             => $status->error,
             ], fn ($v) => $v !== null),
         ]);
     }
 
+    /**
+     * @param Request $request
+     * @param Plant   $plant
+     *
+     * @return JsonResponse
+     */
     public function plantReadings(Request $request, Plant $plant): JsonResponse
     {
         $this->authorize('view', $plant);
 
         $range = $request->query('range', 'week');
         $since = match ($range) {
-            'day' => Carbon::now()->subDay(),
+            'day'   => Carbon::now()->subDay(),
             'month' => Carbon::now()->subDays(30),
             default => Carbon::now()->subDays(7),
         };
@@ -166,37 +206,45 @@ class SensorController extends Controller
         $grouped = $readings->groupBy('sensor_id');
 
         $sensors = [];
+
         foreach ($plant->sensors as $sensor) {
             /** @var Collection<int, SensorReading> $sensorReadings */
             $sensorReadings = $grouped->get($sensor->id, collect());
 
             $formattedReadings = [];
+
             foreach ($sensorReadings as $r) {
                 /** @var Carbon $recordedAt */
-                $recordedAt = $r->recorded_at;
+                $recordedAt          = $r->recorded_at;
                 $formattedReadings[] = [
                     'temperature_f' => round($r->temperature * 9 / 5 + 32, 1),
-                    'humidity' => $r->humidity,
-                    'recorded_at' => $recordedAt->format('Y-m-d\TH:i:s\Z'),
+                    'humidity'      => $r->humidity,
+                    'recorded_at'   => $recordedAt->format('Y-m-d\TH:i:s\Z'),
                 ];
             }
 
             $sensors[] = [
-                'id' => $sensor->id,
-                'name' => $sensor->name,
-                'color' => $sensor->color,
+                'id'       => $sensor->id,
+                'name'     => $sensor->name,
+                'color'    => $sensor->color,
                 'readings' => $formattedReadings,
             ];
         }
 
         return response()->json([
             'data' => [
-                'sensors' => $sensors,
+                'sensors'             => $sensors,
                 'granularity_minutes' => config('sensors.granularity'),
             ],
         ]);
     }
 
+    /**
+     * @param Request $request
+     * @param Plant   $plant
+     *
+     * @return JsonResponse|Response
+     */
     public function snapshot(Request $request, Plant $plant): JsonResponse|Response
     {
         $this->authorize('view', $plant);
@@ -259,9 +307,9 @@ class SensorController extends Controller
         }
 
         $response = [
-            'ambient_temp_c' => (float) number_format($readings->avg('temperature'), 1, '.', ''),
+            'ambient_temp_c'       => (float) number_format($readings->avg('temperature'), 1, '.', ''),
             'ambient_humidity_pct' => (float) number_format($readings->avg('humidity'), 1, '.', ''),
-            'sensor_count' => $readings->count(),
+            'sensor_count'         => $readings->count(),
         ];
 
         if ($readings->count() === 1) {

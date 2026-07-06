@@ -6,8 +6,8 @@ namespace App\Enums;
 
 enum GrowthRate: string
 {
-    case None = 'none';
-    case Slow = 'slow';
+    case None     = 'none';
+    case Slow     = 'slow';
     case Moderate = 'moderate';
-    case Fast = 'fast';
+    case Fast     = 'fast';
 }

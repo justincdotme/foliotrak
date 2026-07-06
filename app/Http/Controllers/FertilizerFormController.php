@@ -10,10 +10,13 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class FertilizerFormController extends Controller
 {
+    /**
+     * @return AnonymousResourceCollection
+     */
     public function index(): AnonymousResourceCollection
     {
         return FertilizerFormResource::collection(
-            FertilizerForm::query()->orderBy('sort_order')->get()
+            FertilizerForm::query()->orderBy('sort_order')->get(),
         );
     }
 }

@@ -15,6 +15,11 @@ class PlantTimelineController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * @param Plant $plant
+     *
+     * @return PlantTimelineResource
+     */
     public function show(Plant $plant): PlantTimelineResource
     {
         $this->authorize('view', $plant);
@@ -27,18 +32,18 @@ class PlantTimelineController extends Controller
             'wateringEvents',
             'fertilizingEvents',
             'observationEvents.observation',
-            'photos' => fn ($query) => $query->orderByDesc('taken_on'),
+            'photos'     => fn ($query) => $query->orderByDesc('taken_on'),
             'careEvents' => fn ($query) => $query->orderByDesc('occurred_at')->orderBy('id'),
             'careEvents.careEventType',
             ...array_map(fn (string $r) => "careEvents.$r", CareEventResource::allDetailRelations()),
         ]);
 
         $observations = $plant->observationEvents;
-        $trends = [
-            'health' => Trends::health($observations),
-            'weight' => Trends::weight($observations),
-            'growth' => Trends::growth($observations),
-            'light' => Trends::light($observations),
+        $trends       = [
+            'health'    => Trends::health($observations),
+            'weight'    => Trends::weight($observations),
+            'growth'    => Trends::growth($observations),
+            'light'     => Trends::light($observations),
             'leaf_size' => Trends::leafSize($observations),
         ];
 

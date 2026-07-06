@@ -19,6 +19,7 @@ use Illuminate\Database\Seeder;
  */
 class CareLookupSeeder extends Seeder
 {
+    /** @return void */
     public function run(): void
     {
         $this->seedCareEventTypes();
@@ -28,6 +29,7 @@ class CareLookupSeeder extends Seeder
         $this->seedEquipment();
     }
 
+    /** @return void */
     private function seedCareEventTypes(): void
     {
         $types = [
@@ -47,6 +49,7 @@ class CareLookupSeeder extends Seeder
         }
     }
 
+    /** @return void */
     private function seedFertilizerForms(): void
     {
         $forms = [
@@ -66,6 +69,7 @@ class CareLookupSeeder extends Seeder
         }
     }
 
+    /** @return void */
     private function seedNutrients(): void
     {
         $nutrients = [
@@ -83,6 +87,7 @@ class CareLookupSeeder extends Seeder
         }
     }
 
+    /** @return void */
     private function seedSymptoms(): void
     {
         $symptoms = [
@@ -107,15 +112,16 @@ class CareLookupSeeder extends Seeder
             Symptom::firstOrCreate(
                 ['key' => $symptom['key']],
                 [
-                    'category' => $symptom['category'],
-                    'label' => $symptom['label'],
+                    'category'   => $symptom['category'],
+                    'label'      => $symptom['label'],
                     'sort_order' => $order + 1,
-                    'is_custom' => false,
+                    'is_custom'  => false,
                 ],
             );
         }
     }
 
+    /** @return void */
     private function seedEquipment(): void
     {
         $items = [

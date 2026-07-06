@@ -19,30 +19,12 @@ class PlantConditionApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(CareLookupSeeder::class);
         Sanctum::actingAs(User::factory()->create());
-    }
-
-    /**
-     * The condition is recomputed on read from the plant's latest observation. The
-     * resolver's own precedence is unit-tested; this proves each input is wired
-     * through from a real logged observation to the API Resource.
-     */
-    #[DataProvider('observationCases')]
-    public function test_condition_reflects_the_latest_observation(
-        ?int $health,
-        ?string $symptomKey,
-        string $expectedKey,
-    ): void {
-        $plant = Plant::factory()->create();
-        $this->logObservation($plant, $health, '2026-06-22T18:00:00Z', $symptomKey);
-
-        $this->getJson("/api/plants/{$plant->id}")
-            ->assertOk()
-            ->assertJsonPath('data.condition.key', $expectedKey);
     }
 
     /**
@@ -59,6 +41,28 @@ class PlantConditionApiTest extends TestCase
         yield 'null health reads as no reading' => [null, null, 'unknown'];
     }
 
+    /**
+     * @param integer|null $health
+     * @param string|null  $symptomKey
+     * @param string       $expectedKey
+     *
+     * @return void
+     */
+    #[DataProvider('observationCases')]
+    public function test_condition_reflects_the_latest_observation(
+        ?int $health,
+        ?string $symptomKey,
+        string $expectedKey,
+    ): void {
+        $plant = Plant::factory()->create();
+        $this->logObservation($plant, $health, '2026-06-22T18:00:00Z', $symptomKey);
+
+        $this->getJson("/api/plants/{$plant->id}")
+            ->assertOk()
+            ->assertJsonPath('data.condition.key', $expectedKey);
+    }
+
+    /** @return void */
     public function test_the_most_recent_observation_wins(): void
     {
         $plant = Plant::factory()->create();
@@ -70,6 +74,7 @@ class PlantConditionApiTest extends TestCase
             ->assertJsonPath('data.condition.key', 'struggling');
     }
 
+    /** @return void */
     public function test_an_overdue_watering_reads_as_likely_dry_when_an_override_is_set(): void
     {
         $plant = Plant::factory()->create(['watering_interval_days_override' => 7]);
@@ -80,10 +85,12 @@ class PlantConditionApiTest extends TestCase
             ->assertJsonPath('data.condition.key', 'dry');
     }
 
+    /** @return void */
     public function test_an_overdue_watering_reads_as_likely_dry_from_the_derived_interval(): void
     {
         // No override, but a steady 7-day rhythm with the last watering long past it.
         $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
+
         foreach ([44, 37, 30] as $daysAgo) {
             CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
         }
@@ -93,6 +100,7 @@ class PlantConditionApiTest extends TestCase
             ->assertJsonPath('data.condition.key', 'dry');
     }
 
+    /** @return void */
     public function test_a_single_watering_cannot_derive_an_interval_so_it_does_not_read_as_dry(): void
     {
         // One event forms no gap, and there is no override, so no interval can be derived.
@@ -104,12 +112,14 @@ class PlantConditionApiTest extends TestCase
             ->assertJsonPath('data.condition.key', 'unknown');
     }
 
+    /** @return void */
     public function test_watering_history_under_28_days_does_not_read_as_likely_dry(): void
     {
         // A 3-day rhythm whose last watering is 14 days past would read dry, but
         // the first watering is only 20 days old: below the 28-day gate no
         // interval is derived, so the chip stays quiet (FOL-98).
         $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
+
         foreach ([20, 17, 14] as $daysAgo) {
             CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
         }
@@ -119,9 +129,17 @@ class PlantConditionApiTest extends TestCase
             ->assertJsonPath('data.condition.key', 'unknown');
     }
 
+    /**
+     * @param Plant        $plant
+     * @param integer|null $health
+     * @param string       $occurredAt
+     * @param string|null  $symptomKey
+     *
+     * @return void
+     */
     private function logObservation(Plant $plant, ?int $health, string $occurredAt, ?string $symptomKey = null): void
     {
-        $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => $occurredAt]);
+        $event       = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => $occurredAt]);
         $observation = Observation::factory()->create(['care_event_id' => $event->id, 'overall_health' => $health]);
 
         if ($symptomKey !== null) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -23,7 +25,7 @@ return [
     ],
 
     'ses' => [
-        'key' => env('AWS_ACCESS_KEY_ID'),
+        'key'    => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
@@ -31,7 +33,7 @@ return [
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+            'channel'              => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
 
@@ -49,7 +51,7 @@ return [
 
         // GBIF can reach the operator here rather than silently blocking the IP.
         'user_agent' => env('GBIF_USER_AGENT', 'Foliotrak/1.0 (+https://github.com/justincdotme/foliotrak)'),
-        'timeout' => (int) env('GBIF_TIMEOUT', 5),
+        'timeout'    => (int) env('GBIF_TIMEOUT', 5),
 
         // Minimum /species/match confidence to accept a fuzzy result (0-100).
         'match_min_confidence' => (int) env('GBIF_MATCH_MIN_CONFIDENCE', 80),
@@ -60,7 +62,7 @@ return [
         // Outbound calls per window, host-keyed, sized far under any plausible GBIF
         // threshold. The cache and the SPA debounce mean real volume is tiny.
         'throttle' => [
-            'max_attempts' => (int) env('GBIF_THROTTLE_MAX_ATTEMPTS', 30),
+            'max_attempts'  => (int) env('GBIF_THROTTLE_MAX_ATTEMPTS', 30),
             'decay_seconds' => (int) env('GBIF_THROTTLE_DECAY_SECONDS', 60),
         ],
 
@@ -68,7 +70,7 @@ return [
         // consecutive failure up to the cap, so an outage stops the calls.
         'breaker' => [
             'base_cooldown_seconds' => (int) env('GBIF_BREAKER_BASE_COOLDOWN_SECONDS', 30),
-            'max_cooldown_seconds' => (int) env('GBIF_BREAKER_MAX_COOLDOWN_SECONDS', 600),
+            'max_cooldown_seconds'  => (int) env('GBIF_BREAKER_MAX_COOLDOWN_SECONDS', 600),
         ],
     ],
 

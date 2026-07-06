@@ -7,15 +7,15 @@ use App\Models\User;
 use Database\Seeders\CareLookupSeeder;
 use Laravel\Dusk\Browser;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->seed(CareLookupSeeder::class);
 });
 
-it('shows the start date picker in the schedule form and persists the value', function () {
-    $user = User::factory()->create();
+it('shows the start date picker in the schedule form and persists the value', function (): void {
+    $user  = User::factory()->create();
     $plant = Plant::factory()->create(['common_name' => 'Dusk Test Plant']);
 
-    $this->browse(function (Browser $browser) use ($user, $plant) {
+    $this->browse(function (Browser $browser) use ($user, $plant): void {
         $browser->loginAs($user)
             ->visit("/plants/{$plant->id}")
             ->waitFor('@schedule-section')

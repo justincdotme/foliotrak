@@ -12,7 +12,8 @@ use Illuminate\Support\Collection;
 class Trends
 {
     /**
-     * @param  Collection<int, CareEvent>  $observationEvents
+     * @param Collection<int, CareEvent> $observationEvents
+     *
      * @return list<array{date: string, value: int|string|null}>
      */
     public static function health(Collection $observationEvents): array
@@ -21,7 +22,8 @@ class Trends
     }
 
     /**
-     * @param  Collection<int, CareEvent>  $observationEvents
+     * @param Collection<int, CareEvent> $observationEvents
+     *
      * @return list<array{date: string, value: int|string|null}>
      */
     public static function weight(Collection $observationEvents): array
@@ -30,7 +32,8 @@ class Trends
     }
 
     /**
-     * @param  Collection<int, CareEvent>  $observationEvents
+     * @param Collection<int, CareEvent> $observationEvents
+     *
      * @return list<array{date: string, value: int|string|null}>
      */
     public static function growth(Collection $observationEvents): array
@@ -39,7 +42,8 @@ class Trends
     }
 
     /**
-     * @param  Collection<int, CareEvent>  $observationEvents
+     * @param Collection<int, CareEvent> $observationEvents
+     *
      * @return list<array{date: string, value: int|null}>
      */
     public static function light(Collection $observationEvents): array
@@ -48,7 +52,8 @@ class Trends
     }
 
     /**
-     * @param  Collection<int, CareEvent>  $observationEvents
+     * @param Collection<int, CareEvent> $observationEvents
+     *
      * @return list<array{date: string, value: float|null}>
      */
     public static function leafSize(Collection $observationEvents): array
@@ -62,8 +67,9 @@ class Trends
     }
 
     /**
-     * @param  Collection<int, CareEvent>  $events
-     * @param  Closure(Observation): (int|float|string|null)  $value
+     * @param Collection<int, CareEvent>                    $events
+     * @param Closure(Observation): (int|float|string|null) $value
+     *
      * @return list<array{date: string, value: int|float|string|null}>
      */
     private static function series(Collection $events, Closure $value): array
@@ -74,7 +80,7 @@ class Trends
                 $observation = $event->observation;
 
                 return [
-                    'date' => $event->occurred_at->format('Y-m-d'),
+                    'date'  => $event->occurred_at->format('Y-m-d'),
                     'value' => $observation === null ? null : $value($observation),
                 ];
             })

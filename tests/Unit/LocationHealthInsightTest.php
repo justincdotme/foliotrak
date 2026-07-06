@@ -10,8 +10,10 @@ use PHPUnit\Framework\TestCase;
 
 class LocationHealthInsightTest extends TestCase
 {
+    /** @var Carbon */
     private Carbon $base;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -19,6 +21,7 @@ class LocationHealthInsightTest extends TestCase
         $this->base = Carbon::parse('2026-04-01 12:00:00');
     }
 
+    /** @return void */
     public function test_no_relocations_assigns_all_observations_to_current_location(): void
     {
         $result = LocationHealthInsight::forPlant(
@@ -34,6 +37,7 @@ class LocationHealthInsightTest extends TestCase
         $this->assertSame([5, 3], $result[0]['healths']);
     }
 
+    /** @return void */
     public function test_observation_strictly_before_first_relocation_uses_from_location(): void
     {
         $result = LocationHealthInsight::forPlant(
@@ -47,6 +51,7 @@ class LocationHealthInsightTest extends TestCase
         $this->assertSame(7.0, $result[0]['median_health']);
     }
 
+    /** @return void */
     public function test_observation_at_relocation_time_uses_to_location(): void
     {
         // Boundary: occurred_at == relocation occurred_at is NOT strictly before, so it belongs
@@ -64,9 +69,10 @@ class LocationHealthInsightTest extends TestCase
         $this->assertSame('window', $result[0]['location']['name']);
     }
 
+    /** @return void */
     public function test_multiple_relocations_produce_multiple_buckets_with_correct_stats(): void
     {
-        $firstMove = Carbon::parse('2026-02-01 12:00:00');
+        $firstMove  = Carbon::parse('2026-02-01 12:00:00');
         $secondMove = Carbon::parse('2026-04-01 12:00:00');
 
         $result = LocationHealthInsight::forPlant(
@@ -100,6 +106,7 @@ class LocationHealthInsightTest extends TestCase
         $this->assertSame([5], $result[2]['healths']);
     }
 
+    /** @return void */
     public function test_null_current_location_with_no_relocations_creates_null_bucket(): void
     {
         $result = LocationHealthInsight::forPlant(
@@ -115,6 +122,7 @@ class LocationHealthInsightTest extends TestCase
         $this->assertSame([3], $result[0]['healths']);
     }
 
+    /** @return void */
     public function test_null_from_location_creates_null_bucket(): void
     {
         $result = LocationHealthInsight::forPlant(
@@ -131,6 +139,7 @@ class LocationHealthInsightTest extends TestCase
         $this->assertNull($result[1]['location']);
     }
 
+    /** @return void */
     public function test_null_bucket_sorts_last_even_when_it_has_the_highest_sample_size(): void
     {
         // 3 observations before the move go to null (from=null), 1 goes to 'desk'.
@@ -153,6 +162,7 @@ class LocationHealthInsightTest extends TestCase
         $this->assertSame(3, $result[1]['sample_size']);
     }
 
+    /** @return void */
     public function test_empty_observations_returns_empty_list(): void
     {
         $result = LocationHealthInsight::forPlant(
@@ -165,6 +175,9 @@ class LocationHealthInsightTest extends TestCase
     }
 
     /**
+     * @param integer $id
+     * @param string  $name
+     *
      * @return array{id: int, name: string}
      */
     private function loc(int $id, string $name): array
@@ -173,6 +186,9 @@ class LocationHealthInsightTest extends TestCase
     }
 
     /**
+     * @param integer $daysFromBase
+     * @param integer $health
+     *
      * @return array{date: Carbon, health: int}
      */
     private function obs(int $daysFromBase, int $health): array

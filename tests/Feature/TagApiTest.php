@@ -15,16 +15,13 @@ class TagApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function actAsHousehold(): void
-    {
-        Sanctum::actingAs(User::factory()->create());
-    }
-
+    /** @return void */
     public function test_listing_tags_requires_authentication(): void
     {
         $this->getJson('/api/tags')->assertUnauthorized();
     }
 
+    /** @return void */
     public function test_lists_tags(): void
     {
         $this->actAsHousehold();
@@ -37,6 +34,7 @@ class TagApiTest extends TestCase
             ->assertJsonStructure(['data' => [['id', 'name', 'color']]]);
     }
 
+    /** @return void */
     public function test_creates_a_tag(): void
     {
         $this->actAsHousehold();
@@ -49,6 +47,7 @@ class TagApiTest extends TestCase
         $this->assertDatabaseHas('plant_tags', ['name' => 'Tropical', 'color' => '#22c55e']);
     }
 
+    /** @return void */
     public function test_rejects_a_duplicate_tag_name(): void
     {
         $this->actAsHousehold();
@@ -59,6 +58,7 @@ class TagApiTest extends TestCase
             ->assertJsonValidationErrorFor('name');
     }
 
+    /** @return void */
     public function test_updates_a_tag(): void
     {
         $this->actAsHousehold();
@@ -70,6 +70,7 @@ class TagApiTest extends TestCase
             ->assertJsonPath('data.color', '#f59e0b');
     }
 
+    /** @return void */
     public function test_updating_a_tag_allows_keeping_its_own_name(): void
     {
         $this->actAsHousehold();
@@ -79,6 +80,7 @@ class TagApiTest extends TestCase
             ->assertOk();
     }
 
+    /** @return void */
     public function test_auto_assigns_color_when_none_provided(): void
     {
         $this->actAsHousehold();
@@ -92,6 +94,7 @@ class TagApiTest extends TestCase
             ->assertJsonPath('data.color', 'var(--series-2)');
     }
 
+    /** @return void */
     public function test_auto_color_cycles_through_palette(): void
     {
         $this->actAsHousehold();
@@ -105,6 +108,7 @@ class TagApiTest extends TestCase
             ->assertJsonPath('data.color', 'var(--series-1)');
     }
 
+    /** @return void */
     public function test_explicit_color_is_preserved(): void
     {
         $this->actAsHousehold();
@@ -114,6 +118,7 @@ class TagApiTest extends TestCase
             ->assertJsonPath('data.color', '#ff0000');
     }
 
+    /** @return void */
     public function test_deletes_a_tag(): void
     {
         $this->actAsHousehold();
@@ -123,10 +128,11 @@ class TagApiTest extends TestCase
         $this->assertDatabaseMissing('plant_tags', ['id' => $tag->id]);
     }
 
+    /** @return void */
     public function test_deleting_a_tag_removes_its_plant_associations(): void
     {
         $this->actAsHousehold();
-        $tag = Tag::factory()->create();
+        $tag   = Tag::factory()->create();
         $plant = Plant::factory()->create();
         $plant->tags()->attach($tag);
 
@@ -134,7 +140,13 @@ class TagApiTest extends TestCase
 
         $this->assertDatabaseMissing('plant_tag', [
             'plant_id' => $plant->id,
-            'tag_id' => $tag->id,
+            'tag_id'   => $tag->id,
         ]);
+    }
+
+    /** @return void */
+    private function actAsHousehold(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
     }
 }

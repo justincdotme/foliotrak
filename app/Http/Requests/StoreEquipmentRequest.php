@@ -9,6 +9,9 @@ use Illuminate\Validation\Rule;
 
 class StoreEquipmentRequest extends FormRequest
 {
+    /**
+     * @return boolean
+     */
     public function authorize(): bool
     {
         return true;

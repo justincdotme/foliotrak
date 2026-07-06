@@ -8,7 +8,6 @@ use App\Enums\PlantStatus;
 use App\Support\Care\CareDue;
 use App\Support\Care\ScheduledCareType;
 use App\Support\PlantConditionResolver;
-use Database\Factories\PlantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,12 +17,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Carbon;
 
 /**
- * @property PlantStatus $status
- * @property Carbon|null $acquired_on
- * @property Carbon|null $watering_schedule_start_date
+ * @property int                             $id
+ * @property string|null                     $common_name
+ * @property string|null                     $scientific_name
+ * @property string|null                     $nickname
+ * @property string|null                     $gbif_key
+ * @property int|null                        $location_id
+ * @property \Illuminate\Support\Carbon|null $acquired_on
+ * @property PlantStatus                     $status
+ * @property string|null                     $notes
+ * @property int|null                        $watering_interval_days_override
+ * @property \Illuminate\Support\Carbon|null $watering_schedule_start_date
+ * @property int|null                        $fertilizing_interval_days_override
+ * @property int|null                        $cover_photo_id
+ * @property \Illuminate\Support\Carbon      $created_at
+ * @property \Illuminate\Support\Carbon      $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
  */
 #[Fillable([
     'common_name',
@@ -50,19 +61,6 @@ class Plant extends Model
     protected $attributes = [
         'status' => PlantStatus::Active->value,
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'status' => PlantStatus::class,
-            'acquired_on' => 'date',
-            'watering_interval_days_override' => 'integer',
-            'watering_schedule_start_date' => 'date',
-            'fertilizing_interval_days_override' => 'integer',
-            'cover_photo_id' => 'integer',
-            'location_id' => 'integer',
-        ];
-    }
 
     /**
      * @return BelongsTo<Location, $this>
@@ -164,8 +162,46 @@ class Plant extends Model
     }
 
     /**
+     * At-a-glance condition, resolved from the latest observation and the
+     * watering-due signal.
+     *
+     * @return array{key: string, label: string}
+     */
+    public function condition(): array
+    {
+        $observation = $this->latestObservationEvent?->observation;
+        $symptoms    = $observation === null ? collect() : $observation->symptoms;
+
+        return PlantConditionResolver::resolve(
+            $this->status,
+            $observation?->overall_health,
+            $symptoms->pluck('category')->unique()->values()->all(),
+            $symptoms->pluck('key')->values()->all(),
+            $this->isLikelyDry(),
+        );
+    }
+
+    /**
+     * @return array<string, string|class-string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status'                             => PlantStatus::class,
+            'acquired_on'                        => 'date',
+            'watering_interval_days_override'    => 'integer',
+            'watering_schedule_start_date'       => 'date',
+            'fertilizing_interval_days_override' => 'integer',
+            'cover_photo_id'                     => 'integer',
+            'location_id'                        => 'integer',
+        ];
+    }
+
+    /**
      * Every logged event of one type, oldest first, so the median interval and the
      * latest event both read from one eager-loaded collection.
+     *
+     * @param string $key
      *
      * @return HasMany<CareEvent, $this>
      */
@@ -178,25 +214,8 @@ class Plant extends Model
     }
 
     /**
-     * At-a-glance condition, resolved from the latest observation and the
-     * watering-due signal.
-     *
-     * @return array{key: string, label: string}
+     * @return boolean
      */
-    public function condition(): array
-    {
-        $observation = $this->latestObservationEvent?->observation;
-        $symptoms = $observation === null ? collect() : $observation->symptoms;
-
-        return PlantConditionResolver::resolve(
-            $this->status,
-            $observation?->overall_health,
-            $symptoms->pluck('category')->unique()->values()->all(),
-            $symptoms->pluck('key')->values()->all(),
-            $this->isLikelyDry(),
-        );
-    }
-
     private function isLikelyDry(): bool
     {
         $due = CareDue::for($this, ScheduledCareType::Watering);

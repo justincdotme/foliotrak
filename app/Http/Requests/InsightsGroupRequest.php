@@ -9,6 +9,9 @@ use Illuminate\Validation\Rule;
 
 class InsightsGroupRequest extends FormRequest
 {
+    /**
+     * @return boolean
+     */
     public function authorize(): bool
     {
         return true;
@@ -20,7 +23,7 @@ class InsightsGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tag' => ['nullable', 'integer', Rule::exists('plant_tags', 'id')],
+            'tag'      => ['nullable', 'integer', Rule::exists('plant_tags', 'id')],
             'location' => ['nullable', 'integer', Rule::exists('locations', 'id')],
         ];
     }

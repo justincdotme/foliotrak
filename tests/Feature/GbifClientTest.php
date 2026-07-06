@@ -12,6 +12,7 @@ use Tests\TestCase;
 
 class GbifClientTest extends TestCase
 {
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -21,29 +22,40 @@ class GbifClientTest extends TestCase
     }
 
     /**
-     * @param  array<string, mixed>  $body
+     * @return array<string, array{int, int}>
      */
-    private function fakeMatch(array $body): void
+    public static function confidenceCases(): array
     {
-        Http::fake(['api.gbif.org/*' => Http::response($body)]);
+        return [
+            'below threshold' => [79, 0],
+            'at threshold'    => [80, 1],
+            'above threshold' => [95, 1],
+        ];
     }
 
-    private function client(): GbifClient
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function unusableMatchTypes(): array
     {
-        return new GbifClient;
+        return [
+            'no match'         => ['NONE'],
+            'higher rank only' => ['HIGHERRANK'],
+        ];
     }
 
+    /** @return void */
     public function test_normalizes_a_fuzzy_match(): void
     {
         $this->fakeMatch([
-            'usageKey' => 2868241,
+            'usageKey'       => 2868241,
             'scientificName' => 'Monstera deliciosa Liebm.',
-            'canonicalName' => 'Monstera deliciosa',
-            'rank' => 'SPECIES',
-            'status' => 'ACCEPTED',
-            'confidence' => 95,
-            'matchType' => 'FUZZY',
-            'family' => 'Araceae',
+            'canonicalName'  => 'Monstera deliciosa',
+            'rank'           => 'SPECIES',
+            'status'         => 'ACCEPTED',
+            'confidence'     => 95,
+            'matchType'      => 'FUZZY',
+            'family'         => 'Araceae',
         ]);
 
         $records = $this->client()->lookup('monstera delicosa');
@@ -55,70 +67,59 @@ class GbifClientTest extends TestCase
         $this->assertNull($records[0]->commonName);
     }
 
+    /**
+     * @param integer $confidence
+     * @param integer $expectedCount
+     *
+     * @return void
+     */
     #[DataProvider('confidenceCases')]
     public function test_applies_the_confidence_threshold(int $confidence, int $expectedCount): void
     {
         $this->fakeMatch([
-            'usageKey' => 1,
+            'usageKey'       => 1,
             'scientificName' => 'Some species',
-            'rank' => 'SPECIES',
-            'confidence' => $confidence,
-            'matchType' => 'FUZZY',
+            'rank'           => 'SPECIES',
+            'confidence'     => $confidence,
+            'matchType'      => 'FUZZY',
         ]);
 
         $this->assertCount($expectedCount, (array) $this->client()->lookup('whatever'));
     }
 
     /**
-     * @return array<string, array{int, int}>
+     * @param string $matchType
+     *
+     * @return void
      */
-    public static function confidenceCases(): array
-    {
-        return [
-            'below threshold' => [79, 0],
-            'at threshold' => [80, 1],
-            'above threshold' => [95, 1],
-        ];
-    }
-
     #[DataProvider('unusableMatchTypes')]
     public function test_rejects_unusable_match_types(string $matchType): void
     {
         $this->fakeMatch([
-            'usageKey' => 1,
+            'usageKey'       => 1,
             'scientificName' => 'Some taxon',
-            'rank' => 'GENUS',
-            'confidence' => 99,
-            'matchType' => $matchType,
+            'rank'           => 'GENUS',
+            'confidence'     => 99,
+            'matchType'      => $matchType,
         ]);
 
         $this->assertSame([], $this->client()->lookup('whatever'));
     }
 
-    /**
-     * @return array<string, array{string}>
-     */
-    public static function unusableMatchTypes(): array
-    {
-        return [
-            'no match' => ['NONE'],
-            'higher rank only' => ['HIGHERRANK'],
-        ];
-    }
-
+    /** @return void */
     public function test_resolves_a_synonym_to_its_accepted_name(): void
     {
         $this->fakeMatch([
-            'usageKey' => 111,
-            'scientificName' => 'Sansevieria trifasciata Prain',
-            'canonicalName' => 'Sansevieria trifasciata',
-            'rank' => 'SPECIES',
-            'status' => 'SYNONYM',
-            'confidence' => 97,
-            'matchType' => 'FUZZY',
+            'usageKey'         => 111,
+            'scientificName'   => 'Sansevieria trifasciata Prain',
+            'canonicalName'    => 'Sansevieria trifasciata',
+            'rank'             => 'SPECIES',
+            'status'           => 'SYNONYM',
+            'confidence'       => 97,
+            'matchType'        => 'FUZZY',
             'acceptedUsageKey' => 222,
-            'accepted' => 'Dracaena trifasciata (Prain) Mabb.',
-            'family' => 'Asparagaceae',
+            'accepted'         => 'Dracaena trifasciata (Prain) Mabb.',
+            'family'           => 'Asparagaceae',
         ]);
 
         $records = $this->client()->lookup('sanseveria trifasciata');
@@ -127,15 +128,16 @@ class GbifClientTest extends TestCase
         $this->assertSame('Dracaena trifasciata (Prain) Mabb.', $records[0]->scientificName);
     }
 
+    /** @return void */
     public function test_includes_confident_alternatives_and_drops_weak_ones(): void
     {
         $this->fakeMatch([
-            'usageKey' => 1,
+            'usageKey'       => 1,
             'scientificName' => 'Primary species',
-            'rank' => 'SPECIES',
-            'confidence' => 95,
-            'matchType' => 'FUZZY',
-            'alternatives' => [
+            'rank'           => 'SPECIES',
+            'confidence'     => 95,
+            'matchType'      => 'FUZZY',
+            'alternatives'   => [
                 ['usageKey' => 2, 'scientificName' => 'Confident alt', 'rank' => 'SPECIES', 'confidence' => 90, 'matchType' => 'FUZZY'],
                 ['usageKey' => 3, 'scientificName' => 'Weak alt', 'rank' => 'SPECIES', 'confidence' => 40, 'matchType' => 'FUZZY'],
             ],
@@ -146,6 +148,7 @@ class GbifClientTest extends TestCase
         $this->assertSame(['1', '2'], array_map(fn (SpeciesRow $r) => $r->gbifKey, $records));
     }
 
+    /** @return void */
     public function test_throttle_saturation_returns_null_without_forwarding(): void
     {
         config()->set('services.gbif.throttle.max_attempts', 1);
@@ -158,6 +161,7 @@ class GbifClientTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    /** @return void */
     public function test_breaker_opens_after_a_failure_and_skips_during_cooldown(): void
     {
         Http::fake(['api.gbif.org/*' => Http::response('error', 500)]);
@@ -167,6 +171,7 @@ class GbifClientTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    /** @return void */
     public function test_breaker_cooldown_grows_on_successive_failures(): void
     {
         Http::fake(['api.gbif.org/*' => Http::response('error', 500)]);
@@ -182,6 +187,7 @@ class GbifClientTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    /** @return void */
     public function test_breaker_resets_after_a_success(): void
     {
         Http::fake(['api.gbif.org/*' => Http::sequence()
@@ -200,22 +206,23 @@ class GbifClientTest extends TestCase
         Http::assertSentCount(4);
     }
 
+    /** @return void */
     public function test_searches_common_name_via_species_search_endpoint(): void
     {
         Http::fake([
             'api.gbif.org/v1/species/search*' => Http::response([
-                'offset' => 0,
-                'limit' => 5,
+                'offset'       => 0,
+                'limit'        => 5,
                 'endOfRecords' => true,
-                'count' => 1,
-                'results' => [
+                'count'        => 1,
+                'results'      => [
                     [
-                        'key' => 7911643,
-                        'scientificName' => 'Zamioculcas zamiifolia (Lodd.) Engl.',
-                        'canonicalName' => 'Zamioculcas zamiifolia',
-                        'rank' => 'SPECIES',
+                        'key'             => 7911643,
+                        'scientificName'  => 'Zamioculcas zamiifolia (Lodd.) Engl.',
+                        'canonicalName'   => 'Zamioculcas zamiifolia',
+                        'rank'            => 'SPECIES',
                         'taxonomicStatus' => 'ACCEPTED',
-                        'family' => 'Araceae',
+                        'family'          => 'Araceae',
                         'vernacularNames' => [
                             ['vernacularName' => 'ZZ Plant', 'language' => 'eng'],
                             ['vernacularName' => 'Zanzibar gem', 'language' => 'eng'],
@@ -236,23 +243,24 @@ class GbifClientTest extends TestCase
         $this->assertSame('Araceae', $records[0]->family);
     }
 
+    /** @return void */
     public function test_search_resolves_synonym_to_accepted_name(): void
     {
         Http::fake([
             'api.gbif.org/v1/species/search*' => Http::response([
-                'offset' => 0,
-                'limit' => 5,
+                'offset'       => 0,
+                'limit'        => 5,
                 'endOfRecords' => true,
-                'results' => [
+                'results'      => [
                     [
-                        'key' => 111,
-                        'scientificName' => 'Sansevieria trifasciata Prain',
-                        'canonicalName' => 'Sansevieria trifasciata',
-                        'rank' => 'SPECIES',
+                        'key'             => 111,
+                        'scientificName'  => 'Sansevieria trifasciata Prain',
+                        'canonicalName'   => 'Sansevieria trifasciata',
+                        'rank'            => 'SPECIES',
                         'taxonomicStatus' => 'SYNONYM',
-                        'acceptedKey' => 222,
-                        'accepted' => 'Dracaena trifasciata (Prain) Mabb.',
-                        'family' => 'Asparagaceae',
+                        'acceptedKey'     => 222,
+                        'accepted'        => 'Dracaena trifasciata (Prain) Mabb.',
+                        'family'          => 'Asparagaceae',
                         'vernacularNames' => [
                             ['vernacularName' => 'Snake Plant', 'language' => 'eng'],
                         ],
@@ -268,31 +276,32 @@ class GbifClientTest extends TestCase
         $this->assertSame('Snake Plant', $records[0]->commonName);
     }
 
+    /** @return void */
     public function test_search_deduplicates_by_resolved_key(): void
     {
         Http::fake([
             'api.gbif.org/v1/species/search*' => Http::response([
-                'offset' => 0,
-                'limit' => 5,
+                'offset'       => 0,
+                'limit'        => 5,
                 'endOfRecords' => true,
-                'results' => [
+                'results'      => [
                     [
-                        'key' => 222,
-                        'scientificName' => 'Dracaena trifasciata (Prain) Mabb.',
-                        'canonicalName' => 'Dracaena trifasciata',
-                        'rank' => 'SPECIES',
+                        'key'             => 222,
+                        'scientificName'  => 'Dracaena trifasciata (Prain) Mabb.',
+                        'canonicalName'   => 'Dracaena trifasciata',
+                        'rank'            => 'SPECIES',
                         'taxonomicStatus' => 'ACCEPTED',
-                        'family' => 'Asparagaceae',
+                        'family'          => 'Asparagaceae',
                         'vernacularNames' => [['vernacularName' => 'Snake Plant', 'language' => 'eng']],
                     ],
                     [
-                        'key' => 111,
-                        'scientificName' => 'Sansevieria trifasciata Prain',
-                        'rank' => 'SPECIES',
+                        'key'             => 111,
+                        'scientificName'  => 'Sansevieria trifasciata Prain',
+                        'rank'            => 'SPECIES',
                         'taxonomicStatus' => 'SYNONYM',
-                        'acceptedKey' => 222,
-                        'accepted' => 'Dracaena trifasciata (Prain) Mabb.',
-                        'family' => 'Asparagaceae',
+                        'acceptedKey'     => 222,
+                        'accepted'        => 'Dracaena trifasciata (Prain) Mabb.',
+                        'family'          => 'Asparagaceae',
                         'vernacularNames' => [['vernacularName' => 'Snake Plant', 'language' => 'eng']],
                     ],
                 ],
@@ -305,12 +314,13 @@ class GbifClientTest extends TestCase
         $this->assertSame('222', $records[0]->gbifKey);
     }
 
+    /** @return void */
     public function test_search_shares_throttle_and_breaker_with_lookup(): void
     {
         config()->set('services.gbif.throttle.max_attempts', 1);
         Http::fake([
             'api.gbif.org/v1/species/match*' => Http::response([
-                'usageKey' => 1, 'scientificName' => 'X', 'rank' => 'SPECIES',
+                'usageKey'   => 1, 'scientificName' => 'X', 'rank' => 'SPECIES',
                 'confidence' => 95, 'matchType' => 'EXACT',
             ]),
             'api.gbif.org/v1/species/search*' => Http::response([
@@ -321,5 +331,23 @@ class GbifClientTest extends TestCase
         $this->assertNotNull($this->client()->lookup('alpha'));
         $this->assertNull($this->client()->searchCommonName('beta'));
         Http::assertSentCount(1);
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     *
+     * @return void
+     */
+    private function fakeMatch(array $body): void
+    {
+        Http::fake(['api.gbif.org/*' => Http::response($body)]);
+    }
+
+    /**
+     * @return GbifClient
+     */
+    private function client(): GbifClient
+    {
+        return new GbifClient;
     }
 }

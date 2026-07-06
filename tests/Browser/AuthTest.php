@@ -5,12 +5,12 @@ declare(strict_types=1);
 use App\Models\User;
 use Laravel\Dusk\Browser;
 
-it('logs in with valid credentials and lands on the dashboard', function () {
+it('logs in with valid credentials and lands on the dashboard', function (): void {
     $user = User::factory()->create([
         'password' => bcrypt('password'),
     ]);
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->visit('/login')
             ->waitFor('@login-form')
@@ -23,13 +23,13 @@ it('logs in with valid credentials and lands on the dashboard', function () {
     });
 });
 
-it('shows an error and stays on login with invalid credentials', function () {
+it('shows an error and stays on login with invalid credentials', function (): void {
     User::factory()->create([
-        'email' => 'real@example.com',
+        'email'    => 'real@example.com',
         'password' => bcrypt('correct-password'),
     ]);
 
-    $this->browse(function (Browser $browser) {
+    $this->browse(function (Browser $browser): void {
         $browser->logout()
             ->visit('/login')
             ->waitFor('@login-form')
@@ -43,10 +43,10 @@ it('shows an error and stays on login with invalid credentials', function () {
     });
 });
 
-it('logs out from the user menu and returns to login', function () {
+it('logs out from the user menu and returns to login', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->visit('/')
@@ -60,8 +60,8 @@ it('logs out from the user menu and returns to login', function () {
     });
 });
 
-it('redirects unauthenticated visitors to login', function () {
-    $this->browse(function (Browser $browser) {
+it('redirects unauthenticated visitors to login', function (): void {
+    $this->browse(function (Browser $browser): void {
         $browser->logout()
             ->visit('/plants')
             ->waitForLocation('/login')
@@ -70,10 +70,10 @@ it('redirects unauthenticated visitors to login', function () {
     });
 });
 
-it('persists the session across a full page reload', function () {
+it('persists the session across a full page reload', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->logout()
             ->loginAs($user)
             ->visit('/')

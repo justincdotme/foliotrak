@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Support\Correlation;
 
 use App\Enums\SoilMoistureLevel;
-use App\Models\Plant;
 use Illuminate\Support\Collection;
 
 /**
@@ -16,11 +15,17 @@ use Illuminate\Support\Collection;
  */
 final class SoilMoistureFactor implements Factor
 {
+    /**
+     * @return string
+     */
     public function key(): string
     {
         return 'soil_moisture';
     }
 
+    /**
+     * @return string
+     */
     public function outcomeKey(): string
     {
         return 'overall_health';
@@ -35,7 +40,8 @@ final class SoilMoistureFactor implements Factor
     }
 
     /**
-     * @param  Collection<int, Plant>  $plants
+     * @param Collection<int, Plant> $plants
+     *
      * @return list<array{x: float, y: float}>
      */
     public function pairs(Collection $plants): array
@@ -44,7 +50,7 @@ final class SoilMoistureFactor implements Factor
 
         foreach ($plants as $plant) {
             foreach ($plant->observationEvents as $event) {
-                $obs = $event->observation;
+                $obs    = $event->observation;
                 $health = $obs?->overall_health;
 
                 if ($health === null) {
@@ -64,6 +70,12 @@ final class SoilMoistureFactor implements Factor
         return $pairs;
     }
 
+    /**
+     * @param integer|null           $precise
+     * @param SoilMoistureLevel|null $relative
+     *
+     * @return float|null
+     */
     private function resolveMoisture(?int $precise, ?SoilMoistureLevel $relative): ?float
     {
         if ($precise !== null) {

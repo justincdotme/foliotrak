@@ -10,10 +10,13 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class NutrientController extends Controller
 {
+    /**
+     * @return AnonymousResourceCollection
+     */
     public function index(): AnonymousResourceCollection
     {
         return NutrientResource::collection(
-            Nutrient::query()->orderBy('sort_order')->get()
+            Nutrient::query()->orderBy('sort_order')->get(),
         );
     }
 }

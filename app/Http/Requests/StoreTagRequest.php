@@ -9,6 +9,9 @@ use Illuminate\Validation\Rule;
 
 class StoreTagRequest extends FormRequest
 {
+    /**
+     * @return boolean
+     */
     public function authorize(): bool
     {
         return true;
@@ -20,7 +23,7 @@ class StoreTagRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:64', Rule::unique('plant_tags', 'name')],
+            'name'  => ['required', 'string', 'max:64', Rule::unique('plant_tags', 'name')],
             'color' => ['nullable', 'string', 'max:16'],
         ];
     }

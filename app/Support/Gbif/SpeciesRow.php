@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace App\Support\Gbif;
 
+use DateTimeInterface;
 use Illuminate\Support\Carbon;
 
 final readonly class SpeciesRow
 {
     /**
-     * @param  list<string>|null  $commonNames
-     * @param  array<string, mixed>|null  $payload
+     * @param string                    $gbifKey
+     * @param string                    $scientificName
+     * @param string|null               $canonicalName
+     * @param string|null               $commonName
+     * @param list<string>|null         $commonNames
+     * @param string|null               $rank
+     * @param string|null               $family
+     * @param array<string, mixed>|null $payload
+     * @param Carbon|null               $cachedAt
      */
     public function __construct(
         public string $gbifKey,
@@ -25,11 +33,13 @@ final readonly class SpeciesRow
     ) {}
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
+     *
+     * @return self|null
      */
     public static function fromArray(array $data): ?self
     {
-        $key = $data['gbif_key'] ?? null;
+        $key  = $data['gbif_key'] ?? null;
         $name = $data['scientific_name'] ?? null;
 
         if ($key === null || ! is_string($name) || $name === '') {
@@ -37,11 +47,11 @@ final readonly class SpeciesRow
         }
 
         $commonNames = $data['common_names'] ?? null;
-        $cachedAt = $data['cached_at'] ?? null;
+        $cachedAt    = $data['cached_at'] ?? null;
 
         if (is_string($cachedAt) && $cachedAt !== '') {
             $cachedAt = Carbon::parse($cachedAt);
-        } elseif ($cachedAt instanceof \DateTimeInterface) {
+        } elseif ($cachedAt instanceof DateTimeInterface) {
             $cachedAt = Carbon::instance($cachedAt);
         } else {
             $cachedAt = null;
@@ -69,13 +79,13 @@ final readonly class SpeciesRow
     public function toArray(): array
     {
         return [
-            'gbif_key' => $this->gbifKey,
+            'gbif_key'        => $this->gbifKey,
             'scientific_name' => $this->scientificName,
-            'canonical_name' => $this->canonicalName,
-            'common_name' => $this->commonName,
-            'common_names' => $this->commonNames,
-            'rank' => $this->rank,
-            'family' => $this->family,
+            'canonical_name'  => $this->canonicalName,
+            'common_name'     => $this->commonName,
+            'common_names'    => $this->commonNames,
+            'rank'            => $this->rank,
+            'family'          => $this->family,
         ];
     }
 }

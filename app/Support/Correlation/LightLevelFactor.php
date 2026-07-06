@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Support\Correlation;
 
-use App\Models\Plant;
 use Illuminate\Support\Collection;
 
 /**
@@ -13,11 +12,17 @@ use Illuminate\Support\Collection;
  */
 final class LightLevelFactor implements Factor
 {
+    /**
+     * @return string
+     */
     public function key(): string
     {
         return 'light_level';
     }
 
+    /**
+     * @return string
+     */
     public function outcomeKey(): string
     {
         return 'overall_health';
@@ -32,7 +37,8 @@ final class LightLevelFactor implements Factor
     }
 
     /**
-     * @param  Collection<int, Plant>  $plants
+     * @param Collection<int, Plant> $plants
+     *
      * @return list<array{x: float, y: float}>
      */
     public function pairs(Collection $plants): array
@@ -42,7 +48,7 @@ final class LightLevelFactor implements Factor
         foreach ($plants as $plant) {
             foreach ($plant->observationEvents as $event) {
                 $lightLevel = $event->observation?->light_level;
-                $health = $event->observation?->overall_health;
+                $health     = $event->observation?->overall_health;
 
                 if ($lightLevel === null || $health === null) {
                     continue;

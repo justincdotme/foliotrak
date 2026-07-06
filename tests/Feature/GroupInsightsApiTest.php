@@ -21,6 +21,7 @@ class GroupInsightsApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -29,19 +30,13 @@ class GroupInsightsApiTest extends TestCase
         $this->travelTo(Carbon::parse('2026-06-26 09:00:00'));
     }
 
-    private function actAsHousehold(): User
-    {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
-
-        return $user;
-    }
-
+    /** @return void */
     public function test_group_insights_requires_authentication(): void
     {
         $this->getJson('/api/insights/group?tag=1')->assertUnauthorized();
     }
 
+    /** @return void */
     public function test_group_insights_validates_nonexistent_ids(): void
     {
         $this->actAsHousehold();
@@ -49,6 +44,7 @@ class GroupInsightsApiTest extends TestCase
         $this->getJson('/api/insights/group?tag=9999')->assertUnprocessable();
     }
 
+    /** @return void */
     public function test_group_insights_with_no_filters_returns_all_active_plants(): void
     {
         $this->actAsHousehold();
@@ -62,6 +58,7 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.plants', [$active->id]);
     }
 
+    /** @return void */
     public function test_group_insights_compares_the_tagged_plants(): void
     {
         $this->actAsHousehold();
@@ -69,8 +66,8 @@ class GroupInsightsApiTest extends TestCase
         $tag = Tag::factory()->create(['name' => 'Pothos']);
 
         $golden = Plant::factory()->create([
-            'common_name' => 'Golden',
-            'watering_interval_days_override' => 7,
+            'common_name'                        => 'Golden',
+            'watering_interval_days_override'    => 7,
             'fertilizing_interval_days_override' => 30,
         ]);
         $golden->tags()->attach($tag);
@@ -107,6 +104,7 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.comparison.1.health_trend.0.value', 5);
     }
 
+    /** @return void */
     public function test_group_insights_for_a_tag_with_no_plants_returns_empty_arrays(): void
     {
         $this->actAsHousehold();
@@ -122,6 +120,7 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.correlation_pairs', []);
     }
 
+    /** @return void */
     public function test_group_insights_excludes_archived_plants(): void
     {
         $this->actAsHousehold();
@@ -138,7 +137,7 @@ class GroupInsightsApiTest extends TestCase
 
         $archived = Plant::factory()->create([
             'common_name' => 'Archived',
-            'status' => PlantStatus::Archived,
+            'status'      => PlantStatus::Archived,
         ]);
         $archived->tags()->attach($tag);
         $this->observe($archived, overallHealth: 2, daysAgo: 1);
@@ -152,6 +151,7 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.comparison.1.plant_id', $active2->id);
     }
 
+    /** @return void */
     public function test_group_insights_reports_a_pooled_watering_interval_correlation(): void
     {
         $this->actAsHousehold();
@@ -187,6 +187,7 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonCount(6, 'data.correlation_pairs.0.points');
     }
 
+    /** @return void */
     public function test_group_insights_does_not_crash_on_a_constant_watering_cadence(): void
     {
         $this->actAsHousehold();
@@ -211,22 +212,24 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.correlation_pairs.0.significant_after_fdr', false);
     }
 
+    /** @return void */
     public function test_group_insights_intersects_tag_and_location_when_both_provided(): void
     {
         $this->actAsHousehold();
 
-        $tag = Tag::factory()->create();
+        $tag      = Tag::factory()->create();
         $location = Location::factory()->create();
-        $plant = Plant::factory()->create(['location_id' => $location->id]);
+        $plant    = Plant::factory()->create(['location_id' => $location->id]);
         $plant->tags()->attach($tag);
 
-        $other = Plant::factory()->create(['location_id' => $location->id]);
+        Plant::factory()->create(['location_id' => $location->id]);
 
         $this->getJson("/api/insights/group?tag={$tag->id}&location={$location->id}")
             ->assertOk()
             ->assertJsonPath('data.plants', [$plant->id]);
     }
 
+    /** @return void */
     public function test_group_insights_fails_for_nonexistent_location(): void
     {
         $this->actAsHousehold();
@@ -234,6 +237,7 @@ class GroupInsightsApiTest extends TestCase
         $this->getJson('/api/insights/group?location=9999')->assertUnprocessable();
     }
 
+    /** @return void */
     public function test_group_insights_by_tag_includes_tag_fields(): void
     {
         $this->actAsHousehold();
@@ -249,6 +253,7 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.location_name', null);
     }
 
+    /** @return void */
     public function test_group_insights_by_location_compares_the_plants_at_that_location(): void
     {
         $this->actAsHousehold();
@@ -256,9 +261,9 @@ class GroupInsightsApiTest extends TestCase
         $location = Location::factory()->create(['name' => 'Living Room']);
 
         $fern = Plant::factory()->create([
-            'common_name' => 'Fern',
-            'location_id' => $location->id,
-            'watering_interval_days_override' => 5,
+            'common_name'                        => 'Fern',
+            'location_id'                        => $location->id,
+            'watering_interval_days_override'    => 5,
             'fertilizing_interval_days_override' => null,
         ]);
         $this->observe($fern, overallHealth: 4, daysAgo: 8);
@@ -294,6 +299,7 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.comparison.1.health_trend.0.value', 5);
     }
 
+    /** @return void */
     public function test_group_insights_by_location_excludes_archived_and_dead_plants(): void
     {
         $this->actAsHousehold();
@@ -309,13 +315,13 @@ class GroupInsightsApiTest extends TestCase
         Plant::factory()->create([
             'common_name' => 'Archived',
             'location_id' => $location->id,
-            'status' => PlantStatus::Archived,
+            'status'      => PlantStatus::Archived,
         ]);
 
         Plant::factory()->create([
             'common_name' => 'Dead',
             'location_id' => $location->id,
-            'status' => PlantStatus::Dead,
+            'status'      => PlantStatus::Dead,
         ]);
 
         $response = $this->getJson("/api/insights/group?location={$location->id}")->assertOk();
@@ -326,6 +332,7 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.comparison.0.plant_id', $active->id);
     }
 
+    /** @return void */
     public function test_group_insights_by_location_with_no_active_plants_returns_empty_arrays(): void
     {
         $this->actAsHousehold();
@@ -341,16 +348,18 @@ class GroupInsightsApiTest extends TestCase
             ->assertJsonPath('data.correlation_pairs', []);
     }
 
+    /** @return void */
     public function test_location_summary_requires_authentication(): void
     {
         $this->getJson('/api/insights/locations')->assertUnauthorized();
     }
 
+    /** @return void */
     public function test_location_summary_returns_per_location_mean_health(): void
     {
         $this->actAsHousehold();
 
-        $living = Location::factory()->create(['name' => 'Living Room']);
+        $living  = Location::factory()->create(['name' => 'Living Room']);
         $kitchen = Location::factory()->create(['name' => 'Kitchen']);
 
         $plant1 = Plant::factory()->create(['location_id' => $living->id]);
@@ -362,7 +371,7 @@ class GroupInsightsApiTest extends TestCase
         $plant3 = Plant::factory()->create(['location_id' => $kitchen->id]);
         $this->observe($plant3, overallHealth: 5, daysAgo: 1);
 
-        $response = $this->getJson('/api/insights/locations')->assertOk();
+        $response   = $this->getJson('/api/insights/locations')->assertOk();
         $byLocation = collect($response->json('data'))->keyBy('location_id');
 
         $livingData = $byLocation[$living->id];
@@ -379,6 +388,7 @@ class GroupInsightsApiTest extends TestCase
         $this->assertEquals(1, $kitchenData['sample_size']);
     }
 
+    /** @return void */
     public function test_location_summary_excludes_archived_and_dead_plants(): void
     {
         $this->actAsHousehold();
@@ -390,11 +400,11 @@ class GroupInsightsApiTest extends TestCase
 
         $archived = Plant::factory()->create([
             'location_id' => $location->id,
-            'status' => PlantStatus::Archived,
+            'status'      => PlantStatus::Archived,
         ]);
         $this->observe($archived, overallHealth: 1, daysAgo: 1);
 
-        $response = $this->getJson('/api/insights/locations')->assertOk();
+        $response     = $this->getJson('/api/insights/locations')->assertOk();
         $locationData = collect($response->json('data'))->firstWhere('location_id', $location->id);
 
         $this->assertEquals(1, $locationData['plant_count']);
@@ -403,6 +413,7 @@ class GroupInsightsApiTest extends TestCase
         $this->assertEquals(1, $locationData['sample_size']);
     }
 
+    /** @return void */
     public function test_location_summary_returns_null_mean_for_location_with_no_observations(): void
     {
         $this->actAsHousehold();
@@ -410,7 +421,7 @@ class GroupInsightsApiTest extends TestCase
         $location = Location::factory()->create(['name' => 'Garage']);
         Plant::factory()->create(['location_id' => $location->id]);
 
-        $response = $this->getJson('/api/insights/locations')->assertOk();
+        $response     = $this->getJson('/api/insights/locations')->assertOk();
         $locationData = collect($response->json('data'))->firstWhere('location_id', $location->id);
 
         $this->assertEquals(1, $locationData['plant_count']);
@@ -420,7 +431,21 @@ class GroupInsightsApiTest extends TestCase
     }
 
     /**
-     * @param  list<int>  $daysAgo
+     * @return User
+     */
+    private function actAsHousehold(): User
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        return $user;
+    }
+
+    /**
+     * @param Plant     $plant
+     * @param integer[] $daysAgo
+     *
+     * @return void
      */
     private function water(Plant $plant, array $daysAgo): void
     {
@@ -432,6 +457,13 @@ class GroupInsightsApiTest extends TestCase
         }
     }
 
+    /**
+     * @param Plant   $plant
+     * @param integer $overallHealth
+     * @param integer $daysAgo
+     *
+     * @return void
+     */
     private function observe(Plant $plant, int $overallHealth, int $daysAgo): void
     {
         $event = CareEvent::factory()->ofType('observation')->for($plant)->create([
@@ -440,11 +472,11 @@ class GroupInsightsApiTest extends TestCase
         // Null out fields read by humidity, light, and soil-moisture factors so factory defaults
         // don't produce spurious correlation pairs in tests that only intend to test watering.
         Observation::factory()->create([
-            'care_event_id' => $event->id,
-            'overall_health' => $overallHealth,
-            'ambient_humidity_pct' => null,
-            'light_level' => null,
-            'soil_moisture_precise' => null,
+            'care_event_id'          => $event->id,
+            'overall_health'         => $overallHealth,
+            'ambient_humidity_pct'   => null,
+            'light_level'            => null,
+            'soil_moisture_precise'  => null,
             'soil_moisture_relative' => null,
         ]);
     }

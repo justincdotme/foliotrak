@@ -12,12 +12,16 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class TagFactory extends Factory
 {
+    /** @var class-string<Tag> */
     protected $model = Tag::class;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         return [
-            'name' => fake()->unique()->word(),
+            'name'  => fake()->unique()->word(),
             'color' => fake()->optional()->hexColor(),
         ];
     }

@@ -12,8 +12,12 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class LocationFactory extends Factory
 {
+    /** @var class-string<Location> */
     protected $model = Location::class;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         return [

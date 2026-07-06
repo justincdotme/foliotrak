@@ -13,26 +13,54 @@ use App\Models\User;
  */
 class TagPolicy
 {
+    /**
+     * @param User $user
+     *
+     * @return boolean
+     */
     public function viewAny(User $user): bool
     {
         return true;
     }
 
+    /**
+     * @param User $user
+     * @param Tag  $tag
+     *
+     * @return boolean
+     */
     public function view(User $user, Tag $tag): bool
     {
         return true;
     }
 
+    /**
+     * @param User $user
+     *
+     * @return boolean
+     */
     public function create(User $user): bool
     {
         return true;
     }
 
+    /**
+     * @param User $user
+     * @param Tag  $tag
+     *
+     * @return boolean
+     */
     public function update(User $user, Tag $tag): bool
     {
         return true;
     }
 
+    /**
+     * @param User $user
+     * @param Tag  $tag
+     *
+     * @return boolean
+     */
     public function delete(User $user, Tag $tag): bool
     {
         return true;

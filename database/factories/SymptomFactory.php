@@ -13,18 +13,22 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class SymptomFactory extends Factory
 {
+    /** @var class-string<Symptom> */
     protected $model = Symptom::class;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         $label = fake()->unique()->words(2, true);
 
         return [
-            'category' => fake()->randomElement(SymptomCategory::cases()),
-            'key' => Symptom::slugFor($label),
-            'label' => ucfirst($label),
+            'category'   => fake()->randomElement(SymptomCategory::cases()),
+            'key'        => Symptom::slugFor($label),
+            'label'      => ucfirst($label),
             'sort_order' => fake()->numberBetween(1, 20),
-            'is_custom' => false,
+            'is_custom'  => false,
         ];
     }
 }

@@ -23,6 +23,7 @@ class PlantTimelineApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -31,14 +32,7 @@ class PlantTimelineApiTest extends TestCase
         $this->travelTo(Carbon::parse('2026-06-26 09:00:00'));
     }
 
-    private function actAsHousehold(): User
-    {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
-
-        return $user;
-    }
-
+    /** @return void */
     public function test_timeline_requires_authentication(): void
     {
         $plant = Plant::factory()->create();
@@ -46,6 +40,7 @@ class PlantTimelineApiTest extends TestCase
         $this->getJson("/api/plants/{$plant->id}/timeline")->assertUnauthorized();
     }
 
+    /** @return void */
     public function test_unknown_plant_returns_not_found(): void
     {
         $this->actAsHousehold();
@@ -53,6 +48,7 @@ class PlantTimelineApiTest extends TestCase
         $this->getJson('/api/plants/9999/timeline')->assertNotFound();
     }
 
+    /** @return void */
     public function test_timeline_returns_the_full_plant_detail_bundle(): void
     {
         $this->actAsHousehold();
@@ -62,10 +58,10 @@ class PlantTimelineApiTest extends TestCase
 
         $older = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(10)]);
         Observation::factory()->create([
-            'care_event_id' => $older->id,
+            'care_event_id'  => $older->id,
             'overall_health' => 3,
-            'weight_grams' => 1000,
-            'growth_rate' => GrowthRate::Slow,
+            'weight_grams'   => 1000,
+            'growth_rate'    => GrowthRate::Slow,
         ]);
 
         $watering = CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(5)]);
@@ -73,15 +69,15 @@ class PlantTimelineApiTest extends TestCase
 
         $newer = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(2)]);
         Observation::factory()->create([
-            'care_event_id' => $newer->id,
+            'care_event_id'  => $newer->id,
             'overall_health' => 5,
-            'weight_grams' => null,
-            'growth_rate' => null,
+            'weight_grams'   => null,
+            'growth_rate'    => null,
         ]);
 
         $relocation = CareEvent::factory()->ofType('relocation')->for($plant)->create(['occurred_at' => now()->subDay()]);
-        $shelf = Location::factory()->create(['name' => 'shelf']);
-        $window = Location::factory()->create(['name' => 'window']);
+        $shelf      = Location::factory()->create(['name' => 'shelf']);
+        $window     = Location::factory()->create(['name' => 'window']);
         $relocation->relocation()->create(['from_location_id' => $shelf->id, 'to_location_id' => $window->id]);
 
         Photo::factory()->create(['plant_id' => $plant->id, 'taken_on' => now()->subDays(3)]);
@@ -129,11 +125,12 @@ class PlantTimelineApiTest extends TestCase
         $response->assertJsonCount(1, 'data.photos');
     }
 
+    /** @return void */
     public function test_timeline_renders_the_detail_block_for_every_care_event_type(): void
     {
         $this->actAsHousehold();
 
-        $plant = Plant::factory()->create();
+        $plant  = Plant::factory()->create();
         $liquid = FertilizerForm::where('key', 'liquid')->value('id');
 
         $watering = CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(4)]);
@@ -148,8 +145,8 @@ class PlantTimelineApiTest extends TestCase
         $observation = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDay()]);
         Observation::factory()->create(['care_event_id' => $observation->id, 'overall_health' => 4]);
 
-        $shelf = Location::factory()->create(['name' => 'shelf']);
-        $window = Location::factory()->create(['name' => 'window']);
+        $shelf      = Location::factory()->create(['name' => 'shelf']);
+        $window     = Location::factory()->create(['name' => 'window']);
         $relocation = CareEvent::factory()->ofType('relocation')->for($plant)->create(['occurred_at' => now()]);
         $relocation->relocation()->create(['from_location_id' => $shelf->id, 'to_location_id' => $window->id]);
 
@@ -169,6 +166,7 @@ class PlantTimelineApiTest extends TestCase
             ->assertJsonPath('data.events.4.watering.amount_ml', 150);
     }
 
+    /** @return void */
     public function test_observation_event_without_a_detail_row_yields_a_null_trend_point(): void
     {
         $this->actAsHousehold();
@@ -183,6 +181,7 @@ class PlantTimelineApiTest extends TestCase
             ->assertJsonPath('data.health_trend.0.value', null);
     }
 
+    /** @return void */
     public function test_timeline_includes_light_trend_and_leaf_size_trend(): void
     {
         $this->actAsHousehold();
@@ -191,8 +190,8 @@ class PlantTimelineApiTest extends TestCase
         $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDays(3)]);
         Observation::factory()->create([
             'care_event_id' => $event->id,
-            'light_level' => 8,
-            'leaf_size_mm' => 32.5,
+            'light_level'   => 8,
+            'leaf_size_mm'  => 32.5,
         ]);
 
         $response = $this->getJson("/api/plants/{$plant->id}/timeline")->assertOk();
@@ -206,13 +205,14 @@ class PlantTimelineApiTest extends TestCase
             ->assertJsonPath('data.leaf_size_trend.0.value', 32.5);
     }
 
+    /** @return void */
     public function test_timeline_shows_due_from_start_date_when_no_watering_events_exist(): void
     {
         $this->actAsHousehold();
         $this->travelTo(Carbon::parse('2026-06-29'));
         $plant = Plant::factory()->create([
             'watering_interval_days_override' => 7,
-            'watering_schedule_start_date' => '2026-06-29',
+            'watering_schedule_start_date'    => '2026-06-29',
         ]);
 
         $response = $this->getJson("/api/plants/{$plant->id}/timeline");
@@ -224,13 +224,14 @@ class PlantTimelineApiTest extends TestCase
         $this->assertSame(7, $due['daysLeft']);
     }
 
+    /** @return void */
     public function test_timeline_includes_due_for_care_for_the_plant(): void
     {
         $this->actAsHousehold();
 
         // Watered 9 days ago on a 7-day override -> overdue by 2 days.
         $plant = Plant::factory()->create([
-            'common_name' => 'Thirsty',
+            'common_name'                     => 'Thirsty',
             'watering_interval_days_override' => 7,
         ]);
         CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(9)]);
@@ -245,5 +246,16 @@ class PlantTimelineApiTest extends TestCase
             ->assertJsonPath('data.due_for_care.0.interval', 7)
             ->assertJsonPath('data.due_for_care.0.due_date', '2026-06-24')
             ->assertJsonMissingPath('data.due_for_care.0.plant_id');
+    }
+
+    /**
+     * @return User
+     */
+    private function actAsHousehold(): User
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        return $user;
     }
 }

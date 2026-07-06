@@ -14,9 +14,10 @@ use Illuminate\Support\Carbon;
 final class LocationHealthInsight
 {
     /**
-     * @param  list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}>  $relocations  Oldest first.
-     * @param  list<array{date: Carbon, health: int}>  $healthObservations  Chronological.
-     * @param  array{id: int, name: string}|null  $currentLocation
+     * @param list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}> $relocations        Oldest first.
+     * @param list<array{date: Carbon, health: int}>                                                                    $healthObservations Chronological.
+     * @param array{id: int, name: string}|null                                                                         $currentLocation
+     *
      * @return list<array{location: array{id: int, name: string}|null, median_health: float|null, sample_size: int, healths: list<int>}>
      */
     public static function forPlant(
@@ -31,6 +32,7 @@ final class LocationHealthInsight
 
         foreach ($healthObservations as $obs) {
             $loc = self::locationAt($obs['date'], $relocations, $currentLocation);
+
             if ($loc === null) {
                 $nullHealths[] = $obs['health'];
             } else {
@@ -43,27 +45,28 @@ final class LocationHealthInsight
 
         /** @var list<array{location: array{id: int, name: string}, median_health: float|null, sample_size: int, healths: list<int>}> $result */
         $result = [];
+
         foreach ($buckets as $bucket) {
             $result[] = [
-                'location' => $bucket['location'],
+                'location'      => $bucket['location'],
                 'median_health' => Stats::median($bucket['healths']),
-                'sample_size' => count($bucket['healths']),
-                'healths' => $bucket['healths'],
+                'sample_size'   => count($bucket['healths']),
+                'healths'       => $bucket['healths'],
             ];
         }
 
         usort(
             $result,
             fn (array $a, array $b): int => $b['sample_size'] <=> $a['sample_size']
-            ?: strcmp($a['location']['name'], $b['location']['name'])
+            ?: strcmp($a['location']['name'], $b['location']['name']),
         );
 
         if ($nullHealths !== []) {
             $result[] = [
-                'location' => null,
+                'location'      => null,
                 'median_health' => Stats::median($nullHealths),
-                'sample_size' => count($nullHealths),
-                'healths' => $nullHealths,
+                'sample_size'   => count($nullHealths),
+                'healths'       => $nullHealths,
             ];
         }
 
@@ -71,8 +74,10 @@ final class LocationHealthInsight
     }
 
     /**
-     * @param  list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}>  $relocations
-     * @param  array{id: int, name: string}|null  $currentLocation
+     * @param Carbon                                                                                                    $t
+     * @param list<array{date: Carbon, from: array{id: int, name: string}|null, to: array{id: int, name: string}|null}> $relocations
+     * @param array{id: int, name: string}|null                                                                         $currentLocation
+     *
      * @return array{id: int, name: string}|null
      */
     private static function locationAt(
@@ -89,6 +94,7 @@ final class LocationHealthInsight
         }
 
         $location = null;
+
         foreach ($relocations as $relocation) {
             if ($relocation['date']->lte($t)) {
                 $location = $relocation['to'];

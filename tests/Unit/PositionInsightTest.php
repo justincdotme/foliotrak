@@ -10,8 +10,10 @@ use PHPUnit\Framework\TestCase;
 
 class PositionInsightTest extends TestCase
 {
+    /** @var Carbon */
     private Carbon $movedAt;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -19,6 +21,7 @@ class PositionInsightTest extends TestCase
         $this->movedAt = Carbon::parse('2026-05-01 12:00:00');
     }
 
+    /** @return void */
     public function test_a_move_with_readings_on_both_sides_summarizes_before_and_after(): void
     {
         $insights = PositionInsight::forMoves(
@@ -41,6 +44,7 @@ class PositionInsightTest extends TestCase
         $this->assertSame(3, $insight['health_after']['sample_size']);
     }
 
+    /** @return void */
     public function test_a_move_with_readings_on_only_one_side_is_skipped(): void
     {
         $afterOnly = PositionInsight::forMoves(
@@ -56,6 +60,7 @@ class PositionInsightTest extends TestCase
         $this->assertSame([], $beforeOnly);
     }
 
+    /** @return void */
     public function test_readings_outside_the_four_week_window_are_excluded(): void
     {
         $insights = PositionInsight::forMoves(
@@ -73,9 +78,10 @@ class PositionInsightTest extends TestCase
         $this->assertSame(1, $insights[0]['health_after']['sample_size']);
     }
 
+    /** @return void */
     public function test_each_qualifying_move_yields_its_own_insight(): void
     {
-        $first = Carbon::parse('2026-03-01 12:00:00');
+        $first  = Carbon::parse('2026-03-01 12:00:00');
         $second = Carbon::parse('2026-05-01 12:00:00');
 
         $insights = PositionInsight::forMoves(
@@ -97,6 +103,9 @@ class PositionInsightTest extends TestCase
     }
 
     /**
+     * @param integer $id
+     * @param string  $name
+     *
      * @return array{id: int, name: string}
      */
     private function loc(int $id, string $name): array
@@ -105,6 +114,9 @@ class PositionInsightTest extends TestCase
     }
 
     /**
+     * @param integer $daysFromMove
+     * @param integer $health
+     *
      * @return array{date: Carbon, health: int}
      */
     private function obs(int $daysFromMove, int $health): array

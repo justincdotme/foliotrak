@@ -14,17 +14,20 @@ class CareLookupApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(CareLookupSeeder::class);
     }
 
+    /** @return void */
     public function test_lookups_require_authentication(): void
     {
         $this->getJson('/api/symptoms')->assertUnauthorized();
     }
 
+    /** @return void */
     public function test_lists_care_event_types_in_order(): void
     {
         Sanctum::actingAs(User::factory()->create());
@@ -35,6 +38,7 @@ class CareLookupApiTest extends TestCase
             ->assertJsonPath('data.0.key', 'watering');
     }
 
+    /** @return void */
     public function test_lists_fertilizer_forms(): void
     {
         Sanctum::actingAs(User::factory()->create());
@@ -45,6 +49,7 @@ class CareLookupApiTest extends TestCase
             ->assertJsonPath('data.0.key', 'liquid');
     }
 
+    /** @return void */
     public function test_lists_nutrients_in_the_component_shape(): void
     {
         Sanctum::actingAs(User::factory()->create());
@@ -56,6 +61,7 @@ class CareLookupApiTest extends TestCase
             ->assertJsonPath('data.0.nutrient_symbol', null);
     }
 
+    /** @return void */
     public function test_lists_seeded_symptoms_with_their_chip_shape(): void
     {
         Sanctum::actingAs(User::factory()->create());
