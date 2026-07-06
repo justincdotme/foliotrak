@@ -102,7 +102,7 @@ export function PlantDetailPage({ id, go }: PlantDetailPageProps) {
         onClose={() => setPhotoOpen(false)}
       />
 
-      <PlantChartsPanel timeline={timeline} recommendations={recommendations} />
+      <PlantChartsPanel plantId={id} timeline={timeline} recommendations={recommendations} />
 
       <PlantPhotosCard photos={photoList} />
 

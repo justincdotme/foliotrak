@@ -30,6 +30,9 @@ vi.mock('@/components/charts/activity-heatmap', () => ({
 vi.mock('@/components/charts/health-by-location', () => ({
   HealthByLocation: () => <div data-testid="locations" />,
 }))
+vi.mock('@/components/charts/environment-chart', () => ({
+  EnvironmentChart: () => <div data-testid="environment" />,
+}))
 // Non-chart children pull their own react-query hooks; stub them so this test
 // isolates the chart-gating logic (repo convention: mock at the boundary).
 vi.mock('@/components/plant/edit-plant-modal', () => ({ EditPlantModal: () => null }))
@@ -183,13 +186,53 @@ describe('PlantDetailPage charts', () => {
     expect(screen.queryByTestId('growth')).not.toBeInTheDocument()
   })
 
-  it('shows the empty state when there are no care events', () => {
+  it('keeps the tab bar visible with empty states when there are no care events', () => {
     setTimeline({ events: [] })
 
     renderPage()
 
-    expect(screen.getByText('Nothing to chart yet')).toBeInTheDocument()
+    // Structurally unconditional: the four per-plant tabs always render.
+    expect(screen.getByRole('tab', { name: 'Trends' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Activity' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Light' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Environment' })).toBeInTheDocument()
+
+    // The old whole-panel takeover is gone; each tab shows its own empty state.
+    expect(screen.queryByText('Nothing to chart yet')).not.toBeInTheDocument()
     expect(screen.queryByTestId('heatmap')).not.toBeInTheDocument()
+    expect(screen.getByText('No trend data yet')).toBeInTheDocument()
+  })
+
+  it('groups the tabs under a titled Charts card', () => {
+    setTimeline({ events: [wateringEvent] })
+
+    renderPage()
+
+    expect(screen.getByText('Charts')).toBeInTheDocument()
+  })
+
+  it('shows a Trends empty state when observations have no numeric trend values', () => {
+    setTimeline({
+      events: [wateringEvent],
+      health_trend: [{ date: '2026-06-20', value: null }],
+    })
+
+    renderPage()
+
+    expect(screen.queryByTestId('health')).not.toBeInTheDocument()
+    expect(screen.getByText('No trend data yet')).toBeInTheDocument()
+  })
+
+  it('does not show the Trends empty state when a series has values', () => {
+    setTimeline({
+      events: [wateringEvent],
+      weight_trend: [{ date: '2026-06-20', value: 1200 }],
+    })
+
+    renderPage()
+
+    expect(screen.getByTestId('weight')).toBeInTheDocument()
+    expect(screen.queryByText('No trend data yet')).not.toBeInTheDocument()
   })
 })
 
