@@ -4,6 +4,7 @@ import {
   deleteSensor,
   discoverSensors,
   listSensors,
+  listSensorTypes,
   testSensorConnection,
   updateSensor,
 } from '@/api/client'
@@ -13,6 +14,11 @@ import type { Sensor } from '@/api/types'
 export function useSensors() {
   const query = useQuery({ queryKey: ['sensors'], queryFn: listSensors })
   return { data: query.data ?? null, loading: query.isPending, error: query.error }
+}
+
+export function useSensorTypes() {
+  const query = useQuery({ queryKey: ['sensor-types'], queryFn: listSensorTypes })
+  return { data: query.data ?? [], loading: query.isPending, error: query.error }
 }
 
 // Discovery polls the gateway over the LAN, so it only runs on explicit refetch.

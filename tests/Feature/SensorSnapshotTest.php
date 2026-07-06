@@ -34,8 +34,8 @@ class SensorSnapshotTest extends TestCase
         $sensor = Sensor::create(['mac' => 'AA:BB:CC:DD:EE:01', 'name' => 'Desk sensor', 'color' => 'var(--series-1)']);
         $plant->sensors()->attach($sensor);
 
-        SensorReading::create(['sensor_id' => $sensor->id, 'temperature' => 22.5, 'humidity' => 65.0, 'recorded_at' => '2026-07-05 14:00:00']);
-        SensorReading::create(['sensor_id' => $sensor->id, 'temperature' => 23.0, 'humidity' => 60.0, 'recorded_at' => '2026-07-05 14:30:00']);
+        SensorReading::create(['sensor_id' => $sensor->id, 'data' => ['temperature' => 22.5, 'humidity' => 65.0], 'recorded_at' => '2026-07-05 14:00:00']);
+        SensorReading::create(['sensor_id' => $sensor->id, 'data' => ['temperature' => 23.0, 'humidity' => 60.0], 'recorded_at' => '2026-07-05 14:30:00']);
 
         $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot?at=2026-07-05T14:22:00Z')
             ->assertOk()
@@ -53,8 +53,8 @@ class SensorSnapshotTest extends TestCase
         $s2    = Sensor::create(['mac' => 'AA:BB:CC:DD:EE:02', 'name' => 'Sensor 2', 'color' => 'var(--series-2)']);
         $plant->sensors()->attach([$s1->id, $s2->id]);
 
-        SensorReading::create(['sensor_id' => $s1->id, 'temperature' => 20.0, 'humidity' => 60.0, 'recorded_at' => '2026-07-05 14:00:00']);
-        SensorReading::create(['sensor_id' => $s2->id, 'temperature' => 24.0, 'humidity' => 70.0, 'recorded_at' => '2026-07-05 14:05:00']);
+        SensorReading::create(['sensor_id' => $s1->id, 'data' => ['temperature' => 20.0, 'humidity' => 60.0], 'recorded_at' => '2026-07-05 14:00:00']);
+        SensorReading::create(['sensor_id' => $s2->id, 'data' => ['temperature' => 24.0, 'humidity' => 70.0], 'recorded_at' => '2026-07-05 14:05:00']);
 
         $response = $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot?at=2026-07-05T14:02:00Z')
             ->assertOk();
@@ -93,8 +93,8 @@ class SensorSnapshotTest extends TestCase
         $s2    = Sensor::create(['mac' => 'AA:BB:CC:DD:EE:02', 'name' => 'Stale', 'color' => 'var(--series-2)']);
         $plant->sensors()->attach([$s1->id, $s2->id]);
 
-        SensorReading::create(['sensor_id' => $s1->id, 'temperature' => 22.0, 'humidity' => 55.0, 'recorded_at' => '2026-07-05 14:00:00']);
-        SensorReading::create(['sensor_id' => $s2->id, 'temperature' => 30.0, 'humidity' => 80.0, 'recorded_at' => '2026-07-05 12:00:00']);
+        SensorReading::create(['sensor_id' => $s1->id, 'data' => ['temperature' => 22.0, 'humidity' => 55.0], 'recorded_at' => '2026-07-05 14:00:00']);
+        SensorReading::create(['sensor_id' => $s2->id, 'data' => ['temperature' => 30.0, 'humidity' => 80.0], 'recorded_at' => '2026-07-05 12:00:00']);
 
         $response = $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot?at=2026-07-05T14:10:00Z')
             ->assertOk();
@@ -114,7 +114,7 @@ class SensorSnapshotTest extends TestCase
         $sensor = Sensor::create(['mac' => 'AA:BB:CC:DD:EE:01', 'name' => 'Sensor', 'color' => 'var(--series-1)']);
         $plant->sensors()->attach($sensor);
 
-        SensorReading::create(['sensor_id' => $sensor->id, 'temperature' => 21.0, 'humidity' => 50.0, 'recorded_at' => '2026-07-05 13:55:00']);
+        SensorReading::create(['sensor_id' => $sensor->id, 'data' => ['temperature' => 21.0, 'humidity' => 50.0], 'recorded_at' => '2026-07-05 13:55:00']);
 
         $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot')
             ->assertOk()

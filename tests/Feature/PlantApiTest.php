@@ -234,6 +234,7 @@ class PlantApiTest extends TestCase
             'name'     => 'Desk sensor',
             'color'    => 'var(--series-1)',
             'location' => 'Living room',
+            'type'     => 'hygrometer',
         ]);
 
         $this->patchJson("/api/plants/{$plant->id}", ['sensor_ids' => [$sensor->id]])

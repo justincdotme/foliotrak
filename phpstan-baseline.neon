@@ -763,6 +763,12 @@ parameters:
 			path: app/Http/Resources/SensorResource.php
 
 		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$updated_at\.$#'
 			identifier: property.notFound
 			count: 1

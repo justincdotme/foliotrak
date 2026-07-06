@@ -62,12 +62,12 @@ final class GondolaAdapter implements SensorReadingSource
                 $recordedAt = new DateTimeImmutable($row['recorded_at']);
                 $from       = $recordedAt->format('Y-m-d\TH:i:s\Z');
 
+                $data = $row;
+                unset($data['recorded_at']);
+
                 yield new SensorReading(
-                    temperature: (float) $row['temperature'],
-                    humidity: (float) $row['humidity'],
+                    data: $data,
                     recordedAt: $recordedAt,
-                    battery: isset($row['battery']) ? (int) $row['battery'] : null,
-                    rssi: isset($row['rssi']) ? (int) $row['rssi'] : null,
                 );
             }
 
@@ -100,13 +100,14 @@ final class GondolaAdapter implements SensorReadingSource
             $lastReading = null;
 
             if (isset($entry['last_reading'])) {
-                $lr          = $entry['last_reading'];
+                $lr         = $entry['last_reading'];
+                $recordedAt = new DateTimeImmutable($lr['recorded_at']);
+                $data       = $lr;
+                unset($data['recorded_at']);
+
                 $lastReading = new SensorReading(
-                    temperature: (float) $lr['temperature'],
-                    humidity: (float) $lr['humidity'],
-                    recordedAt: new DateTimeImmutable($lr['recorded_at']),
-                    battery: isset($lr['battery']) ? (int) $lr['battery'] : null,
-                    rssi: isset($lr['rssi']) ? (int) $lr['rssi'] : null,
+                    data: $data,
+                    recordedAt: $recordedAt,
                 );
             }
 

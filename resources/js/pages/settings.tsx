@@ -33,14 +33,16 @@ import {
   useDiscoverSensors,
   useTestConnection,
   useCreateSensor,
+  useSensorTypes,
   useUpdateSensor,
   useDeleteSensor,
 } from '@/hooks/useSensors'
 import { Button } from '@/components/ui/button'
 import { TooltipButton } from '@/components/ui/tooltip-button'
-import { Input } from '@/components/ui/input'
+import { Input, inputClass } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { extractValidationError } from '@/lib/handle-api-error'
+import { cn } from '@/lib/utils'
 import { ConfirmDelete } from '@/components/app/confirm-delete'
 import { SectionTitle } from '@/components/app/section-title'
 import { Segmented } from '@/components/app/segmented'
@@ -701,7 +703,7 @@ function SensorRow({
               )}
             </div>
             <div className="text-[11px] text-text-muted truncate">
-              {sensor.mac}
+              {sensor.type.charAt(0).toUpperCase() + sensor.type.slice(1)} &middot; {sensor.mac}
               {sensor.location && <> &middot; {sensor.location}</>}
               {sensor.plant_count > 0 && (
                 <>
@@ -764,8 +766,10 @@ function RegisterForm({
   onClose: () => void
 }) {
   const createSensor = useCreateSensor()
+  const { data: sensorTypes } = useSensorTypes()
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
+  const [type, setType] = useState('')
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -773,10 +777,17 @@ function RegisterForm({
     inputRef.current?.focus()
   }, [])
 
+  // Auto-select when only one type is available; show the chooser when a second arrives.
+  const resolvedType = type || (sensorTypes.length === 1 ? (sensorTypes[0]?.value ?? '') : '')
+
   const submit = async () => {
     const trimmed = name.trim()
     if (!trimmed) {
       setError('Name is required.')
+      return
+    }
+    if (!resolvedType) {
+      setError('Select a sensor type.')
       return
     }
     try {
@@ -785,10 +796,11 @@ function RegisterForm({
         device_name: deviceName,
         name: trimmed,
         location: location.trim() || null,
+        type: resolvedType,
       })
       onClose()
     } catch (err) {
-      setError(extractValidationError(err, ['name', 'mac'], 'Could not register.'))
+      setError(extractValidationError(err, ['name', 'mac', 'type'], 'Could not register.'))
     }
   }
 
@@ -809,6 +821,23 @@ function RegisterForm({
         placeholder="Name (required)"
         className="h-8 text-[13px]"
       />
+      <select
+        value={resolvedType}
+        onChange={e => {
+          setType(e.target.value)
+          setError(null)
+        }}
+        className={cn(inputClass, 'h-8 text-[13px]')}
+      >
+        <option value="" disabled>
+          Select sensor type
+        </option>
+        {sensorTypes.map(t => (
+          <option key={t.value} value={t.value}>
+            {t.label}
+          </option>
+        ))}
+      </select>
       <Input
         value={location}
         onChange={e => setLocation(e.target.value)}
@@ -824,9 +853,15 @@ function RegisterForm({
         <TooltipButton
           size="sm"
           onClick={submit}
-          disabled={createSensor.isPending || !name.trim()}
+          disabled={createSensor.isPending || !name.trim() || !resolvedType}
           tooltipContent={
-            createSensor.isPending ? 'Saving...' : !name.trim() ? 'Enter a sensor name' : undefined
+            createSensor.isPending
+              ? 'Saving...'
+              : !name.trim()
+                ? 'Enter a sensor name'
+                : !resolvedType
+                  ? 'Select a sensor type'
+                  : undefined
           }
         >
           Save

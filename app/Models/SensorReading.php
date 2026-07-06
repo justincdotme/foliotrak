@@ -11,19 +11,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int                        $id
  * @property int                        $sensor_id
- * @property float                      $temperature
- * @property float                      $humidity
+ * @property array<string, mixed>       $data
  * @property \Illuminate\Support\Carbon $recorded_at
- * @property array<string, mixed>|null  $meta
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
  */
 #[Fillable([
     'sensor_id',
-    'temperature',
-    'humidity',
+    'data',
     'recorded_at',
-    'meta',
 ])]
 class SensorReading extends Model
 {
@@ -41,10 +37,8 @@ class SensorReading extends Model
     protected function casts(): array
     {
         return [
-            'temperature' => 'float',
-            'humidity'    => 'float',
+            'data'        => 'array',
             'recorded_at' => 'datetime',
-            'meta'        => 'array',
         ];
     }
 }

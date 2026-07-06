@@ -84,6 +84,14 @@ class SensorIngestBackfillTest extends TestCase
         $this->assertContains($this->dataset[100]['recorded_at'], $storedTimestamps);
         $this->assertContains($this->dataset[199]['recorded_at'], $storedTimestamps);
         $this->assertContains($this->dataset[200]['recorded_at'], $storedTimestamps);
+
+        // Whole-number floats (e.g. 20.0) lose their decimal through the JSON
+        // round-trip and decode back as int, so these compare by value.
+        $reading = SensorReading::first();
+        $this->assertEquals($this->dataset[0]['temperature'], $reading->data['temperature']);
+        $this->assertEquals($this->dataset[0]['humidity'], $reading->data['humidity']);
+        $this->assertSame($this->dataset[0]['battery'], $reading->data['battery']);
+        $this->assertSame($this->dataset[0]['rssi'], $reading->data['rssi']);
     }
 
     /** @return void */

@@ -56,6 +56,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('settings', [SettingsController::class, 'show']);
     Route::patch('settings', [SettingsController::class, 'update']);
 
+    Route::get('sensor-types', [SensorController::class, 'sensorTypes']);
     Route::get('sensors/discover', [SensorController::class, 'discover']);
     Route::post('sensors/test-connection', [SensorController::class, 'testConnection']);
     Route::apiResource('sensors', SensorController::class)->only(['index', 'store', 'update', 'destroy']);

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Contracts\SensorReadingSource;
+use App\Enums\SensorType;
 use App\Http\Requests\StoreSensorRequest;
 use App\Http\Requests\UpdateSensorRequest;
 use App\Http\Resources\SensorResource;
 use App\Models\Plant;
 use App\Models\Sensor;
 use App\Models\SensorReading;
+use App\Services\Sensors\Transformers\HygrometerTransformer;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,6 +42,19 @@ class SensorController extends Controller
         return SensorResource::collection(
             Sensor::query()->withCount('plants')->orderBy('name')->get(),
         );
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function sensorTypes(): JsonResponse
+    {
+        $types = array_map(
+            fn (SensorType $type) => ['value' => $type->value, 'label' => $type->label()],
+            SensorType::cases(),
+        );
+
+        return response()->json(['data' => $types]);
     }
 
     /**
@@ -130,13 +145,10 @@ class SensorController extends Controller
             return [
                 'mac'          => $device->mac,
                 'device_name'  => $device->deviceName,
-                'last_reading' => $reading ? [
-                    'temperature' => $reading->temperature,
-                    'humidity'    => $reading->humidity,
-                    'battery'     => $reading->battery,
-                    'rssi'        => $reading->rssi,
-                    'recorded_at' => $reading->recordedAt->format('Y-m-d\TH:i:s\Z'),
-                ] : null,
+                'last_reading' => $reading ? array_merge(
+                    $reading->data,
+                    ['recorded_at' => $reading->recordedAt->format('Y-m-d\TH:i:s\Z')],
+                ) : null,
                 'registered' => in_array($device->mac, $registeredMacs, true),
             ];
         }, $devices);
@@ -210,23 +222,27 @@ class SensorController extends Controller
         foreach ($plant->sensors as $sensor) {
             /** @var Collection<int, SensorReading> $sensorReadings */
             $sensorReadings = $grouped->get($sensor->id, collect());
+            $transformer    = $sensor->type->transformer();
 
             $formattedReadings = [];
 
             foreach ($sensorReadings as $r) {
                 /** @var Carbon $recordedAt */
-                $recordedAt          = $r->recorded_at;
-                $formattedReadings[] = [
-                    'temperature_f' => round($r->temperature * 9 / 5 + 32, 1),
-                    'humidity'      => $r->humidity,
-                    'recorded_at'   => $recordedAt->format('Y-m-d\TH:i:s\Z'),
-                ];
+                $recordedAt = $r->recorded_at;
+                $vo         = $transformer->hydrate($r->data);
+
+                $formattedReadings[] = array_merge(
+                    $vo->toApiValues(),
+                    ['recorded_at' => $recordedAt->format('Y-m-d\TH:i:s\Z')],
+                );
             }
 
             $sensors[] = [
                 'id'       => $sensor->id,
                 'name'     => $sensor->name,
                 'color'    => $sensor->color,
+                'type'     => $sensor->type->value,
+                'fields'   => $transformer->chartFields(),
                 'readings' => $formattedReadings,
             ];
         }
@@ -257,7 +273,9 @@ class SensorController extends Controller
             ? Carbon::parse($request->query('at'))
             : Carbon::now();
 
-        $sensorIds = $plant->sensors()->pluck('sensors.id');
+        $sensorIds = $plant->sensors()
+            ->where('type', SensorType::Hygrometer)
+            ->pluck('sensors.id');
 
         if ($sensorIds->isEmpty()) {
             return response()->noContent();
@@ -306,10 +324,22 @@ class SensorController extends Controller
             return response()->noContent();
         }
 
+        $transformer = new HygrometerTransformer;
+
         $response = [
-            'ambient_temp_c'       => (float) number_format($readings->avg('temperature'), 1, '.', ''),
-            'ambient_humidity_pct' => (float) number_format($readings->avg('humidity'), 1, '.', ''),
-            'sensor_count'         => $readings->count(),
+            'ambient_temp_c' => (float) number_format(
+                $readings->avg(fn ($r) => $transformer->hydrate($r->data)->temperature),
+                1,
+                '.',
+                '',
+            ),
+            'ambient_humidity_pct' => (float) number_format(
+                $readings->avg(fn ($r) => $transformer->hydrate($r->data)->humidity),
+                1,
+                '.',
+                '',
+            ),
+            'sensor_count' => $readings->count(),
         ];
 
         if ($readings->count() === 1) {

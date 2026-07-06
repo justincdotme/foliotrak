@@ -38,9 +38,9 @@ function formatXAxis(recorded_at: string, range: Range): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// Recharts needs a single time-indexed array with all sensor series as keyed columns.
+// Recharts needs a single time-indexed array with every sensor field as a keyed column.
 function buildChartData(sensors: SensorSeries[]) {
-  const map = new Map<string, Record<string, number | string>>()
+  const map = new Map<string, Record<string, number | string | undefined>>()
 
   for (const sensor of sensors) {
     for (const r of sensor.readings) {
@@ -49,14 +49,73 @@ function buildChartData(sensors: SensorSeries[]) {
         row = { recorded_at: r.recorded_at }
         map.set(r.recorded_at, row)
       }
-      row[`temp_${sensor.id}`] = r.temperature_f
-      row[`hum_${sensor.id}`] = r.humidity
+      for (const field of sensor.fields) {
+        row[`${field.key}_${sensor.id}`] = r[field.key]
+      }
     }
   }
 
   return [...map.values()].sort((a, b) =>
     (a.recorded_at as string).localeCompare(b.recorded_at as string)
   )
+}
+
+interface AxisSpec {
+  id: string
+  orientation: 'left' | 'right'
+  unit: string
+}
+
+// Axis ids are no longer fixed to temp/humidity; a sensor type can place a field on
+// either side, so the set of Y axes is derived from whatever fields are present.
+function collectAxes(sensors: SensorSeries[]): AxisSpec[] {
+  const byId = new Map<string, AxisSpec>()
+  for (const sensor of sensors) {
+    for (const field of sensor.fields) {
+      if (!byId.has(field.axis)) {
+        byId.set(field.axis, {
+          id: field.axis,
+          orientation: field.axis === 'right' ? 'right' : 'left',
+          unit: field.unit,
+        })
+      }
+    }
+  }
+  return [...byId.values()]
+}
+
+interface LineSpec {
+  dataKey: string
+  yAxisId: string
+  name: string
+  color: string
+  unit: string
+  dashed: boolean
+}
+
+// Grouped by field position rather than by sensor, so every sensor's first field
+// (e.g. temperature) draws and lists before any second field: same stacking order
+// and tooltip order the old hardcoded temp-then-humidity render produced.
+function collectLines(sensors: SensorSeries[]): LineSpec[] {
+  const fieldCount = Math.max(0, ...sensors.map(s => s.fields.length))
+  const lines: LineSpec[] = []
+
+  for (let index = 0; index < fieldCount; index++) {
+    for (const sensor of sensors) {
+      const field = sensor.fields[index]
+      if (!field) continue
+      lines.push({
+        dataKey: `${field.key}_${sensor.id}`,
+        yAxisId: field.axis,
+        name: `${sensor.name} - ${field.label}`,
+        color: sensor.color,
+        unit: field.unit,
+        dashed: index > 0,
+      })
+    }
+  }
+
+  return lines
 }
 
 export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
@@ -101,6 +160,9 @@ export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
   }
 
   const chartData = buildChartData(sensors)
+  const axes = collectAxes(sensors)
+  const lines = collectLines(sensors)
+  const unitByKey = new Map(lines.map(l => [l.dataKey, l.unit]))
 
   return (
     <ChartShell title="Environment" height={280}>
@@ -116,8 +178,16 @@ export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
               {...axis}
               tickFormatter={(v: string) => formatXAxis(v, range)}
             />
-            <YAxis yAxisId="temp" {...axis} unit="°F" />
-            <YAxis yAxisId="hum" orientation="right" domain={[0, 100]} {...axis} unit="%" />
+            {axes.map(a => (
+              <YAxis
+                key={a.id}
+                yAxisId={a.id}
+                orientation={a.orientation}
+                domain={a.unit === '%' ? [0, 100] : undefined}
+                {...axis}
+                unit={a.unit}
+              />
+            ))}
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null
@@ -134,7 +204,7 @@ export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
                         />
                         <span className="text-[12px] tnum">
                           {entry.name}: {entry.value}
-                          {(entry.dataKey as string).startsWith('temp_') ? '°F' : '%'}
+                          {unitByKey.get(entry.dataKey as string) ?? ''}
                         </span>
                       </div>
                     ))}
@@ -147,49 +217,38 @@ export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-text-muted">
                   {sensors.map(sensor => (
                     <div key={sensor.id} className="flex items-center gap-3">
-                      <span className="flex items-center gap-1">
-                        <span
-                          className="inline-block h-0.5 w-3"
-                          style={{ background: sensor.color }}
-                        />
-                        {sensor.name} - Temp
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span
-                          className="inline-block h-0.5 w-3 border-t border-dashed"
-                          style={{ borderColor: sensor.color }}
-                        />
-                        {sensor.name} - Humidity
-                      </span>
+                      {sensor.fields.map((field, index) => (
+                        <span key={field.key} className="flex items-center gap-1">
+                          <span
+                            className={
+                              index === 0
+                                ? 'inline-block h-0.5 w-3'
+                                : 'inline-block h-0.5 w-3 border-t border-dashed'
+                            }
+                            style={
+                              index === 0
+                                ? { background: sensor.color }
+                                : { borderColor: sensor.color }
+                            }
+                          />
+                          {sensor.name} - {field.label}
+                        </span>
+                      ))}
                     </div>
                   ))}
                 </div>
               )}
             />
-            {sensors.map(sensor => (
+            {lines.map(line => (
               <Line
-                key={`temp_${sensor.id}`}
-                yAxisId="temp"
+                key={line.dataKey}
+                yAxisId={line.yAxisId}
                 type="monotone"
-                dataKey={`temp_${sensor.id}`}
-                name={`${sensor.name} - Temp`}
-                stroke={sensor.color}
+                dataKey={line.dataKey}
+                name={line.name}
+                stroke={line.color}
                 strokeWidth={2}
-                dot={false}
-                connectNulls
-                isAnimationActive={false}
-              />
-            ))}
-            {sensors.map(sensor => (
-              <Line
-                key={`hum_${sensor.id}`}
-                yAxisId="hum"
-                type="monotone"
-                dataKey={`hum_${sensor.id}`}
-                name={`${sensor.name} - Humidity`}
-                stroke={sensor.color}
-                strokeWidth={2}
-                strokeDasharray="5 3"
+                strokeDasharray={line.dashed ? '5 3' : undefined}
                 dot={false}
                 connectNulls
                 isAnimationActive={false}

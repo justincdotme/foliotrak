@@ -20,6 +20,7 @@ import type {
   Sensor,
   SensorReadingsResponse,
   SensorSnapshot,
+  SensorTypeOption,
   Settings,
   SpeciesSuggestion,
   Symptom,
@@ -270,11 +271,15 @@ export const listLocations = async (): Promise<Location[]> =>
 export const createLocation = async (name: string): Promise<Location> =>
   unwrap(await api.post<{ data: Location }>('/api/locations', { name }))
 
+export const listSensorTypes = async (): Promise<SensorTypeOption[]> =>
+  unwrap(await api.get<{ data: SensorTypeOption[] }>('/api/sensor-types'))
+
 export interface SensorPayload {
   mac: string
   device_name?: string | null
   name: string
   location?: string | null
+  type: string
 }
 
 export interface SensorUpdatePayload {
