@@ -55,7 +55,26 @@ export function HealthByLocation({ data }: HealthByLocationProps) {
               fontSize: 12,
             }}
           />
-          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Legend
+            content={() => (
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-text-muted">
+                <div className="flex items-center gap-1">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ background: 'var(--primary)', opacity: 0.55 }}
+                  />
+                  Reading
+                </div>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="inline-block h-2 w-2 rotate-45"
+                    style={{ background: 'var(--accent)' }}
+                  />
+                  Median
+                </div>
+              </div>
+            )}
+          />
           <Scatter
             name="Reading"
             data={readings}

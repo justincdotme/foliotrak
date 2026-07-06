@@ -1,4 +1,4 @@
-import { Calendar, Camera, ExternalLink, MapPin, Pencil } from 'lucide-react'
+import { Calendar, Camera, ExternalLink, MapPin, Pencil, Trash2 } from 'lucide-react'
 import type { PlantWithTags } from '@/api/types'
 import { Chip } from '@/components/app/chip'
 import { ConditionChip } from '@/components/app/condition-chip'
@@ -12,9 +12,10 @@ interface PlantHeaderProps {
   plant: PlantWithTags
   onEdit: () => void
   onChangeCover: () => void
+  onDelete: () => void
 }
 
-export function PlantHeader({ plant, onEdit, onChangeCover }: PlantHeaderProps) {
+export function PlantHeader({ plant, onEdit, onChangeCover, onDelete }: PlantHeaderProps) {
   return (
     <div className="flex gap-4 items-start">
       <div className="relative shrink-0">
@@ -51,9 +52,14 @@ export function PlantHeader({ plant, onEdit, onChangeCover }: PlantHeaderProps) 
               {plant.scientific_name}
             </div>
           </div>
-          <IconButton label="Edit plant" onClick={onEdit} className="ml-auto h-9 w-9 shrink-0">
-            <Pencil size={15} />
-          </IconButton>
+          <div className="ml-auto flex gap-1 shrink-0">
+            <IconButton label="Edit plant" onClick={onEdit} className="h-9 w-9">
+              <Pencil size={15} />
+            </IconButton>
+            <IconButton label="Delete plant" onClick={onDelete} className="h-9 w-9">
+              <Trash2 size={15} />
+            </IconButton>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[12px] text-text-muted">
           <span className="flex items-center gap-1">

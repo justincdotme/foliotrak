@@ -3,6 +3,7 @@ import { type ChangeEvent, type DragEvent, useCallback, useRef, useState } from 
 import type { CropArea, Photo, Plant } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/app/modal'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { photoUrl } from '@/lib/photos'
 import { useDeletePhoto, useSetCoverPhoto, useUploadPhoto } from '@/hooks/usePlantMutations'
@@ -130,37 +131,51 @@ export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhoto
                   const confirming = confirmDeleteId === ph.id
                   return (
                     <div key={ph.id} className="relative">
-                      <button
-                        type="button"
-                        onClick={() => pick(ph.id)}
-                        disabled={busy}
-                        aria-pressed={isCover}
-                        className={cn(
-                          'relative aspect-square w-full overflow-hidden rounded-md border',
-                          isCover ? 'border-primary ring-2 ring-primary' : 'border-border'
-                        )}
-                      >
-                        <img
-                          src={photoUrl(ph.thumb_path ?? ph.path)}
-                          alt={ph.caption || 'Plant photo'}
-                          className="h-full w-full object-cover"
-                        />
-                        {isCover && (
-                          <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-white">
-                            <Check size={12} />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex">
+                            <button
+                              type="button"
+                              onClick={() => pick(ph.id)}
+                              disabled={busy}
+                              aria-pressed={isCover}
+                              className={cn(
+                                'relative aspect-square w-full overflow-hidden rounded-md border',
+                                isCover ? 'border-primary ring-2 ring-primary' : 'border-border'
+                              )}
+                            >
+                              <img
+                                src={photoUrl(ph.thumb_path ?? ph.path)}
+                                alt={ph.caption || 'Plant photo'}
+                                className="h-full w-full object-cover"
+                              />
+                              {isCover && (
+                                <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-white">
+                                  <Check size={12} />
+                                </span>
+                              )}
+                            </button>
                           </span>
-                        )}
-                      </button>
+                        </TooltipTrigger>
+                        {busy && <TooltipContent>Saving...</TooltipContent>}
+                      </Tooltip>
                       {confirming ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 rounded-md bg-black/70 p-2">
-                          <button
-                            type="button"
-                            onClick={() => removePhoto(ph.id)}
-                            disabled={busy}
-                            className="w-full rounded-md bg-overdue px-2 py-1.5 text-[12px] font-medium text-white hover:bg-overdue/90"
-                          >
-                            Delete
-                          </button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex w-full">
+                                <button
+                                  type="button"
+                                  onClick={() => removePhoto(ph.id)}
+                                  disabled={busy}
+                                  className="w-full rounded-md bg-overdue px-2 py-1.5 text-[12px] font-medium text-white hover:bg-overdue/90"
+                                >
+                                  Delete
+                                </button>
+                              </span>
+                            </TooltipTrigger>
+                            {busy && <TooltipContent>Saving...</TooltipContent>}
+                          </Tooltip>
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteId(null)}
@@ -170,15 +185,22 @@ export function PrimaryPhotoModal({ plant, photos, open, onClose }: PrimaryPhoto
                           </button>
                         </div>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteId(ph.id)}
-                          disabled={busy}
-                          className="absolute bottom-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-black/50 text-white/80 hover:bg-overdue hover:text-white transition-colors"
-                          aria-label="Delete photo"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(ph.id)}
+                                disabled={busy}
+                                className="absolute bottom-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-black/50 text-white/80 hover:bg-overdue hover:text-white transition-colors"
+                                aria-label="Delete photo"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </span>
+                          </TooltipTrigger>
+                          {busy && <TooltipContent>Saving...</TooltipContent>}
+                        </Tooltip>
                       )}
                     </div>
                   )

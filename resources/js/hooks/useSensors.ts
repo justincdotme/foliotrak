@@ -48,6 +48,7 @@ export function useUpdateSensor() {
         (old ?? []).map(s => (s.id === updated.id ? updated : s))
       )
       qc.invalidateQueries({ queryKey: ['plants'] })
+      qc.invalidateQueries({ queryKey: ['sensor-readings'] })
     },
   })
 }
@@ -59,6 +60,7 @@ export function useDeleteSensor() {
     onSuccess: (_data, id) => {
       qc.setQueryData<Sensor[]>(['sensors'], old => (old ?? []).filter(s => s.id !== id))
       qc.invalidateQueries({ queryKey: ['plants'] })
+      qc.invalidateQueries({ queryKey: ['sensor-readings'] })
     },
   })
 }

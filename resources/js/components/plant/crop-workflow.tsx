@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { CropArea } from '@/api/types'
 import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Modal } from '@/components/app/modal'
 import { ImageCropper } from './image-cropper'
 
@@ -63,10 +64,14 @@ export function CropWorkflow({
               <ChevronLeft size={16} />
               Back
             </Button>
-            <Button onClick={() => setStep('thumb')} disabled={!heroCropArea}>
+            <TooltipButton
+              onClick={() => setStep('thumb')}
+              disabled={!heroCropArea}
+              tooltipContent={!heroCropArea ? 'Crop the cover photo first' : undefined}
+            >
               Next
               <ChevronRight size={16} />
-            </Button>
+            </TooltipButton>
           </div>
         ) : (
           <div className="flex w-full items-center justify-between">
@@ -74,9 +79,15 @@ export function CropWorkflow({
               <ChevronLeft size={16} />
               Back
             </Button>
-            <Button onClick={handleSubmit} disabled={!thumbCropArea || busy}>
+            <TooltipButton
+              onClick={handleSubmit}
+              disabled={!thumbCropArea || busy}
+              tooltipContent={
+                busy ? 'Uploading...' : !thumbCropArea ? 'Crop the thumbnail first' : undefined
+              }
+            >
               {busy ? 'Uploading...' : 'Save cover photo'}
-            </Button>
+            </TooltipButton>
           </div>
         )
       }

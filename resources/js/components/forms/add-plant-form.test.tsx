@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AddPlantForm } from './add-plant-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 vi.mock('@/hooks/useTags', () => ({
   useTags: () => ({ data: [], loading: false, error: null }),
@@ -47,6 +48,9 @@ import { useCreatePlant } from '@/hooks/usePlantMutations'
 
 const mutateAsync = vi.fn().mockResolvedValue({ plant: { id: 1 }, coverUploadFailed: false })
 
+const renderWithProvider = (ui: React.ReactElement) =>
+  render(<TooltipProvider>{ui}</TooltipProvider>)
+
 beforeEach(() => {
   mutateAsync.mockClear()
   vi.mocked(useCreatePlant).mockReturnValue({
@@ -59,7 +63,7 @@ beforeEach(() => {
 describe('AddPlantForm', () => {
   it('creates a plant with the typed name and no cover file, then closes', async () => {
     const onDone = vi.fn()
-    render(<AddPlantForm onDone={onDone} />)
+    renderWithProvider(<AddPlantForm onDone={onDone} />)
 
     await userEvent.type(screen.getByPlaceholderText(/Pothos, Monstera/), 'Pothos')
     await userEvent.click(screen.getByRole('button', { name: /add plant/i }))
@@ -81,7 +85,7 @@ describe('AddPlantForm', () => {
   })
 
   it('opens the crop workflow when a photo is chosen', async () => {
-    render(<AddPlantForm onDone={vi.fn()} />)
+    renderWithProvider(<AddPlantForm onDone={vi.fn()} />)
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     await userEvent.upload(input, new File(['img'], 'plant.jpg', { type: 'image/jpeg' }))
@@ -91,7 +95,7 @@ describe('AddPlantForm', () => {
 
   it('submits the cover with both crop areas after cropping', async () => {
     const onDone = vi.fn()
-    render(<AddPlantForm onDone={onDone} />)
+    renderWithProvider(<AddPlantForm onDone={onDone} />)
 
     await userEvent.type(screen.getByPlaceholderText(/Pothos, Monstera/), 'Pothos')
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
@@ -119,7 +123,7 @@ describe('AddPlantForm', () => {
   })
 
   it('clears the pending photo when the crop is aborted', async () => {
-    render(<AddPlantForm onDone={vi.fn()} />)
+    renderWithProvider(<AddPlantForm onDone={vi.fn()} />)
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     await userEvent.upload(input, new File(['img'], 'plant.jpg', { type: 'image/jpeg' }))
@@ -133,7 +137,7 @@ describe('AddPlantForm', () => {
 
   it('sends nickname in the payload when provided', async () => {
     const onDone = vi.fn()
-    render(<AddPlantForm onDone={onDone} />)
+    renderWithProvider(<AddPlantForm onDone={onDone} />)
 
     await userEvent.type(screen.getByPlaceholderText(/Pothos, Monstera/), 'Pothos')
     await userEvent.type(screen.getByPlaceholderText(/Kitchen Pothos/), 'Kitchen Pothos')

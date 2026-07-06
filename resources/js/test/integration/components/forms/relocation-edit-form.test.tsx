@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CareEvent } from '@/api/types'
 import { RelocationEditForm } from '@/components/forms/relocation-edit-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { server } from '../../../handlers'
 
 function makeWrapper() {
@@ -13,7 +14,11 @@ function makeWrapper() {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
   return function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    return (
+      <TooltipProvider>
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      </TooltipProvider>
+    )
   }
 }
 

@@ -3,6 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { CareEvent } from '@/api/types'
 import { LogObservationForm } from './log-observation-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
+
+const renderWithProvider = (ui: React.ReactElement) =>
+  render(<TooltipProvider>{ui}</TooltipProvider>)
 
 vi.mock('@/hooks/useCareLookups', () => ({
   useSymptoms: () => ({
@@ -63,7 +67,7 @@ beforeEach(() => {
 describe('LogObservationForm', () => {
   it('sends weight as lb/oz/g, splits seeded and custom symptoms, and links an attached photo', async () => {
     const onDone = vi.fn()
-    const { container } = render(<LogObservationForm plantId={3} onDone={onDone} />)
+    const { container } = renderWithProvider(<LogObservationForm plantId={3} onDone={onDone} />)
 
     await userEvent.click(screen.getByRole('button', { name: /Yellowing leaves/ }))
     await userEvent.type(screen.getByLabelText('Custom symptom'), 'curled tips')
@@ -94,7 +98,7 @@ describe('LogObservationForm', () => {
   })
 
   it('omits weight when no components are entered', async () => {
-    render(<LogObservationForm plantId={3} onDone={vi.fn()} />)
+    renderWithProvider(<LogObservationForm plantId={3} onDone={vi.fn()} />)
 
     await userEvent.click(screen.getByRole('button', { name: /Log observation/ }))
 
@@ -153,7 +157,7 @@ describe('LogObservationForm', () => {
       },
     }
 
-    render(<LogObservationForm plantId={3} onDone={vi.fn()} event={event} />)
+    renderWithProvider(<LogObservationForm plantId={3} onDone={vi.fn()} event={event} />)
 
     expect(screen.getByLabelText('Pounds')).toHaveValue(2)
     expect(screen.getByLabelText('Ounces')).toHaveValue(10)

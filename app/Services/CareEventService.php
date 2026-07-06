@@ -90,6 +90,10 @@ final class CareEventService
                 'relocation'  => $this->editRelocation($event, $data),
                 default       => null,
             };
+
+            if ($type === 'relocation' && array_key_exists('occurred_at', $data)) {
+                $this->recordRelocation->recomputeLocationFromChain($event->plant);
+            }
         });
 
         return $event;
@@ -102,8 +106,18 @@ final class CareEventService
      */
     public function delete(CareEvent $event): void
     {
-        // Detail rows and the symptom pivot drop with the spine via cascade FKs.
-        $event->delete();
+        $event->loadMissing('careEventType');
+        $isRelocation = $event->careEventType->key === 'relocation';
+        $plant        = $isRelocation ? $event->plant : null;
+
+        DB::transaction(function () use ($event, $plant): void {
+            // Detail rows and the symptom pivot drop with the spine via cascade FKs.
+            $event->delete();
+
+            if ($plant !== null) {
+                $this->recordRelocation->recomputeLocationFromChain($plant);
+            }
+        });
     }
 
     /**
@@ -300,28 +314,7 @@ final class CareEventService
         }
 
         $event->relocation()->update($detail);
-
-        if (array_key_exists('to_location_id', $data) && $this->isLatestRelocation($event)) {
-            $event->plant->update(['location_id' => $data['to_location_id']]);
-        }
-    }
-
-    /**
-     * @param CareEvent $event
-     *
-     * @return boolean
-     */
-    private function isLatestRelocation(CareEvent $event): bool
-    {
-        return ! $event->plant->careEvents()
-            ->whereHas('careEventType', fn ($type) => $type->where('key', 'relocation'))
-            ->where('id', '!=', $event->id)
-            ->where(fn ($newer) => $newer
-                ->where('occurred_at', '>', $event->occurred_at)
-                ->orWhere(fn ($tie) => $tie
-                    ->where('occurred_at', $event->occurred_at)
-                    ->where('id', '>', $event->id)))
-            ->exists();
+        $this->recordRelocation->recomputeLocationFromChain($event->plant);
     }
 
     /**

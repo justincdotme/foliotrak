@@ -7,7 +7,7 @@ import type { CareEvent } from '@/api/types'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
 import { isoToLocal, toIso } from '@/lib/datetime'
-import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Field } from '@/components/app/field'
 import { FormError } from '@/components/app/form-error'
 import { LocationCombobox } from '@/components/app/location-combobox'
@@ -76,10 +76,16 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
       </Field>
       <FormError message={formError} />
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="submit" disabled={isSubmitting || toLocationId == null}>
+        <TooltipButton
+          type="submit"
+          disabled={isSubmitting || toLocationId == null}
+          tooltipContent={
+            isSubmitting ? 'Saving...' : toLocationId == null ? 'Select a location' : undefined
+          }
+        >
           <Move size={16} />
           Save changes
-        </Button>
+        </TooltipButton>
       </div>
     </form>
   )

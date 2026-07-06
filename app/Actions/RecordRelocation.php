@@ -41,9 +41,6 @@ final class RecordRelocation
         return DB::transaction(function () use ($plant, $toLocationId, $occurredAt, $note, $userId): CareEvent {
             $fromLocationId = $plant->location_id;
 
-            $plant->location_id = $toLocationId;
-            $plant->save();
-
             $event = CareEventSpine::build($plant, 'relocation', $occurredAt, $userId, $note);
 
             $event->relocation()->create([
@@ -51,7 +48,30 @@ final class RecordRelocation
                 'to_location_id'   => $toLocationId,
             ]);
 
+            $this->recomputeLocationFromChain($plant);
+
             return $event;
         });
+    }
+
+    /**
+     * Derives the plant's current location from the chronologically latest
+     * relocation in its care-event chain.
+     *
+     * @param Plant $plant
+     *
+     * @return void
+     */
+    public function recomputeLocationFromChain(Plant $plant): void
+    {
+        /** @var int|null $locationId */
+        $locationId = $plant->careEvents()
+            ->whereHas('careEventType', fn ($type) => $type->where('key', 'relocation'))
+            ->join('relocation_details', 'care_events.id', '=', 'relocation_details.care_event_id')
+            ->orderByDesc('care_events.occurred_at')
+            ->orderByDesc('care_events.id')
+            ->value('relocation_details.to_location_id');
+
+        $plant->update(['location_id' => $locationId]);
     }
 }

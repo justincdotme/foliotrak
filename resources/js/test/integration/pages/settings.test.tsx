@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { SettingsPage } from '@/pages/settings'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { server } from '../../handlers'
 import userFixture from '../../fixtures/user.json'
 import tagsFixture from '../../fixtures/lookups/tags.json'
@@ -14,7 +15,11 @@ import settingsUpdatedFixture from '../../fixtures/settings/updated.json'
 const makeWrapper = () => {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    return (
+      <TooltipProvider>
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      </TooltipProvider>
+    )
   }
 }
 

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SettingsPage } from './settings'
 import type { User } from '@/api/types'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 vi.mock('@/hooks/useSettings', () => ({
   useSettings: vi.fn(),
@@ -120,7 +121,11 @@ function setup(opts: {
   })
   vi.mocked(useUpdateSettings).mockReturnValue({ mutateAsync } as never)
   vi.mocked(useCurrentUser).mockReturnValue({ user: USER, loading: false, error: null })
-  const view = render(<SettingsPage theme="system" setTheme={vi.fn()} onLogout={vi.fn()} />)
+  const view = render(
+    <TooltipProvider>
+      <SettingsPage theme="system" setTheme={vi.fn()} onLogout={vi.fn()} />
+    </TooltipProvider>
+  )
   return { mutateAsync, rerender: view.rerender }
 }
 
@@ -169,7 +174,11 @@ describe('SettingsPage', () => {
     // A successful save seeds ['settings'] with the saved value, which re-renders
     // the page with the new key. The confirmation must survive that re-render.
     settingsValue(NEW_KEY)
-    rerender(<SettingsPage theme="system" setTheme={vi.fn()} onLogout={vi.fn()} />)
+    rerender(
+      <TooltipProvider>
+        <SettingsPage theme="system" setTheme={vi.fn()} onLogout={vi.fn()} />
+      </TooltipProvider>
+    )
 
     expect(screen.getByText('Saved')).toBeInTheDocument()
     expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe(NEW_KEY)

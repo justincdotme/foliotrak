@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { AxiosError, AxiosHeaders } from 'axios'
-import { extractValidationError } from './handle-api-error'
+import { extractValidationError, handleApiError } from './handle-api-error'
+import { SessionExpiredError } from './errors'
 
 function make422(errors: Record<string, string[]>) {
   return new AxiosError('Validation', '422', undefined, undefined, {
@@ -47,5 +48,27 @@ describe('extractValidationError', () => {
       config: { headers: new AxiosHeaders() },
     })
     expect(extractValidationError(err, 'name', 'Failed')).toBe('Failed')
+  })
+})
+
+describe('handleApiError', () => {
+  it('returns session expired message for SessionExpiredError', () => {
+    const err = new SessionExpiredError('Session expired')
+    expect(handleApiError(err)).toBe('Your session expired. Redirecting...')
+  })
+
+  it('returns generic message for non-axios errors', () => {
+    expect(handleApiError(new Error('boom'))).toBe('Something went wrong. Please try again.')
+  })
+
+  it('returns the response message for non-validation errors', () => {
+    const err = new AxiosError('Server error', '500', undefined, undefined, {
+      status: 500,
+      data: { message: 'Database connection failed' },
+      statusText: 'Internal Server Error',
+      headers: {},
+      config: { headers: new AxiosHeaders() },
+    })
+    expect(handleApiError(err)).toBe('Database connection failed')
   })
 })

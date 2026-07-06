@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { ReactNode } from 'react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { AddPlantForm } from '@/components/forms/add-plant-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { server } from '../../../handlers'
 import { jsonMessage } from '../../../handlers/_helpers'
 
@@ -41,7 +42,11 @@ function makeWrapper() {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
   return function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    return (
+      <TooltipProvider>
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      </TooltipProvider>
+    )
   }
 }
 

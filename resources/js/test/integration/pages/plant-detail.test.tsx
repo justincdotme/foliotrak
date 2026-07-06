@@ -91,7 +91,7 @@ describe('PlantDetailPage', () => {
 
     const relocationToggle = await screen.findByRole('button', { name: /moved/i })
     await user.click(relocationToggle)
-    await user.click(screen.getByRole('button', { name: /delete/i }))
+    await user.click(screen.getByRole('button', { name: /^delete$/i }))
 
     const dialog = screen.getByRole('dialog')
     await user.click(within(dialog).getByRole('button', { name: /delete/i }))

@@ -4,19 +4,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http } from 'msw'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import { AppRoot } from '@/app-root'
 import { LoginPage } from '@/pages/login'
 import { AuthGate } from '@/components/shell/auth-gate'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { server } from '../../handlers'
 import { jsonMessage } from '../../handlers/_helpers'
 
 const renderLoginRoutes = () =>
   render(
-    <MemoryRouter initialEntries={['/login']}>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<div>Home</div>} />
-      </Routes>
-    </MemoryRouter>
+    <TooltipProvider>
+      <MemoryRouter initialEntries={['/login']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<div>Home</div>} />
+        </Routes>
+      </MemoryRouter>
+    </TooltipProvider>
   )
 
 describe('LoginPage', () => {
@@ -40,11 +44,24 @@ describe('LoginPage', () => {
     expect(await screen.findByText('Incorrect email or password.')).toBeInTheDocument()
     expect(screen.queryByText('Home')).not.toBeInTheDocument()
   })
+
+  // Rendered through AppRoot on purpose: the login route lives outside the shell,
+  // so a hand-built wrapper here can provide context the real app does not.
+  it('shows validation errors when submitting empty credentials', async () => {
+    window.history.pushState({}, '', '/login')
+    render(<AppRoot />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Sign in' }))
+
+    expect(await screen.findByText('Enter a valid email')).toBeInTheDocument()
+    expect(screen.getByText('Enter your password')).toBeInTheDocument()
+    window.history.pushState({}, '', '/')
+  })
 })
 
 describe('AuthGate', () => {
   // A 401 here isn't usable: the shared axios instance (lib/api.ts) intercepts
-  // 401s on non-auth routes and hard-redirects via window.location before React
+  // 401s on non-auth routes and hard redirects via window.location before React
   // Query ever sees a rejection, so AuthGate's own isError branch never runs for
   // that case. A 500 reaches AuthGate's real isError -> <Navigate> path instead.
   it('redirects to /login when the session check fails', async () => {
