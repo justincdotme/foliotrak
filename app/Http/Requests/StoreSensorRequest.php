@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\SensorType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,6 +28,7 @@ class StoreSensorRequest extends FormRequest
             'device_name' => ['nullable', 'string'],
             'name'        => ['required', 'string', 'max:255'],
             'location'    => ['nullable', 'string', 'max:255'],
+            'type'        => ['required', 'string', Rule::in(array_column(SensorType::cases(), 'value'))],
         ];
     }
 }

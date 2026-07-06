@@ -7,6 +7,7 @@
       "name": "hygro-1",
       "color": "var(--series-1)",
       "location": "Steps",
+      "type": "hygrometer",
       "plant_count": 6,
       "created_at": "2026-07-05T04:07:19.000000Z",
       "updated_at": "2026-07-05T04:07:19.000000Z"
@@ -18,6 +19,7 @@
       "name": "hygro-2",
       "color": "var(--series-2)",
       "location": "Wet Bar",
+      "type": "hygrometer",
       "plant_count": 11,
       "created_at": "2026-07-05T23:10:01.000000Z",
       "updated_at": "2026-07-05T23:10:01.000000Z"
@@ -29,6 +31,7 @@
       "name": "hygro-3",
       "color": "var(--series-3)",
       "location": "Guest Bedroom",
+      "type": "hygrometer",
       "plant_count": 3,
       "created_at": "2026-07-05T23:18:11.000000Z",
       "updated_at": "2026-07-05T23:18:11.000000Z"
@@ -40,6 +43,7 @@
       "name": "hygro-4",
       "color": "var(--series-4)",
       "location": "Steps (bottom)",
+      "type": "hygrometer",
       "plant_count": 13,
       "created_at": "2026-07-05T23:37:27.000000Z",
       "updated_at": "2026-07-05T23:37:27.000000Z"

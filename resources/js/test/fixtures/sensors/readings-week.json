@@ -5,6 +5,11 @@
         "id": 1,
         "name": "hygro-1",
         "color": "var(--series-1)",
+        "type": "hygrometer",
+        "fields": [
+          { "key": "temperature_f", "label": "Temperature", "unit": "°F", "axis": "left" },
+          { "key": "humidity", "label": "Humidity", "unit": "%", "axis": "right" }
+        ],
         "readings": [
           {
             "temperature_f": 70.3,

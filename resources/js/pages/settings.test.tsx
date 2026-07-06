@@ -27,6 +27,7 @@ vi.mock('@/hooks/useSensors', () => ({
   useDiscoverSensors: vi.fn(),
   useTestConnection: vi.fn(),
   useCreateSensor: vi.fn(),
+  useSensorTypes: vi.fn(),
   useUpdateSensor: vi.fn(),
   useDeleteSensor: vi.fn(),
 }))
@@ -45,6 +46,7 @@ import {
   useDiscoverSensors,
   useTestConnection,
   useCreateSensor,
+  useSensorTypes,
   useUpdateSensor,
   useDeleteSensor,
 } from '@/hooks/useSensors'
@@ -100,6 +102,11 @@ function mockSensorHooks() {
     data: undefined,
   } as never)
   vi.mocked(useCreateSensor).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as never)
+  vi.mocked(useSensorTypes).mockReturnValue({
+    data: [{ value: 'hygrometer', label: 'Hygrometer' }],
+    loading: false,
+    error: null,
+  })
   vi.mocked(useUpdateSensor).mockReturnValue({ mutateAsync: vi.fn() } as never)
   vi.mocked(useDeleteSensor).mockReturnValue({ mutate: vi.fn() } as never)
 }

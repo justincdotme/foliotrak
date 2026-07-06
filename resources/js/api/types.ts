@@ -423,10 +423,16 @@ export interface PlantSensor {
   location: string | null
 }
 
+export interface SensorTypeOption {
+  value: string
+  label: string
+}
+
 export interface Sensor {
   id: number
   mac: string
   device_name: string | null
+  type: string
   name: string
   color: string
   location: string | null
@@ -458,16 +464,24 @@ export interface GatewayStatus {
   error?: string
 }
 
+export interface SensorField {
+  key: string
+  label: string
+  unit: string
+  axis: string
+}
+
 export interface SensorSeriesReading {
-  temperature_f: number
-  humidity: number
   recorded_at: string
+  [key: string]: number | string
 }
 
 export interface SensorSeries {
   id: number
   name: string
   color: string
+  type: string
+  fields: SensorField[]
   readings: SensorSeriesReading[]
 }
 

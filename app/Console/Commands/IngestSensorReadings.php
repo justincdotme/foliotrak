@@ -90,21 +90,12 @@ class IngestSensorReadings extends Command
      */
     private function persist(Sensor $sensor, SensorReadingDTO $dto): int
     {
-        $meta = null;
-
-        if ($dto->battery !== null || $dto->rssi !== null) {
-            $meta = json_encode(array_filter([
-                'battery' => $dto->battery,
-                'rssi'    => $dto->rssi,
-            ], fn ($v) => $v !== null));
-        }
+        $transformer = $sensor->type->transformer();
 
         return SensorReading::insertOrIgnore([
             'sensor_id'   => $sensor->id,
-            'temperature' => $dto->temperature,
-            'humidity'    => $dto->humidity,
+            'data'        => json_encode($transformer->normalize($dto->data)),
             'recorded_at' => $dto->recordedAt->format('Y-m-d H:i:s'),
-            'meta'        => $meta,
             'created_at'  => now(),
             'updated_at'  => now(),
         ]);

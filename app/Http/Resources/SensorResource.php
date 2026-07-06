@@ -26,6 +26,7 @@ class SensorResource extends JsonResource
             'name'        => $this->name,
             'color'       => $this->color,
             'location'    => $this->location,
+            'type'        => $this->type->value,
             'plant_count' => $this->plants_count ?? 0,
             'created_at'  => $this->created_at,
             'updated_at'  => $this->updated_at,
