@@ -1,0 +1,34 @@
+{
+  "data": {
+    "sensors": [
+      {
+        "id": 1,
+        "name": "hygro-1",
+        "color": "var(--series-1)",
+        "readings": [
+          {
+            "temperature_f": 70.3,
+            "humidity": 34.3,
+            "recorded_at": "2026-07-04T04:23:09Z"
+          },
+          {
+            "temperature_f": 70.7,
+            "humidity": 34,
+            "recorded_at": "2026-07-04T04:24:10Z"
+          },
+          {
+            "temperature_f": 70.9,
+            "humidity": 34.2,
+            "recorded_at": "2026-07-04T04:25:13Z"
+          },
+          {
+            "temperature_f": 71.1,
+            "humidity": 33.4,
+            "recorded_at": "2026-07-04T04:26:18Z"
+          }
+        ]
+      }
+    ],
+    "granularity_minutes": 30
+  }
+}
