@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CropWorkflow } from './crop-workflow'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 vi.mock('react-easy-crop', () => ({
   default: function MockCropper(props: Record<string, unknown>) {
@@ -34,22 +35,25 @@ const defaults = {
   failed: false,
 }
 
+const renderWithProvider = (ui: React.ReactElement) =>
+  render(<TooltipProvider>{ui}</TooltipProvider>)
+
 describe('CropWorkflow', () => {
   it('starts on the hero crop step with 2:3 aspect', () => {
-    render(<CropWorkflow {...defaults} />)
+    renderWithProvider(<CropWorkflow {...defaults} />)
     expect(screen.getByText('Crop hero photo (2:3)')).toBeInTheDocument()
     expect(screen.getByTestId('cropper').dataset.aspect).toBe(String(2 / 3))
   })
 
   it('enables Next after the hero crop area is set', async () => {
-    render(<CropWorkflow {...defaults} />)
+    renderWithProvider(<CropWorkflow {...defaults} />)
     expect(screen.getByRole('button', { name: /next/i })).toBeDisabled()
     await userEvent.click(screen.getByTestId('cropper'))
     expect(screen.getByRole('button', { name: /next/i })).toBeEnabled()
   })
 
   it('transitions to the thumbnail step after Next', async () => {
-    render(<CropWorkflow {...defaults} />)
+    renderWithProvider(<CropWorkflow {...defaults} />)
     await userEvent.click(screen.getByTestId('cropper'))
     await userEvent.click(screen.getByRole('button', { name: /next/i }))
     expect(screen.getByText('Crop thumbnail (1:1)')).toBeInTheDocument()
@@ -58,7 +62,7 @@ describe('CropWorkflow', () => {
 
   it('calls onComplete with both crop areas on save', async () => {
     const onComplete = vi.fn()
-    render(<CropWorkflow {...defaults} onComplete={onComplete} />)
+    renderWithProvider(<CropWorkflow {...defaults} onComplete={onComplete} />)
     await userEvent.click(screen.getByTestId('cropper'))
     await userEvent.click(screen.getByRole('button', { name: /next/i }))
     await userEvent.click(screen.getByTestId('cropper'))
@@ -71,13 +75,13 @@ describe('CropWorkflow', () => {
 
   it('calls onBack when Back is pressed on the hero step', async () => {
     const onBack = vi.fn()
-    render(<CropWorkflow {...defaults} onBack={onBack} />)
+    renderWithProvider(<CropWorkflow {...defaults} onBack={onBack} />)
     await userEvent.click(screen.getByRole('button', { name: /back/i }))
     expect(onBack).toHaveBeenCalled()
   })
 
   it('navigates back to hero when Back is pressed on the thumbnail step', async () => {
-    render(<CropWorkflow {...defaults} />)
+    renderWithProvider(<CropWorkflow {...defaults} />)
     await userEvent.click(screen.getByTestId('cropper'))
     await userEvent.click(screen.getByRole('button', { name: /next/i }))
     expect(screen.getByText('Crop thumbnail (1:1)')).toBeInTheDocument()
@@ -86,7 +90,7 @@ describe('CropWorkflow', () => {
   })
 
   it('disables Save and shows uploading text when busy', async () => {
-    render(<CropWorkflow {...defaults} busy />)
+    renderWithProvider(<CropWorkflow {...defaults} busy />)
     await userEvent.click(screen.getByTestId('cropper'))
     await userEvent.click(screen.getByRole('button', { name: /next/i }))
     await userEvent.click(screen.getByTestId('cropper'))
@@ -94,7 +98,7 @@ describe('CropWorkflow', () => {
   })
 
   it('shows error message when failed on the thumbnail step', async () => {
-    render(<CropWorkflow {...defaults} failed />)
+    renderWithProvider(<CropWorkflow {...defaults} failed />)
     await userEvent.click(screen.getByTestId('cropper'))
     await userEvent.click(screen.getByRole('button', { name: /next/i }))
     expect(screen.getByText(/could not save/i)).toBeInTheDocument()

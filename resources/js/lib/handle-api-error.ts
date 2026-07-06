@@ -1,10 +1,15 @@
 import { isAxiosError } from 'axios'
 import type { FieldPath, FieldValues, UseFormSetError } from 'react-hook-form'
+import { SessionExpiredError } from './errors'
 
 export function handleApiError<T extends FieldValues = FieldValues>(
   error: unknown,
   setError?: UseFormSetError<T>
 ): string {
+  if (error instanceof SessionExpiredError) {
+    return 'Your session expired. Redirecting...'
+  }
+
   if (!isAxiosError(error) || !error.response) {
     return 'Something went wrong. Please try again.'
   }

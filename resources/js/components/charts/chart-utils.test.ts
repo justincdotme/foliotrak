@@ -1,5 +1,12 @@
-import { describe, it, expect } from 'vitest'
-import { describeCorrelation, pairsToHeatmapSeries, prettyVar, regression } from './chart-utils'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import {
+  computeTickInterval,
+  describeCorrelation,
+  filterByDateRange,
+  pairsToHeatmapSeries,
+  prettyVar,
+  regression,
+} from './chart-utils'
 import type { CorrelationPair } from '@/api/types'
 
 const pair = (over: Partial<CorrelationPair> = {}): CorrelationPair => ({
@@ -149,5 +156,84 @@ describe('regression', () => {
     if (!result) return
     expect(result.slope).toBeCloseTo(2)
     expect(result.intercept).toBeCloseTo(-1)
+  })
+})
+
+describe('computeTickInterval', () => {
+  it.each([
+    [1, 0],
+    [4, 0],
+    [8, 0],
+  ])('shows every tick when data has %d points', (length, expected) => {
+    expect(computeTickInterval(length)).toBe(expected)
+  })
+
+  it.each([
+    [14, 1],
+    [21, 2],
+    [50, 7],
+  ])('skips ticks when data has %d points (interval=%d)', (length, expected) => {
+    expect(computeTickInterval(length)).toBe(expected)
+  })
+})
+
+describe('filterByDateRange', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const items = [
+    { date: '2026-06-01', v: 1 },
+    { date: '2026-06-15', v: 2 },
+    { date: '2026-06-28', v: 3 },
+    { date: '2026-07-03', v: 4 },
+    { date: '2026-07-05', v: 5 },
+  ]
+
+  it('returns all items when range is "all"', () => {
+    expect(filterByDateRange(items, i => i.date, 'all')).toEqual(items)
+  })
+
+  it('filters to the last 7 days relative to now', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    const result = filterByDateRange(items, i => i.date, '7d')
+    expect(result.map(i => i.v)).toEqual([4, 5])
+  })
+
+  it('filters to the last 30 days relative to now', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    const result = filterByDateRange(items, i => i.date, '30d')
+    expect(result.map(i => i.v)).toEqual([2, 3, 4, 5])
+  })
+
+  it('filters to the last 90 days relative to now', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    const result = filterByDateRange(items, i => i.date, '90d')
+    expect(result.map(i => i.v)).toEqual(items.map(i => i.v))
+  })
+
+  it('returns an empty array when no items fall within the range', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2027-01-01T12:00:00.000Z'))
+
+    expect(filterByDateRange(items, i => i.date, '7d')).toEqual([])
+  })
+
+  it('works with a custom dateAccessor', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    const records = [
+      { created: '2026-05-01', id: 1 },
+      { created: '2026-07-05', id: 2 },
+    ]
+    const result = filterByDateRange(records, r => r.created, '7d')
+    expect(result.map(r => r.id)).toEqual([2])
   })
 })

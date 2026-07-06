@@ -106,4 +106,123 @@ class RelocationApiTest extends TestCase
 
         $this->assertDatabaseCount('care_events', 0);
     }
+
+    /** @return void */
+    public function test_deleting_the_latest_relocation_reverts_to_prior_destination(): void
+    {
+        $east  = Location::factory()->create();
+        $west  = Location::factory()->create();
+        $plant = Plant::factory()->create(['location_id' => null]);
+
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $east->id,
+            'occurred_at'    => '2026-06-10T12:00:00Z',
+        ])->assertCreated();
+
+        $latestId = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $west->id,
+            'occurred_at'    => '2026-06-20T12:00:00Z',
+        ])->json('data.id');
+
+        $this->deleteJson("/api/care-events/{$latestId}")->assertNoContent();
+
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $east->id]);
+    }
+
+    /** @return void */
+    public function test_deleting_the_only_relocation_nulls_plant_location(): void
+    {
+        $east  = Location::factory()->create();
+        $plant = Plant::factory()->create(['location_id' => null]);
+
+        $eventId = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $east->id,
+            'occurred_at'    => '2026-06-01T12:00:00Z',
+        ])->json('data.id');
+
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $east->id]);
+
+        $this->deleteJson("/api/care-events/{$eventId}")->assertNoContent();
+
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => null]);
+    }
+
+    /** @return void */
+    public function test_deleting_a_non_latest_relocation_leaves_location_unchanged(): void
+    {
+        $south = Location::factory()->create();
+        $east  = Location::factory()->create();
+        $plant = Plant::factory()->create(['location_id' => null]);
+
+        $firstId = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $south->id,
+            'occurred_at'    => '2026-06-01T12:00:00Z',
+        ])->json('data.id');
+
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $east->id,
+            'occurred_at'    => '2026-06-10T12:00:00Z',
+        ])->assertCreated();
+
+        $this->deleteJson("/api/care-events/{$firstId}")->assertNoContent();
+
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $east->id]);
+    }
+
+    /** @return void */
+    public function test_backdated_relocation_does_not_override_chronologically_latest(): void
+    {
+        $south = Location::factory()->create();
+        $east  = Location::factory()->create();
+        $plant = Plant::factory()->create(['location_id' => null]);
+
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $east->id,
+            'occurred_at'    => '2026-06-20T12:00:00Z',
+        ])->assertCreated();
+
+        // Backdate a move that predates the existing one.
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $south->id,
+            'occurred_at'    => '2026-06-01T12:00:00Z',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $east->id]);
+    }
+
+    /** @return void */
+    public function test_editing_occurred_at_to_reorder_relocations_updates_plant_location(): void
+    {
+        $east  = Location::factory()->create();
+        $west  = Location::factory()->create();
+        $plant = Plant::factory()->create(['location_id' => null]);
+
+        $eastEventId = $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $east->id,
+            'occurred_at'    => '2026-06-10T12:00:00Z',
+        ])->json('data.id');
+
+        $this->postJson("/api/plants/{$plant->id}/care-events", [
+            'type'           => 'relocation',
+            'to_location_id' => $west->id,
+            'occurred_at'    => '2026-06-20T12:00:00Z',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $west->id]);
+
+        // Move the east event after the west event, making it chronologically latest.
+        $this->patchJson("/api/care-events/{$eastEventId}", [
+            'occurred_at' => '2026-06-25T12:00:00Z',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $east->id]);
+    }
 }

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { isAxiosError } from 'axios'
 import { AlertTriangle, Leaf } from 'lucide-react'
 import api from '@/lib/api'
-import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Field } from '@/components/app/field'
@@ -68,9 +68,14 @@ export function LoginPage() {
                 {authError}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <TooltipButton
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting}
+              tooltipContent={isSubmitting ? 'Saving...' : undefined}
+            >
               Sign in
-            </Button>
+            </TooltipButton>
           </form>
         </Card>
         <p className="mt-4 text-center text-[12px] text-text-subtle">

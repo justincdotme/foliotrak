@@ -3,9 +3,13 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { CareEvent } from '@/api/types'
 import { LogRepottingForm } from './log-repotting-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+
+const renderWithProvider = (ui: React.ReactElement) =>
+  render(<TooltipProvider>{ui}</TooltipProvider>)
 
 const createRepotting = { mutateAsync: vi.fn() }
 const updateEvent = { mutateAsync: vi.fn() }
@@ -29,7 +33,9 @@ describe('LogRepottingForm', () => {
   it('chains a linked fertilizing entry at the same timestamp when fertilizer was added', async () => {
     const onDone = vi.fn()
     const onLogFertilizer = vi.fn()
-    render(<LogRepottingForm plantId={4} onDone={onDone} onLogFertilizer={onLogFertilizer} />)
+    renderWithProvider(
+      <LogRepottingForm plantId={4} onDone={onDone} onLogFertilizer={onLogFertilizer} />
+    )
 
     await userEvent.click(screen.getByRole('switch'))
     await userEvent.click(screen.getByRole('button', { name: /Log repotting/ }))
@@ -47,7 +53,9 @@ describe('LogRepottingForm', () => {
   it('closes normally when no fertilizer was added', async () => {
     const onDone = vi.fn()
     const onLogFertilizer = vi.fn()
-    render(<LogRepottingForm plantId={4} onDone={onDone} onLogFertilizer={onLogFertilizer} />)
+    renderWithProvider(
+      <LogRepottingForm plantId={4} onDone={onDone} onLogFertilizer={onLogFertilizer} />
+    )
 
     await userEvent.click(screen.getByRole('button', { name: /Log repotting/ }))
 
@@ -77,7 +85,7 @@ describe('LogRepottingForm', () => {
       },
     }
 
-    render(
+    renderWithProvider(
       <LogRepottingForm
         plantId={4}
         onDone={onDone}

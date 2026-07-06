@@ -61,6 +61,10 @@ export const createPlant = async (payload: PlantPayload): Promise<PlantWithTags>
 export const updatePlant = async (id: number, payload: PlantPayload): Promise<PlantWithTags> =>
   unwrap(await api.patch<{ data: PlantWithTags }>(`/api/plants/${id}`, payload))
 
+export const deletePlant = async (id: number): Promise<void> => {
+  await api.delete(`/api/plants/${id}`)
+}
+
 export const listTags = async (): Promise<Tag[]> =>
   unwrap(await api.get<{ data: Tag[] }>('/api/tags'))
 

@@ -2,7 +2,7 @@ import { AlertTriangle, Info } from 'lucide-react'
 import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { PlantSensor, PlantWithTags, Tag } from '@/api/types'
-import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { LocationCombobox } from '@/components/app/location-combobox'
@@ -15,6 +15,7 @@ import { useSensors } from '@/hooks/useSensors'
 import { useTags } from '@/hooks/useTags'
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
 import { handleApiError } from '@/lib/handle-api-error'
+import { Button } from '@/components/ui/button'
 
 interface EditPlantModalProps {
   plant: PlantWithTags
@@ -87,10 +88,14 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={save} disabled={update.isPending}>
+          <TooltipButton
+            onClick={save}
+            disabled={update.isPending}
+            tooltipContent={update.isPending ? 'Saving...' : undefined}
+          >
             <Check size={16} />
             Save changes
-          </Button>
+          </TooltipButton>
         </>
       }
     >

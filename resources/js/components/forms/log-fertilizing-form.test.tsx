@@ -3,6 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { CareEvent } from '@/api/types'
 import { LogFertilizingForm } from './log-fertilizing-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
+
+const renderWithProvider = (ui: React.ReactElement) =>
+  render(<TooltipProvider>{ui}</TooltipProvider>)
 
 const organicEvent: CareEvent = {
   id: 88,
@@ -76,7 +80,7 @@ beforeEach(() => {
 
 describe('LogFertilizingForm', () => {
   it('includes nutrient components only when the form is organic (detected by key)', async () => {
-    render(<LogFertilizingForm plantId={2} onDone={vi.fn()} />)
+    renderWithProvider(<LogFertilizingForm plantId={2} onDone={vi.fn()} />)
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Form' }), '4')
     await userEvent.click(screen.getByRole('button', { name: /^Add$/ }))
@@ -93,7 +97,7 @@ describe('LogFertilizingForm', () => {
   })
 
   it('clears nutrients for a non-organic form', async () => {
-    render(<LogFertilizingForm plantId={2} onDone={vi.fn()} />)
+    renderWithProvider(<LogFertilizingForm plantId={2} onDone={vi.fn()} />)
 
     // Default is liquid; submit without touching the form select.
     await userEvent.click(screen.getByRole('button', { name: /Log fertilizing/ }))
@@ -106,7 +110,7 @@ describe('LogFertilizingForm', () => {
   })
 
   it('edits an organic event without auto-defaulting the form, routing to update', async () => {
-    render(<LogFertilizingForm plantId={2} onDone={vi.fn()} event={organicEvent} />)
+    renderWithProvider(<LogFertilizingForm plantId={2} onDone={vi.fn()} event={organicEvent} />)
 
     // The auto-default-to-liquid effect must not fire on edit.
     expect(screen.getByRole('combobox', { name: 'Form' })).toHaveValue('4')
@@ -128,7 +132,7 @@ describe('LogFertilizingForm', () => {
   })
 
   it('drops prefilled nutrients when an organic event is switched to a non-organic form', async () => {
-    render(<LogFertilizingForm plantId={2} onDone={vi.fn()} event={organicEvent} />)
+    renderWithProvider(<LogFertilizingForm plantId={2} onDone={vi.fn()} event={organicEvent} />)
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Form' }), '1')
     await userEvent.click(screen.getByRole('button', { name: /Save changes/ }))

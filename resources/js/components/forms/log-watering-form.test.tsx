@@ -3,9 +3,13 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { CareEvent } from '@/api/types'
 import { LogWateringForm } from './log-watering-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
+
+const renderWithProvider = (ui: React.ReactElement) =>
+  render(<TooltipProvider>{ui}</TooltipProvider>)
 
 const createWatering = { mutateAsync: vi.fn() }
 const updateEvent = { mutateAsync: vi.fn() }
@@ -45,7 +49,7 @@ const wateringEvent: CareEvent = {
 describe('LogWateringForm', () => {
   it('creates a watering with the entered amount', async () => {
     const onDone = vi.fn()
-    render(<LogWateringForm plantId={1} onDone={onDone} />)
+    renderWithProvider(<LogWateringForm plantId={1} onDone={onDone} />)
 
     await userEvent.type(screen.getByPlaceholderText('200'), '180')
     await userEvent.click(screen.getByRole('button', { name: /Log watering/ }))
@@ -60,7 +64,7 @@ describe('LogWateringForm', () => {
   })
 
   it('edits an existing watering through update, prefilled from the event', async () => {
-    render(<LogWateringForm plantId={1} onDone={vi.fn()} event={wateringEvent} />)
+    renderWithProvider(<LogWateringForm plantId={1} onDone={vi.fn()} event={wateringEvent} />)
 
     expect(screen.getByPlaceholderText('200')).toHaveValue(200)
 
@@ -79,7 +83,7 @@ describe('LogWateringForm', () => {
 
   it('defaults the "When" field to the current time for a new watering', () => {
     vi.useFakeTimers({ now: new Date(2026, 6, 2, 14, 37, 0) })
-    render(<LogWateringForm plantId={1} onDone={vi.fn()} />)
+    renderWithProvider(<LogWateringForm plantId={1} onDone={vi.fn()} />)
 
     const when = screen.getByLabelText(/when/i) as HTMLInputElement
     expect(when.value).toBe('2026-07-02T14:37')

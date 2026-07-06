@@ -5,9 +5,11 @@ import { usePlant } from '@/hooks/usePlant'
 import { usePlantPhotos } from '@/hooks/usePlantPhotos'
 import { useTimeline } from '@/hooks/useTimeline'
 import { useRecommendations } from '@/hooks/useRecommendations'
+import { useDeletePlant } from '@/hooks/usePlantMutations'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/app/empty-state'
 import { Spinner } from '@/components/app/spinner'
+import { ConfirmDelete } from '@/components/app/confirm-delete'
 import { EditPlantModal } from '@/components/plant/edit-plant-modal'
 import { PrimaryPhotoModal } from '@/components/plant/primary-photo-modal'
 import { ScheduleSection, type NextDue } from '@/components/plant/schedule-section'
@@ -46,8 +48,10 @@ export function PlantDetailPage({ id, go }: PlantDetailPageProps) {
     loading: recommendationsLoading,
     error: recommendationsError,
   } = useRecommendations(id)
+  const deletePlant = useDeletePlant()
   const [editOpen, setEditOpen] = useState(false)
   const [photoOpen, setPhotoOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (loading) return <Spinner />
 
@@ -76,6 +80,7 @@ export function PlantDetailPage({ id, go }: PlantDetailPageProps) {
         plant={plant}
         onEdit={() => setEditOpen(true)}
         onChangeCover={() => setPhotoOpen(true)}
+        onDelete={() => setDeleteOpen(true)}
       />
 
       {plant.notes && <p className="text-[13px] text-text-muted">{plant.notes}</p>}
@@ -100,6 +105,16 @@ export function PlantDetailPage({ id, go }: PlantDetailPageProps) {
         photos={photoList}
         open={photoOpen}
         onClose={() => setPhotoOpen(false)}
+      />
+      <ConfirmDelete
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={() => {
+          deletePlant.mutate(id, {
+            onSuccess: () => go('/plants'),
+          })
+        }}
+        label="This plant and all its care history will be permanently removed."
       />
 
       <PlantChartsPanel plantId={id} timeline={timeline} recommendations={recommendations} />

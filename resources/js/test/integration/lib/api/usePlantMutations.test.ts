@@ -9,11 +9,14 @@ import {
   useUploadPhoto,
   useSetCoverPhoto,
   useDeletePhoto,
+  useDeletePlant,
 } from '@/hooks/usePlantMutations'
+import { useSensorReadings } from '@/hooks/useSensorReadings'
 import { server } from '../../../handlers'
 import { jsonMessage } from '../../../handlers/_helpers'
 import plantCreatedFixture from '../../../fixtures/plants/created-201.json'
 import plantDetailFixture from '../../../fixtures/plants/detail-1.json'
+import sensorReadingsFixture from '../../../fixtures/sensors/readings-week.json'
 import photoCreatedFixture from '../../../fixtures/photos/created-201.json'
 
 const makeWrapper = () => {
@@ -214,5 +217,55 @@ describe('useDeletePhoto', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toBeFalsy()
     expect(requests[0]).toMatchObject({ photoId: '4' })
+  })
+})
+
+describe('useDeletePlant', () => {
+  it('deletes a plant and resolves with no body', async () => {
+    const requests: Array<{ plantId: string }> = []
+    server.use(
+      http.delete('/api/plants/:id', ({ params }) => {
+        requests.push({ plantId: params.id as string })
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
+    const { result } = renderHook(() => useDeletePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync(3)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toBeFalsy()
+    expect(requests[0]).toMatchObject({ plantId: '3' })
+  })
+
+  it('surfaces an error when the API fails', async () => {
+    server.use(http.delete('/api/plants/:id', () => jsonMessage(500, 'boom')))
+    const { result } = renderHook(() => useDeletePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync(1).catch(() => {})
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toBeTruthy()
+  })
+
+  it("does not refetch the deleted plant's sensor readings", async () => {
+    let readingsRequests = 0
+    server.use(
+      http.get('/api/plants/:id/sensor-readings', () => {
+        readingsRequests++
+        return HttpResponse.json(sensorReadingsFixture)
+      })
+    )
+    const wrapper = makeWrapper()
+    const readings = renderHook(() => useSensorReadings(1, 'week'), { wrapper })
+    await waitFor(() => expect(readings.result.current.isSuccess).toBe(true))
+    expect(readingsRequests).toBe(1)
+
+    const { result } = renderHook(() => useDeletePlant(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync(1)
+    })
+    await waitFor(() => expect(readings.result.current.isFetching).toBe(false))
+    expect(readingsRequests).toBe(1)
   })
 })

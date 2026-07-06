@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { CareEvent } from '@/api/types'
 import { RelocationEditForm } from './relocation-edit-form'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
 vi.mock('@/hooks/useLocations', () => ({
@@ -11,6 +12,9 @@ vi.mock('@/hooks/useLocations', () => ({
 }))
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { useLocations, useCreateLocation } from '@/hooks/useLocations'
+
+const renderWithProvider = (ui: React.ReactElement) =>
+  render(<TooltipProvider>{ui}</TooltipProvider>)
 
 const updateEvent = { mutateAsync: vi.fn() }
 
@@ -56,7 +60,7 @@ const relocationEvent: CareEvent = {
 
 describe('RelocationEditForm', () => {
   it('shows the origin read-only and submits with location IDs', async () => {
-    render(<RelocationEditForm plantId={1} event={relocationEvent} onDone={vi.fn()} />)
+    renderWithProvider(<RelocationEditForm plantId={1} event={relocationEvent} onDone={vi.fn()} />)
 
     expect(screen.getByText('shelf')).toBeInTheDocument()
 

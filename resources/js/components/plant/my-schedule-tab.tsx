@@ -2,6 +2,7 @@ import { Bell, Check, Droplets, FlaskConical } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { Plant } from '@/api/types'
 import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Field } from '@/components/app/field'
 import { Input } from '@/components/ui/input'
 import { WaterDrop } from '@/components/app/water-drop'
@@ -216,10 +217,15 @@ export function MyScheduleTab({ plant, due }: MyScheduleTabProps) {
             <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
               Cancel
             </Button>
-            <Button size="sm" onClick={save} disabled={update.isPending}>
+            <TooltipButton
+              size="sm"
+              onClick={save}
+              disabled={update.isPending}
+              tooltipContent={update.isPending ? 'Saving...' : undefined}
+            >
               <Check size={14} />
               Save schedule
-            </Button>
+            </TooltipButton>
           </div>
         </div>
       )}

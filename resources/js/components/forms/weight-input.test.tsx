@@ -18,4 +18,28 @@ describe('WeightInput', () => {
     const expectedGrams = weightToGrams({ lb: 2, oz: 3, g: 10 })
     expect(screen.getByText(`${expectedGrams} g`)).toBeInTheDocument()
   })
+
+  it('allows clearing a field to empty without showing "0"', async () => {
+    render(<WeightInput onChange={vi.fn()} defaultValue={{ lb: 5, oz: 0, g: 0 }} />)
+
+    const lbInput = screen.getByLabelText('Pounds') as HTMLInputElement
+    expect(lbInput.value).toBe('5')
+
+    await userEvent.clear(lbInput)
+
+    expect(lbInput.value).toBe('')
+  })
+
+  it('typing into empty field works without leading zero', async () => {
+    const onChange = vi.fn()
+    render(<WeightInput onChange={onChange} />)
+
+    const lbInput = screen.getByLabelText('Pounds') as HTMLInputElement
+    expect(lbInput.value).toBe('')
+
+    await userEvent.type(lbInput, '7')
+
+    expect(lbInput.value).toBe('7')
+    expect(onChange).toHaveBeenLastCalledWith({ lb: 7, oz: 0, g: 0 })
+  })
 })

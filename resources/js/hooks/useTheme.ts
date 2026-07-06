@@ -19,7 +19,11 @@ const store = {
     return value === 'light' || value === 'dark' || value === 'system' ? value : 'system'
   },
   apply(choice: ThemeChoice): void {
+    document.documentElement.classList.add('no-transitions')
     document.documentElement.classList.toggle('dark', resolveDark(choice))
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove('no-transitions')
+    })
   },
   set(choice: ThemeChoice): void {
     localStorage.setItem(KEY, choice)

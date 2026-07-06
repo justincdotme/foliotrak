@@ -7,6 +7,7 @@ import { useTags } from '@/hooks/useTags'
 import { useCreatePlant } from '@/hooks/usePlantMutations'
 import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
 import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Field } from '@/components/app/field'
 import { FormError } from '@/components/app/form-error'
 import { InlineCombobox } from '@/components/app/inline-combobox'
@@ -261,14 +262,17 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
             Done
           </Button>
         ) : (
-          <Button
+          <TooltipButton
             type="submit"
             dusk="add-plant-submit"
             disabled={create.isPending || !common.trim()}
+            tooltipContent={
+              create.isPending ? 'Saving...' : !common.trim() ? 'Enter a plant name' : undefined
+            }
           >
             <Plus size={16} />
             Add plant
-          </Button>
+          </TooltipButton>
         )}
       </div>
       {cropping && preview && (

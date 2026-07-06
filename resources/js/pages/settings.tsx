@@ -37,6 +37,7 @@ import {
   useDeleteSensor,
 } from '@/hooks/useSensors'
 import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { extractValidationError } from '@/lib/handle-api-error'
@@ -124,7 +125,12 @@ function PushoverKeyForm({
           aria-describedby={errorMessage ? 'pushover-key-error' : undefined}
           className="flex-1 tnum"
         />
-        <Button type="submit" disabled={isSubmitting} className="shrink-0">
+        <TooltipButton
+          type="submit"
+          disabled={isSubmitting}
+          className="shrink-0"
+          tooltipContent={isSubmitting ? 'Saving...' : undefined}
+        >
           {saved ? (
             <>
               <Check size={16} />
@@ -133,7 +139,7 @@ function PushoverKeyForm({
           ) : (
             'Save'
           )}
-        </Button>
+        </TooltipButton>
       </div>
       {errorMessage && (
         <div id="pushover-key-error" role="alert" className="mt-1 text-[12px] text-overdue">
@@ -323,9 +329,16 @@ function TagManager() {
               placeholder="Tag name"
               className="h-8 text-[13px] flex-1"
             />
-            <Button size="sm" onClick={submitNew} disabled={createTag.isPending || !newName.trim()}>
+            <TooltipButton
+              size="sm"
+              onClick={submitNew}
+              disabled={createTag.isPending || !newName.trim()}
+              tooltipContent={
+                createTag.isPending ? 'Saving...' : !newName.trim() ? 'Enter a tag name' : undefined
+              }
+            >
               Add
-            </Button>
+            </TooltipButton>
             <button
               type="button"
               onClick={() => {
@@ -536,13 +549,20 @@ function EquipmentManager() {
               placeholder="Equipment name"
               className="h-8 text-[13px] flex-1"
             />
-            <Button
+            <TooltipButton
               size="sm"
               onClick={submitNew}
               disabled={createEquipmentMut.isPending || !newLabel.trim()}
+              tooltipContent={
+                createEquipmentMut.isPending
+                  ? 'Saving...'
+                  : !newLabel.trim()
+                    ? 'Enter equipment name'
+                    : undefined
+              }
             >
               Add
-            </Button>
+            </TooltipButton>
             <button
               type="button"
               onClick={() => {
@@ -801,9 +821,16 @@ function RegisterForm({
       />
       {error && <div className="text-[11px] text-overdue">{error}</div>}
       <div className="flex gap-2">
-        <Button size="sm" onClick={submit} disabled={createSensor.isPending || !name.trim()}>
+        <TooltipButton
+          size="sm"
+          onClick={submit}
+          disabled={createSensor.isPending || !name.trim()}
+          tooltipContent={
+            createSensor.isPending ? 'Saving...' : !name.trim() ? 'Enter a sensor name' : undefined
+          }
+        >
           Save
-        </Button>
+        </TooltipButton>
         <button
           type="button"
           onClick={onClose}
@@ -867,14 +894,15 @@ function SensorManager() {
       {/* Gateway connection */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <Button
+          <TooltipButton
             size="sm"
             variant="outline"
             onClick={() => testConn.mutate()}
             disabled={testConn.isPending}
+            tooltipContent={testConn.isPending ? 'Testing...' : undefined}
           >
             {testConn.isPending ? 'Testing...' : 'Test Connection'}
-          </Button>
+          </TooltipButton>
           {statusLabel && <span className={`text-[12px] ${statusColor}`}>{statusLabel}</span>}
         </div>
       </div>
@@ -907,14 +935,15 @@ function SensorManager() {
 
           {/* Discovery */}
           <div className="pt-2 border-t border-border">
-            <Button
+            <TooltipButton
               size="sm"
               variant="outline"
               onClick={() => discovery.refetch()}
               disabled={discovery.isFetching}
+              tooltipContent={discovery.isFetching ? 'Scanning...' : undefined}
             >
               {discovery.isFetching ? 'Scanning...' : 'Discover Sensors'}
-            </Button>
+            </TooltipButton>
             {discovery.error && (
               <div className="mt-1 text-[11px] text-overdue">Could not reach gateway.</div>
             )}

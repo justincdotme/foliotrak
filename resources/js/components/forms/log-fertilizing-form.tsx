@@ -9,6 +9,7 @@ import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
 import { useFertilizerForms, useNutrients } from '@/hooks/useCareLookups'
 import { isoToLocal, nowLocal, toIso } from '@/lib/datetime'
 import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Field } from '@/components/app/field'
 import { FormError } from '@/components/app/form-error'
 import { Input, inputClass } from '@/components/ui/input'
@@ -253,10 +254,15 @@ export function LogFertilizingForm({
       </Field>
       <FormError message={formError} />
       <div className="flex justify-end gap-2 pt-1">
-        <Button type="submit" dusk="care-form-submit" disabled={isSubmitting}>
+        <TooltipButton
+          type="submit"
+          dusk="care-form-submit"
+          disabled={isSubmitting}
+          tooltipContent={isSubmitting ? 'Saving...' : undefined}
+        >
           <FlaskConical size={16} />
           {event ? 'Save changes' : 'Log fertilizing'}
-        </Button>
+        </TooltipButton>
       </div>
     </form>
   )

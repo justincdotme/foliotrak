@@ -15,22 +15,29 @@ interface WeightInputProps {
 }
 
 export function WeightInput({ defaultValue, onChange }: WeightInputProps) {
-  const [lb, setLb] = useState(defaultValue?.lb ?? 0)
-  const [oz, setOz] = useState(defaultValue?.oz ?? 0)
-  const [g, setG] = useState(defaultValue?.g ?? 0)
+  const [lbStr, setLbStr] = useState(defaultValue?.lb ? String(defaultValue.lb) : '')
+  const [ozStr, setOzStr] = useState(defaultValue?.oz ? String(defaultValue.oz) : '')
+  const [gStr, setGStr] = useState(defaultValue?.g ? String(defaultValue.g) : '')
+
+  const lb = Number(lbStr) || 0
+  const oz = Number(ozStr) || 0
+  const g = Number(gStr) || 0
   const grams = weightToGrams({ lb, oz, g })
 
-  const setLbAndEmit = (next: number) => {
-    setLb(next)
-    onChange({ lb: next, oz, g })
+  const setLbAndEmit = (next: string) => {
+    setLbStr(next)
+    const numLb = Number(next) || 0
+    onChange({ lb: numLb, oz, g })
   }
-  const setOzAndEmit = (next: number) => {
-    setOz(next)
-    onChange({ lb, oz: next, g })
+  const setOzAndEmit = (next: string) => {
+    setOzStr(next)
+    const numOz = Number(next) || 0
+    onChange({ lb, oz: numOz, g })
   }
-  const setGAndEmit = (next: number) => {
-    setG(next)
-    onChange({ lb, oz, g: next })
+  const setGAndEmit = (next: string) => {
+    setGStr(next)
+    const numG = Number(next) || 0
+    onChange({ lb, oz, g: numG })
   }
 
   return (
@@ -47,8 +54,8 @@ export function WeightInput({ defaultValue, onChange }: WeightInputProps) {
               type="number"
               min="0"
               aria-label="Pounds"
-              value={lb}
-              onChange={e => setLbAndEmit(Number(e.target.value))}
+              value={lbStr}
+              onChange={e => setLbAndEmit(e.target.value)}
             />
             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
               lb
@@ -59,8 +66,8 @@ export function WeightInput({ defaultValue, onChange }: WeightInputProps) {
               type="number"
               min="0"
               aria-label="Ounces"
-              value={oz}
-              onChange={e => setOzAndEmit(Number(e.target.value))}
+              value={ozStr}
+              onChange={e => setOzAndEmit(e.target.value)}
             />
             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
               oz
@@ -72,8 +79,8 @@ export function WeightInput({ defaultValue, onChange }: WeightInputProps) {
               min="0"
               step="0.1"
               aria-label="Grams"
-              value={g}
-              onChange={e => setGAndEmit(Number(e.target.value))}
+              value={gStr}
+              onChange={e => setGAndEmit(e.target.value)}
             />
             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
               g

@@ -1,6 +1,6 @@
 import { Check, ClipboardList, Clock, Droplets, FlaskConical, Info } from 'lucide-react'
 import type { Plant, PlantRecommendations } from '@/api/types'
-import { Button } from '@/components/ui/button'
+import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Spinner } from '@/components/app/spinner'
 import { useNotification } from '@/components/app/notification-context'
 import { handleApiError } from '@/lib/handle-api-error'
@@ -140,16 +140,17 @@ export function RecommendedTab({
             </div>
           </div>
           {plant.watering_interval_days_override !== watering.interval_days && (
-            <Button
+            <TooltipButton
               size="sm"
               variant="ghost"
               className="mt-2"
               onClick={() => adoptWatering(watering.interval_days)}
               disabled={update.isPending}
+              tooltipContent={update.isPending ? 'Saving...' : undefined}
             >
               <Check size={14} />
               Use this for my schedule
-            </Button>
+            </TooltipButton>
           )}
         </div>
       ) : (

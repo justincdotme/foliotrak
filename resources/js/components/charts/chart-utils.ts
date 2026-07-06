@@ -1,6 +1,41 @@
 import type { CorrelationPair, CorrelationPoint } from '@/api/types'
 import { HEALTH_VAR } from '@/lib/domain'
 
+export type DateRange = '7d' | '30d' | '90d' | 'all'
+
+export const DATE_RANGE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '7d', label: '7 d' },
+  { value: '30d', label: '30 d' },
+  { value: '90d', label: '90 d' },
+  { value: 'all', label: 'All' },
+]
+
+const RANGE_DAYS: Record<DateRange, number | null> = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+  all: null,
+}
+
+export function filterByDateRange<T>(
+  data: T[],
+  dateAccessor: (item: T) => string,
+  range: DateRange
+): T[] {
+  const days = RANGE_DAYS[range]
+  if (days == null) return data
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days)
+  return data.filter(item => new Date(dateAccessor(item)) >= cutoff)
+}
+
+// Keeps tick labels from overlapping by skipping intermediate ticks when the
+// dataset is wider than ~8 points.
+export function computeTickInterval(dataLength: number): number {
+  if (dataLength <= 8) return 0
+  return Math.ceil(dataLength / 7) - 1
+}
+
 export const axis = {
   stroke: 'var(--border-strong)',
   tick: { fontSize: 11, fill: 'var(--text-subtle)' },
@@ -86,8 +121,7 @@ export interface HeatCell {
   significant: boolean
 }
 
-// Reshape the flat pair list into a factor-by-outcome grid for the Nivo heatmap. A pair missing
-// from the grid leaves a null cell, which the heatmap renders as the empty color.
+// Missing factor-outcome combinations produce null cells so the heatmap renders them as empty.
 export function pairsToHeatmapSeries(pairs: CorrelationPair[]): { id: string; data: HeatCell[] }[] {
   const xs = [...new Set(pairs.map(p => p.x_variable))]
   const ys = [...new Set(pairs.map(p => p.y_variable))]

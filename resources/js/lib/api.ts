@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { SessionExpiredError } from './errors'
 
 // Sanctum SPA cookie auth: send the session cookie, and let axios copy the
 // XSRF-TOKEN cookie into the X-XSRF-TOKEN header on every request.
@@ -16,12 +17,15 @@ api.interceptors.response.use(undefined, error => {
 
     if (status === 401 && !isAuthRoute) {
       window.location.href = '/login'
-      return new Promise(() => {})
+      // Reject with a sentinel error so the calling code's catch block fires
+      // and shows feedback before the redirect completes.
+      return Promise.reject(new SessionExpiredError('Unauthenticated'))
     }
 
     if (status === 419) {
       window.location.reload()
-      return new Promise(() => {})
+      // Same as 401: reject so the form shows a message before the page reloads.
+      return Promise.reject(new SessionExpiredError('Session expired'))
     }
   }
   return Promise.reject(error)
