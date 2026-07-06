@@ -39,6 +39,7 @@ auth.json
 /.superpowers
 /docs/superpowers
 /docs/project
+/docs/testing
 /CLAUDE.md
 /temp
 AGENTS.md
