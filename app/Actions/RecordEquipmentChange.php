@@ -18,7 +18,11 @@ use Illuminate\Support\Facades\DB;
 final class RecordEquipmentChange
 {
     /**
-     * @param  array<int, int|string>  $equipmentIds
+     * @param Plant                  $plant
+     * @param array<int, int|string> $equipmentIds
+     * @param integer|null           $userId
+     *
+     * @return void
      */
     public function record(Plant $plant, array $equipmentIds, ?int $userId = null): void
     {
@@ -35,14 +39,22 @@ final class RecordEquipmentChange
         });
     }
 
+    /**
+     * @param Plant        $plant
+     * @param integer      $equipmentId
+     * @param string       $action
+     * @param integer|null $userId
+     *
+     * @return void
+     */
     private function recordChange(Plant $plant, int $equipmentId, string $action, ?int $userId): void
     {
         $event = CareEventSpine::build($plant, 'equipment', null, $userId, null);
 
         $event->equipmentChange()->create([
-            'equipment_id' => $equipmentId,
+            'equipment_id'    => $equipmentId,
             'equipment_label' => Equipment::query()->whereKey($equipmentId)->value('label') ?? 'Equipment',
-            'action' => $action,
+            'action'          => $action,
         ]);
     }
 }

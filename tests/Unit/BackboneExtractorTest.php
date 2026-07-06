@@ -11,37 +11,43 @@ use ZipArchive;
 
 class BackboneExtractorTest extends TestCase
 {
+    /** @var string */
     private string $workdir;
 
+    /** @var string */
     private string $archive;
 
+    /** @var string */
     private string $output;
 
     /** @var array<int, array<string, mixed>> */
     private array $byKey;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->workdir = sys_get_temp_dir().'/backbone-test-'.bin2hex(random_bytes(6));
+        $this->workdir = sys_get_temp_dir() . '/backbone-test-' . bin2hex(random_bytes(6));
         mkdir($this->workdir, 0775, true);
-        $this->archive = $this->workdir.'/backbone.zip';
-        $this->output = $this->workdir.'/species.ndjson.gz';
+        $this->archive = $this->workdir . '/backbone.zip';
+        $this->output  = $this->workdir . '/species.ndjson.gz';
 
         $this->buildArchive();
         (new BackboneExtractor)->extract($this->archive, $this->output);
         $this->byKey = $this->readOutput();
     }
 
+    /** @return void */
     protected function tearDown(): void
     {
-        array_map('unlink', glob($this->workdir.'/*') ?: []);
+        array_map('unlink', glob($this->workdir . '/*') ?: []);
         @rmdir($this->workdir);
 
         parent::tearDown();
     }
 
+    /** @return void */
     public function test_keeps_only_accepted_plant_taxa_at_offered_ranks(): void
     {
         $this->assertSame(
@@ -50,12 +56,14 @@ class BackboneExtractorTest extends TestCase
         );
     }
 
+    /** @return void */
     public function test_excludes_non_plant_kingdoms_even_with_an_english_name(): void
     {
         $this->assertArrayNotHasKey(2222222, $this->byKey); // Animalia
         $this->assertArrayNotHasKey(3333333, $this->byKey); // Fungi
     }
 
+    /** @return void */
     public function test_excludes_synonyms_doubtful_and_coarse_ranks(): void
     {
         $this->assertArrayNotHasKey(4444444, $this->byKey); // synonym
@@ -63,11 +71,13 @@ class BackboneExtractorTest extends TestCase
         $this->assertArrayNotHasKey(6666666, $this->byKey); // family rank
     }
 
+    /** @return void */
     public function test_gbif_key_is_written_as_a_string(): void
     {
         $this->assertIsString($this->byKey[2868241]['gbif_key']);
     }
 
+    /** @return void */
     public function test_joins_the_first_english_common_name(): void
     {
         $monstera = $this->byKey[2868241];
@@ -82,6 +92,7 @@ class BackboneExtractorTest extends TestCase
         );
     }
 
+    /** @return void */
     public function test_sets_null_common_name_when_no_english_name_exists(): void
     {
         $this->assertNull($this->byKey[2769648]['common_name']);
@@ -90,6 +101,7 @@ class BackboneExtractorTest extends TestCase
         $this->assertNull($this->byKey[7777777]['common_names']);
     }
 
+    /** @return void */
     public function test_normalizes_rank_to_uppercase_across_offered_ranks(): void
     {
         $this->assertSame('GENUS', $this->byKey[7777777]['rank']);
@@ -98,6 +110,7 @@ class BackboneExtractorTest extends TestCase
         $this->assertSame('FORM', $this->byKey[1111111]['rank']);
     }
 
+    /** @return void */
     public function test_applies_nfc_normalization_to_string_values(): void
     {
         $record = $this->byKey[1212121];
@@ -105,10 +118,11 @@ class BackboneExtractorTest extends TestCase
         $this->assertStringNotContainsString("\u{0301}", $record['scientific_name']);
     }
 
+    /** @return void */
     public function test_refuses_a_meta_xml_carrying_a_doctype(): void
     {
-        $hostile = $this->workdir.'/doctype.zip';
-        $zip = new ZipArchive;
+        $hostile = $this->workdir . '/doctype.zip';
+        $zip     = new ZipArchive;
         $zip->open($hostile, ZipArchive::CREATE);
         $zip->addFromString('meta.xml', '<?xml version="1.0"?><!DOCTYPE a [<!ENTITY x "y">]><archive/>');
         $zip->addFromString('Taxon.tsv', "x\n");
@@ -116,9 +130,10 @@ class BackboneExtractorTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('DOCTYPE');
-        (new BackboneExtractor)->extract($hostile, $this->workdir.'/out.ndjson.gz');
+        (new BackboneExtractor)->extract($hostile, $this->workdir . '/out.ndjson.gz');
     }
 
+    /** @return void */
     private function buildArchive(): void
     {
         // Columns are out of natural order with a header row to skip, so a
@@ -149,7 +164,7 @@ class BackboneExtractorTest extends TestCase
         // Mixed-case enums mirror real backbone values; the decomposed accent
         // (e + U+0301) must fold to a single code point under NFC.
         $decomposed = "Mammillaria de\u{0301}cipiens";
-        $taxa = [
+        $taxa       = [
             ['taxonID', 'family', 'taxonomicStatus', 'kingdom', 'scientificName', 'taxonRank', 'canonicalName'],
             ['2868241', 'Araceae', 'accepted', 'Plantae', 'Monstera deliciosa Liebm.', 'species', 'Monstera deliciosa'],
             ['2769648', 'Asparagaceae', 'accepted', 'Plantae', 'Dracaena trifasciata (Prain) Mabb.', 'species', 'Dracaena trifasciata'],
@@ -157,7 +172,7 @@ class BackboneExtractorTest extends TestCase
             ['8888888', 'Rosaceae', 'accepted', 'Plantae', 'Rosa canina subsp. dumalis', 'subspecies', 'Rosa canina dumalis'],
             ['9999999', 'Rosaceae', 'accepted', 'Plantae', 'Rosa gallica var. officinalis', 'variety', 'Rosa gallica officinalis'],
             ['1111111', 'Rosaceae', 'accepted', 'Plantae', 'Fragaria vesca f. alba', 'form', 'Fragaria vesca alba'],
-            ['1212121', 'Cactaceae', 'accepted', 'Plantae', $decomposed.' K.Brandegee', 'species', $decomposed],
+            ['1212121', 'Cactaceae', 'accepted', 'Plantae', $decomposed . ' K.Brandegee', 'species', $decomposed],
             ['2222222', 'Felidae', 'accepted', 'Animalia', 'Panthera leo (Linnaeus, 1758)', 'species', 'Panthera leo'],
             ['3333333', 'Agaricaceae', 'accepted', 'Fungi', 'Agaricus bisporus', 'species', 'Agaricus bisporus'],
             ['4444444', 'Asteraceae', 'synonym', 'Plantae', 'Aster synonymus', 'species', 'Aster synonymus'],
@@ -182,11 +197,13 @@ class BackboneExtractorTest extends TestCase
     }
 
     /**
-     * @param  list<list<string>>  $rows
+     * @param list<list<string>> $rows
+     *
+     * @return string
      */
     private function toTsv(array $rows): string
     {
-        return implode("\n", array_map(static fn (array $row): string => implode("\t", $row), $rows))."\n";
+        return implode("\n", array_map(static fn (array $row): string => implode("\t", $row), $rows)) . "\n";
     }
 
     /**
@@ -195,13 +212,15 @@ class BackboneExtractorTest extends TestCase
     private function readOutput(): array
     {
         $handle = gzopen($this->output, 'rb');
-        $byKey = [];
+        $byKey  = [];
+
         while (! gzeof($handle)) {
             $line = trim((string) gzgets($handle));
+
             if ($line === '') {
                 continue;
             }
-            $record = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+            $record                     = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
             $byKey[$record['gbif_key']] = $record;
         }
         gzclose($handle);

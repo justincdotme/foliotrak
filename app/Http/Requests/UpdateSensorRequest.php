@@ -8,6 +8,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSensorRequest extends FormRequest
 {
+    /**
+     * @return boolean
+     */
     public function authorize(): bool
     {
         return true;
@@ -19,8 +22,8 @@ class UpdateSensorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'color' => ['sometimes', 'string', 'max:16'],
+            'name'     => ['sometimes', 'required', 'string', 'max:255'],
+            'color'    => ['sometimes', 'string', 'max:16'],
             'location' => ['nullable', 'string', 'max:255'],
         ];
     }

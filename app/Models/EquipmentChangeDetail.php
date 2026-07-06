@@ -9,20 +9,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @property int      $care_event_id
  * @property int|null $equipment_id
- * @property string $equipment_label
- * @property string $action
+ * @property string   $equipment_label
+ * @property string   $action
  */
 #[Fillable(['care_event_id', 'equipment_id', 'equipment_label', 'action'])]
 class EquipmentChangeDetail extends Model
 {
-    protected $primaryKey = 'care_event_id';
-
+    /** @var boolean Disable auto-increment */
     public $incrementing = false;
 
-    protected $keyType = 'int';
-
+    /** @var boolean Disable timestamps */
     public $timestamps = false;
+
+    /** @var string Primary key column */
+    protected $primaryKey = 'care_event_id';
+
+    /** @var string Primary key type */
+    protected $keyType = 'int';
 
     /**
      * @return BelongsTo<CareEvent, $this>

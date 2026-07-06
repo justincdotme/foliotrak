@@ -11,9 +11,12 @@ use App\Models\Symptom;
 final class PlantConditionResolver
 {
     /**
-     * @param  list<SymptomCategory>  $symptomCategories  categories on the latest observation
-     * @param  list<string>  $symptomKeys  symptom keys on the latest observation
-     * @param  bool  $likelyDry  watering overdue beyond max(2, interval * 0.4) days
+     * @param PlantStatus           $status
+     * @param integer|null          $overallHealth
+     * @param list<SymptomCategory> $symptomCategories Categories on the latest observation.
+     * @param list<string>          $symptomKeys       Symptom keys on the latest observation.
+     * @param boolean               $likelyDry         Watering overdue beyond max(2, interval * 0.4) days.
+     *
      * @return array{key: string, label: string}
      */
     public static function resolve(

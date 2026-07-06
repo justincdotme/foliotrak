@@ -19,14 +19,29 @@ class DashboardController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * Plant relations for dashboard eager loading
+     *
+     * @var list<string>
+     */
     private const PLANT_RELATIONS = [
         'wateringEvents',
         'fertilizingEvents',
         'latestObservationEvent.observation.symptoms',
     ];
 
+    /**
+     * Max recent activity items to show
+     *
+     * @var int
+     */
     private const RECENT_ACTIVITY_LIMIT = 8;
 
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Plant::class);
@@ -52,9 +67,9 @@ class DashboardController extends Controller
 
         return response()->json([
             'data' => [
-                'user' => (new UserResource($request->user()))->resolve($request),
-                'due_for_care' => $dueForCare,
-                'recent_activity' => $this->recentActivity(),
+                'user'             => (new UserResource($request->user()))->resolve($request),
+                'due_for_care'     => $dueForCare,
+                'recent_activity'  => $this->recentActivity(),
                 'flagged_problems' => $flaggedProblems,
             ],
         ]);
@@ -73,12 +88,12 @@ class DashboardController extends Controller
             ->limit(self::RECENT_ACTIVITY_LIMIT)
             ->get()
             ->map(fn (CareEvent $event): array => [
-                'event_id' => $event->id,
-                'plant_id' => $event->plant_id,
+                'event_id'          => $event->id,
+                'plant_id'          => $event->plant_id,
                 'plant_common_name' => $event->plant?->common_name,
-                'type' => $event->careEventType->key,
-                'occurred_at' => $event->occurred_at->toISOString(),
-                'note' => $event->note,
+                'type'              => $event->careEventType->key,
+                'occurred_at'       => $event->occurred_at->toISOString(),
+                'note'              => $event->note,
             ])
             ->all();
     }

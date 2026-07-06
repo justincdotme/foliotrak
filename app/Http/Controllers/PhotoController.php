@@ -18,15 +18,29 @@ class PhotoController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * @param PhotoService $service
+     */
     public function __construct(private readonly PhotoService $service) {}
 
+    /**
+     * @param Plant $plant
+     *
+     * @return AnonymousResourceCollection
+     */
     public function index(Plant $plant): AnonymousResourceCollection
     {
         return PhotoResource::collection(
-            $plant->photos()->latest('taken_on')->get()
+            $plant->photos()->latest('taken_on')->get(),
         );
     }
 
+    /**
+     * @param StorePhotoRequest $request
+     * @param Plant             $plant
+     *
+     * @return JsonResponse
+     */
     public function store(StorePhotoRequest $request, Plant $plant): JsonResponse
     {
         $this->authorize('update', $plant);
@@ -47,6 +61,11 @@ class PhotoController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    /**
+     * @param Photo $photo
+     *
+     * @return Response
+     */
     public function destroy(Photo $photo): Response
     {
         $this->authorize('delete', $photo->plant);

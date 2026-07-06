@@ -8,10 +8,15 @@ use App\Models\User;
 use Facebook\WebDriver\WebDriverBy;
 use Laravel\Dusk\Browser;
 
-// A generated fixture avoids committing a binary; GD is compiled into the app image.
+/**
+ * A generated fixture avoids committing a binary; GD is compiled into the app image.
+ *
+ * @return string
+ */
 function coverFixture(): string
 {
-    $path = sys_get_temp_dir().'/dusk-cover.jpg';
+    $path = sys_get_temp_dir() . '/dusk-cover.jpg';
+
     if (! file_exists($path)) {
         $img = imagecreatetruecolor(900, 1400);
         imagefilledrectangle($img, 0, 0, 900, 1400, (int) imagecolorallocate($img, 34, 139, 34));
@@ -22,26 +27,32 @@ function coverFixture(): string
     return $path;
 }
 
-// react-easy-crop emits an initial crop area on image load, so the step buttons
-// enable without a drag; the waits cover the load plus the webp encodes on save.
+/**
+ * react-easy-crop emits an initial crop area on image load, so the step buttons
+ * enable without a drag; the waits cover the load plus the webp encodes on save.
+ *
+ * @param Browser $browser
+ *
+ * @return void
+ */
 function completeCrop(Browser $browser): void
 {
     $browser->waitForText('Crop hero photo (2:3)')
         ->waitUsing(10, 100, fn () => count($browser->driver->findElements(
-            WebDriverBy::xpath("//button[normalize-space()='Next' and not(@disabled)]")
+            WebDriverBy::xpath("//button[normalize-space()='Next' and not(@disabled)]"),
         )) > 0)
         ->press('Next')
         ->waitForText('Crop thumbnail (1:1)')
         ->waitUsing(10, 100, fn () => count($browser->driver->findElements(
-            WebDriverBy::xpath("//button[normalize-space()='Save cover photo' and not(@disabled)]")
+            WebDriverBy::xpath("//button[normalize-space()='Save cover photo' and not(@disabled)]"),
         )) > 0)
         ->press('Save cover photo');
 }
 
-it('crops a cover photo while adding a plant', function () {
+it('crops a cover photo while adding a plant', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->loginAs($user)
             ->resize(1280, 800)
             ->visit('/plants')
@@ -58,7 +69,8 @@ it('crops a cover photo while adding a plant', function () {
             ->waitUntilMissing('@add-plant-modal', 15)
             ->waitFor('@plant-card')
             ->waitUsing(15, 250, fn () => str_contains(
-                $browser->attribute('@plant-card img', 'src') ?? '', '_thumb.webp'
+                $browser->attribute('@plant-card img', 'src') ?? '',
+                '_thumb.webp',
             ));
     });
 
@@ -69,11 +81,11 @@ it('crops a cover photo while adding a plant', function () {
     expect($cover->path)->toEndWith('_hero.webp');
 });
 
-it('crops a replacement cover photo from the plant detail page', function () {
-    $user = User::factory()->create();
+it('crops a replacement cover photo from the plant detail page', function (): void {
+    $user  = User::factory()->create();
     $plant = Plant::factory()->create(['common_name' => 'Dusk Cover Plant']);
 
-    $this->browse(function (Browser $browser) use ($user, $plant) {
+    $this->browse(function (Browser $browser) use ($user, $plant): void {
         $browser->loginAs($user)
             ->resize(1280, 800)
             ->visit("/plants/{$plant->id}")
@@ -85,7 +97,8 @@ it('crops a replacement cover photo from the plant detail page', function () {
         completeCrop($browser);
 
         $browser->waitUsing(15, 250, fn () => str_contains(
-            $browser->attribute('@cover-hero', 'src') ?? '', '_hero.webp'
+            $browser->attribute('@cover-hero', 'src') ?? '',
+            '_hero.webp',
         ));
     });
 

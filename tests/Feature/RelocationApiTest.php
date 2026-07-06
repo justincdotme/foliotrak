@@ -17,6 +17,7 @@ class RelocationApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -24,17 +25,18 @@ class RelocationApiTest extends TestCase
         Sanctum::actingAs(User::factory()->create());
     }
 
+    /** @return void */
     public function test_logging_a_relocation_mirrors_the_location_and_records_the_move(): void
     {
         $south = Location::factory()->create(['name' => 'south window']);
-        $east = Location::factory()->create(['name' => 'east window']);
+        $east  = Location::factory()->create(['name' => 'east window']);
         $plant = Plant::factory()->create(['location_id' => $south->id]);
 
         $this->postJson("/api/plants/{$plant->id}/care-events", [
-            'type' => 'relocation',
+            'type'           => 'relocation',
             'to_location_id' => $east->id,
-            'occurred_at' => '2026-06-20T12:00:00Z',
-            'note' => 'Winter light',
+            'occurred_at'    => '2026-06-20T12:00:00Z',
+            'note'           => 'Winter light',
         ])
             ->assertCreated()
             ->assertJsonPath('data.type', 'relocation')
@@ -45,10 +47,11 @@ class RelocationApiTest extends TestCase
         $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $east->id]);
         $this->assertDatabaseHas('relocation_details', [
             'from_location_id' => $south->id,
-            'to_location_id' => $east->id,
+            'to_location_id'   => $east->id,
         ]);
     }
 
+    /** @return void */
     public function test_relocating_to_the_current_location_is_a_no_op(): void
     {
         $south = Location::factory()->create(['name' => 'south window']);
@@ -61,11 +64,12 @@ class RelocationApiTest extends TestCase
         $this->assertDatabaseHas('plants', ['id' => $plant->id, 'location_id' => $south->id]);
     }
 
+    /** @return void */
     public function test_changing_location_via_patch_logs_exactly_one_relocation(): void
     {
-        $south = Location::factory()->create(['name' => 'south window']);
+        $south   = Location::factory()->create(['name' => 'south window']);
         $kitchen = Location::factory()->create(['name' => 'kitchen sill']);
-        $plant = Plant::factory()->create(['location_id' => $south->id]);
+        $plant   = Plant::factory()->create(['location_id' => $south->id]);
 
         $this->patchJson("/api/plants/{$plant->id}", ['location_id' => $kitchen->id])
             ->assertOk()
@@ -74,12 +78,13 @@ class RelocationApiTest extends TestCase
         $this->assertDatabaseCount('care_events', 1);
         $event = CareEvent::firstOrFail();
         $this->assertDatabaseHas('relocation_details', [
-            'care_event_id' => $event->id,
+            'care_event_id'    => $event->id,
             'from_location_id' => $south->id,
-            'to_location_id' => $kitchen->id,
+            'to_location_id'   => $kitchen->id,
         ]);
     }
 
+    /** @return void */
     public function test_patching_an_unchanged_location_logs_nothing(): void
     {
         $south = Location::factory()->create(['name' => 'south window']);
@@ -91,6 +96,7 @@ class RelocationApiTest extends TestCase
         $this->assertDatabaseCount('care_events', 0);
     }
 
+    /** @return void */
     public function test_patching_other_fields_logs_no_relocation(): void
     {
         $south = Location::factory()->create(['name' => 'south window']);

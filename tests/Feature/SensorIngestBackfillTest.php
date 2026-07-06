@@ -27,15 +27,17 @@ class SensorIngestBackfillTest extends TestCase
     /** @var list<array{temperature: float, humidity: float, battery: int, rssi: int, recorded_at: string}> */
     private array $dataset = [];
 
+    /** @var Carbon */
     private Carbon $startTime;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
 
         config([
             'sensors.base_url' => self::GATEWAY_URL,
-            'sensors.api_key' => self::API_KEY,
+            'sensors.api_key'  => self::API_KEY,
         ]);
 
         $this->startTime = Carbon::now('UTC')->subHours(5);
@@ -43,22 +45,23 @@ class SensorIngestBackfillTest extends TestCase
         for ($i = 0; $i < 250; $i++) {
             $this->dataset[] = [
                 'temperature' => round(20.0 + $i * 0.1, 1),
-                'humidity' => round(50.0 + $i * 0.05, 2),
-                'battery' => 95,
-                'rssi' => -60,
+                'humidity'    => round(50.0 + $i * 0.05, 2),
+                'battery'     => 95,
+                'rssi'        => -60,
                 'recorded_at' => $this->startTime->copy()->addSeconds($i * 60)->format('Y-m-d\TH:i:s\Z'),
             ];
         }
     }
 
+    /** @return void */
     public function test_multi_page_backfill_produces_gap_free_series(): void
     {
         $this->fakeGondolaHealthy();
         Sensor::create([
-            'mac' => self::MAC,
+            'mac'         => self::MAC,
             'device_name' => 'Test Sensor',
-            'name' => 'Test',
-            'color' => 'var(--series-1)',
+            'name'        => 'Test',
+            'color'       => 'var(--series-1)',
         ]);
 
         $this->artisan('sensors:ingest')->assertExitCode(0);
@@ -83,13 +86,14 @@ class SensorIngestBackfillTest extends TestCase
         $this->assertContains($this->dataset[200]['recorded_at'], $storedTimestamps);
     }
 
+    /** @return void */
     public function test_interrupted_backfill_resumes_without_gaps_or_duplicates(): void
     {
         $sensor = Sensor::create([
-            'mac' => self::MAC,
+            'mac'         => self::MAC,
             'device_name' => 'Test Sensor',
-            'name' => 'Test',
-            'color' => 'var(--series-1)',
+            'name'        => 'Test',
+            'color'       => 'var(--series-1)',
         ]);
 
         // Throws only on request #2 (the second page of the first run)
@@ -100,6 +104,7 @@ class SensorIngestBackfillTest extends TestCase
             }
 
             $requestCount++;
+
             if ($requestCount === 2) {
                 throw new ConnectionException('Simulated outage');
             }
@@ -134,14 +139,15 @@ class SensorIngestBackfillTest extends TestCase
         $this->assertSame(250, $distinctCount);
     }
 
+    /** @return void */
     public function test_idempotent_rerun_stores_nothing_new(): void
     {
         $this->fakeGondolaHealthy();
         Sensor::create([
-            'mac' => self::MAC,
+            'mac'         => self::MAC,
             'device_name' => 'Test Sensor',
-            'name' => 'Test',
-            'color' => 'var(--series-1)',
+            'name'        => 'Test',
+            'color'       => 'var(--series-1)',
         ]);
 
         $this->artisan('sensors:ingest')->assertExitCode(0);
@@ -157,11 +163,17 @@ class SensorIngestBackfillTest extends TestCase
         $this->assertSame(250, SensorReading::count());
     }
 
+    /** @return void */
     private function fakeGondolaHealthy(): void
     {
         Http::fake(fn (Request $request) => $this->gondolaResponse($request));
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return PromiseInterface
+     */
     private function gondolaResponse(Request $request): PromiseInterface
     {
         if (! str_contains($request->url(), '/api/v1/readings')) {
@@ -173,15 +185,15 @@ class SensorIngestBackfillTest extends TestCase
 
         $remaining = array_values(array_filter(
             $this->dataset,
-            fn (array $row) => $row['recorded_at'] > $from
+            fn (array $row) => $row['recorded_at'] > $from,
         ));
 
-        $page = array_slice($remaining, 0, 100);
+        $page    = array_slice($remaining, 0, 100);
         $hasMore = count($remaining) > 100;
 
         return Http::response([
-            'mac' => self::MAC,
-            'count' => count($page),
+            'mac'      => self::MAC,
+            'count'    => count($page),
             'has_more' => $hasMore,
             'readings' => $page,
         ]);

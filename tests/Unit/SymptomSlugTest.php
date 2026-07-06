@@ -11,17 +11,6 @@ use PHPUnit\Framework\TestCase;
 class SymptomSlugTest extends TestCase
 {
     /**
-     * The slug is the dedup key for freetext symptoms: case and punctuation
-     * variants must collapse onto one key, and it must stay inside the 48-char
-     * column, so a drift here would split or truncate reusable custom rows.
-     */
-    #[DataProvider('slugCases')]
-    public function test_slugs_a_freetext_label(string $label, string $expected): void
-    {
-        $this->assertSame($expected, Symptom::slugFor($label));
-    }
-
-    /**
      * @return iterable<string, array{string, string}>
      */
     public static function slugCases(): iterable
@@ -36,5 +25,21 @@ class SymptomSlugTest extends TestCase
             str_repeat('a', 60),
             str_repeat('a', 48),
         ];
+    }
+
+    /**
+     * The slug is the dedup key for freetext symptoms: case and punctuation
+     * variants must collapse onto one key, and it must stay inside the 48-char
+     * column, so a drift here would split or truncate reusable custom rows.
+     *
+     * @param string $label
+     * @param string $expected
+     *
+     * @return void
+     */
+    #[DataProvider('slugCases')]
+    public function test_slugs_a_freetext_label(string $label, string $expected): void
+    {
+        $this->assertSame($expected, Symptom::slugFor($label));
     }
 }

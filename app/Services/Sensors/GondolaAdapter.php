@@ -8,14 +8,22 @@ use App\Contracts\SensorReadingSource;
 use App\DTOs\SensorDevice;
 use App\DTOs\SensorGatewayStatus;
 use App\DTOs\SensorReading;
+use DateTimeImmutable;
+use DateTimeInterface;
+use Generator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 final class GondolaAdapter implements SensorReadingSource
 {
-    /** @return \Generator<int, SensorReading> */
-    public function readingsSince(string $mac, \DateTimeInterface $since): \Generator
+    /**
+     * @param string            $mac
+     * @param DateTimeInterface $since
+     *
+     * @return Generator<int, SensorReading>
+     */
+    public function readingsSince(string $mac, DateTimeInterface $since): Generator
     {
         if (! $this->isConfigured()) {
             return;
@@ -27,7 +35,7 @@ final class GondolaAdapter implements SensorReadingSource
             try {
                 $response = $this->client()
                     ->get($this->url('/api/v1/readings'), [
-                        'mac' => $mac,
+                        'mac'  => $mac,
                         'from' => $from,
                     ]);
             } catch (ConnectionException) {
@@ -42,7 +50,7 @@ final class GondolaAdapter implements SensorReadingSource
                 return;
             }
 
-            $body = $response->json();
+            $body     = $response->json();
             $readings = $body['readings'] ?? [];
 
             // An empty page cannot advance the cursor; stop rather than trust has_more.
@@ -51,8 +59,8 @@ final class GondolaAdapter implements SensorReadingSource
             }
 
             foreach ($readings as $row) {
-                $recordedAt = new \DateTimeImmutable($row['recorded_at']);
-                $from = $recordedAt->format('Y-m-d\TH:i:s\Z');
+                $recordedAt = new DateTimeImmutable($row['recorded_at']);
+                $from       = $recordedAt->format('Y-m-d\TH:i:s\Z');
 
                 yield new SensorReading(
                     temperature: (float) $row['temperature'],
@@ -67,7 +75,9 @@ final class GondolaAdapter implements SensorReadingSource
         } while ($hasMore);
     }
 
-    /** @return list<SensorDevice> */
+    /**
+     * @return list<SensorDevice>
+     */
     public function discoverSensors(): array
     {
         if (! $this->isConfigured()) {
@@ -85,14 +95,16 @@ final class GondolaAdapter implements SensorReadingSource
         }
 
         $sensors = [];
+
         foreach ($response->json('sensors', []) as $entry) {
             $lastReading = null;
+
             if (isset($entry['last_reading'])) {
-                $lr = $entry['last_reading'];
+                $lr          = $entry['last_reading'];
                 $lastReading = new SensorReading(
                     temperature: (float) $lr['temperature'],
                     humidity: (float) $lr['humidity'],
-                    recordedAt: new \DateTimeImmutable($lr['recorded_at']),
+                    recordedAt: new DateTimeImmutable($lr['recorded_at']),
                     battery: isset($lr['battery']) ? (int) $lr['battery'] : null,
                     rssi: isset($lr['rssi']) ? (int) $lr['rssi'] : null,
                 );
@@ -108,6 +120,9 @@ final class GondolaAdapter implements SensorReadingSource
         return $sensors;
     }
 
+    /**
+     * @return SensorGatewayStatus
+     */
     public function testConnection(): SensorGatewayStatus
     {
         if (! $this->isConfigured()) {
@@ -139,7 +154,7 @@ final class GondolaAdapter implements SensorReadingSource
                 collectorRunning: null,
                 sensorsSeen: null,
                 uptimeSeconds: null,
-                error: 'Health endpoint returned '.$healthResponse->status(),
+                error: 'Health endpoint returned ' . $healthResponse->status(),
             );
         }
 
@@ -176,17 +191,28 @@ final class GondolaAdapter implements SensorReadingSource
         );
     }
 
+    /**
+     * @return boolean
+     */
     private function isConfigured(): bool
     {
         return config('sensors.base_url') !== ''
             && config('sensors.api_key') !== '';
     }
 
+    /**
+     * @param string $path
+     *
+     * @return string
+     */
     private function url(string $path): string
     {
-        return rtrim(config('sensors.base_url'), '/').$path;
+        return rtrim(config('sensors.base_url'), '/') . $path;
     }
 
+    /**
+     * @return PendingRequest
+     */
     private function client(): PendingRequest
     {
         return Http::withHeaders(['X-API-Key' => config('sensors.api_key')])

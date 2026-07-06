@@ -6,7 +6,7 @@ namespace App\Enums;
 
 enum PlantStatus: string
 {
-    case Active = 'active';
+    case Active   = 'active';
     case Archived = 'archived';
-    case Dead = 'dead';
+    case Dead     = 'dead';
 }

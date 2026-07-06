@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Support\Care;
 
-use App\Models\CareEvent;
 use App\Models\Plant;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -16,32 +15,46 @@ use Illuminate\Support\Carbon;
  */
 enum ScheduledCareType: string
 {
-    case Watering = 'watering';
+    case Watering    = 'watering';
     case Fertilizing = 'fertilizing';
 
+    /**
+     * @param Plant $plant
+     *
+     * @return integer|null
+     */
     public function override(Plant $plant): ?int
     {
         return match ($this) {
-            self::Watering => $plant->watering_interval_days_override,
+            self::Watering    => $plant->watering_interval_days_override,
             self::Fertilizing => $plant->fertilizing_interval_days_override,
         };
     }
 
     /**
-     * @return Collection<int, CareEvent> every logged event of the type, oldest first
+     * Every logged event of the type, oldest first.
+     *
+     * @param Plant $plant
+     *
+     * @return Collection<int, CareEvent>
      */
     public function events(Plant $plant): Collection
     {
         return match ($this) {
-            self::Watering => $plant->wateringEvents,
+            self::Watering    => $plant->wateringEvents,
             self::Fertilizing => $plant->fertilizingEvents,
         };
     }
 
+    /**
+     * @param Plant $plant
+     *
+     * @return Carbon|null
+     */
     public function scheduleStartDate(Plant $plant): ?Carbon
     {
         return match ($this) {
-            self::Watering => $plant->watering_schedule_start_date,
+            self::Watering    => $plant->watering_schedule_start_date,
             self::Fertilizing => null,
         };
     }

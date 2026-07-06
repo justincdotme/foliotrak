@@ -19,6 +19,7 @@ class DashboardApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -27,19 +28,13 @@ class DashboardApiTest extends TestCase
         $this->travelTo(Carbon::parse('2026-06-26 09:00:00'));
     }
 
-    private function actAsHousehold(): User
-    {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
-
-        return $user;
-    }
-
+    /** @return void */
     public function test_dashboard_requires_authentication(): void
     {
         $this->getJson('/api/dashboard')->assertUnauthorized();
     }
 
+    /** @return void */
     public function test_dashboard_returns_the_current_user_and_the_four_sections(): void
     {
         $user = $this->actAsHousehold();
@@ -55,6 +50,7 @@ class DashboardApiTest extends TestCase
             ]);
     }
 
+    /** @return void */
     public function test_due_for_care_lists_plants_with_a_derivable_interval_sorted_by_urgency(): void
     {
         $this->actAsHousehold();
@@ -104,6 +100,7 @@ class DashboardApiTest extends TestCase
             ->assertJsonPath('data.due_for_care.2.daysLeft', 7);
     }
 
+    /** @return void */
     public function test_due_for_care_derives_the_interval_from_logged_history_without_an_override(): void
     {
         $this->actAsHousehold();
@@ -112,6 +109,7 @@ class DashboardApiTest extends TestCase
         // history and derive a 7-day interval. Last watered 8 days ago, so it
         // is one day overdue.
         $plant = Plant::factory()->create(['common_name' => 'Rhythmic', 'watering_interval_days_override' => null]);
+
         foreach ([36, 29, 22, 15, 8] as $daysAgo) {
             CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
         }
@@ -127,6 +125,7 @@ class DashboardApiTest extends TestCase
             ->assertJsonPath('data.due_for_care.0.daysLeft', -1);
     }
 
+    /** @return void */
     public function test_due_for_care_omits_a_derived_interval_under_28_days_of_history(): void
     {
         $this->actAsHousehold();
@@ -134,6 +133,7 @@ class DashboardApiTest extends TestCase
         // The same 7-day rhythm, but the first watering is only 22 days old:
         // below the 28-day gate no median is derived, so nothing is due (FOL-98).
         $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
+
         foreach ([22, 15, 8] as $daysAgo) {
             CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays($daysAgo)]);
         }
@@ -141,15 +141,17 @@ class DashboardApiTest extends TestCase
         $this->getJson('/api/dashboard')->assertOk()->assertJsonCount(0, 'data.due_for_care');
     }
 
+    /** @return void */
     public function test_recent_activity_returns_the_eight_newest_events_across_plants(): void
     {
         $this->actAsHousehold();
 
         $plant = Plant::factory()->create(['common_name' => 'Logged']);
+
         foreach (range(1, 10) as $daysAgo) {
             CareEvent::factory()->ofType('watering')->for($plant)->create([
                 'occurred_at' => now()->subDays($daysAgo),
-                'note' => "watering {$daysAgo}",
+                'note'        => "watering {$daysAgo}",
             ]);
         }
 
@@ -164,6 +166,7 @@ class DashboardApiTest extends TestCase
             ->assertJsonPath('data.recent_activity.7.note', 'watering 8');
     }
 
+    /** @return void */
     public function test_flagged_problems_surface_observation_signals(): void
     {
         $this->actAsHousehold();
@@ -200,6 +203,7 @@ class DashboardApiTest extends TestCase
         );
     }
 
+    /** @return void */
     public function test_days_left_counts_midnight_normalized_calendar_days(): void
     {
         $this->actAsHousehold();
@@ -217,12 +221,13 @@ class DashboardApiTest extends TestCase
             ->assertJsonPath('data.due_for_care.0.due_date', '2026-06-27');
     }
 
+    /** @return void */
     public function test_a_plant_with_both_overrides_yields_one_due_entry_per_type(): void
     {
         $this->actAsHousehold();
 
         $plant = Plant::factory()->create([
-            'watering_interval_days_override' => 7,
+            'watering_interval_days_override'    => 7,
             'fertilizing_interval_days_override' => 30,
         ]);
         CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(8)]);
@@ -236,6 +241,7 @@ class DashboardApiTest extends TestCase
         $this->assertSame([$plant->id], $entries->pluck('plant_id')->unique()->values()->all());
     }
 
+    /** @return void */
     public function test_recent_activity_spans_plants_and_excludes_trashed_ones(): void
     {
         $this->actAsHousehold();
@@ -257,6 +263,7 @@ class DashboardApiTest extends TestCase
         $this->assertNotContains('trashed event', $notes);
     }
 
+    /** @return void */
     public function test_flagged_problems_cover_root_rot_disease_and_multiple_signals(): void
     {
         $this->actAsHousehold();
@@ -300,13 +307,28 @@ class DashboardApiTest extends TestCase
     }
 
     /**
-     * @param  list<string>  $symptomKeys
+     * @return User
+     */
+    private function actAsHousehold(): User
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        return $user;
+    }
+
+    /**
+     * @param Plant    $plant
+     * @param integer  $overallHealth
+     * @param string[] $symptomKeys
+     *
+     * @return void
      */
     private function observe(Plant $plant, int $overallHealth, array $symptomKeys): void
     {
-        $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDay()]);
+        $event       = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()->subDay()]);
         $observation = Observation::factory()->create([
-            'care_event_id' => $event->id,
+            'care_event_id'  => $event->id,
             'overall_health' => $overallHealth,
         ]);
 

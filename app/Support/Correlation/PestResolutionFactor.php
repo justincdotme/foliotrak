@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Support\Correlation;
 
-use App\Models\Plant;
 use App\Support\SymptomEpisodeResolver;
 use Illuminate\Support\Collection;
 
@@ -15,11 +14,17 @@ use Illuminate\Support\Collection;
  */
 final class PestResolutionFactor implements Factor
 {
+    /**
+     * @return string
+     */
     public function key(): string
     {
         return 'resolution_time_days';
     }
 
+    /**
+     * @return string
+     */
     public function outcomeKey(): string
     {
         return 'health_at_clear';
@@ -34,7 +39,8 @@ final class PestResolutionFactor implements Factor
     }
 
     /**
-     * @param  Collection<int, Plant>  $plants
+     * @param Collection<int, Plant> $plants
+     *
      * @return list<array{x: float, y: float}>
      */
     public function pairs(Collection $plants): array

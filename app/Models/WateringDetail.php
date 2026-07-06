@@ -8,23 +8,24 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int      $care_event_id
+ * @property int|null $amount_ml
+ */
 #[Fillable(['care_event_id', 'amount_ml'])]
 class WateringDetail extends Model
 {
-    protected $primaryKey = 'care_event_id';
-
+    /** @var boolean Disable auto-increment */
     public $incrementing = false;
 
-    protected $keyType = 'int';
-
+    /** @var boolean Disable timestamps */
     public $timestamps = false;
 
-    protected function casts(): array
-    {
-        return [
-            'amount_ml' => 'integer',
-        ];
-    }
+    /** @var string Primary key column */
+    protected $primaryKey = 'care_event_id';
+
+    /** @var string Primary key type */
+    protected $keyType = 'int';
 
     /**
      * @return BelongsTo<CareEvent, $this>
@@ -32,5 +33,15 @@ class WateringDetail extends Model
     public function careEvent(): BelongsTo
     {
         return $this->belongsTo(CareEvent::class);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'amount_ml' => 'integer',
+        ];
     }
 }

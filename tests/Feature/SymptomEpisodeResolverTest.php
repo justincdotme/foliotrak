@@ -16,6 +16,7 @@ class SymptomEpisodeResolverTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     public function test_plant_with_no_observations_returns_empty_episodes(): void
     {
         $plant = Plant::factory()->create();
@@ -24,9 +25,10 @@ class SymptomEpisodeResolverTest extends TestCase
         $this->assertSame([], SymptomEpisodeResolver::forPlant($plant));
     }
 
+    /** @return void */
     public function test_plant_with_one_observation_returns_empty_episodes(): void
     {
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites']);
         $this->observe($plant, '2026-01-01', [$symptom->id], health: 3);
 
@@ -35,9 +37,10 @@ class SymptomEpisodeResolverTest extends TestCase
         $this->assertSame([], SymptomEpisodeResolver::forPlant($plant));
     }
 
+    /** @return void */
     public function test_symptom_that_appears_then_clears_produces_a_resolved_episode(): void
     {
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites']);
 
         $this->observe($plant, '2026-01-01', [$symptom->id], health: 3);
@@ -56,9 +59,10 @@ class SymptomEpisodeResolverTest extends TestCase
         $this->assertSame(7, $episode['duration_days']);
     }
 
+    /** @return void */
     public function test_symptom_present_on_all_observations_is_an_open_episode(): void
     {
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'leaf', 'key' => 'yellow_leaf', 'label' => 'Yellowing leaves']);
 
         $this->observe($plant, '2026-01-01', [$symptom->id]);
@@ -75,11 +79,12 @@ class SymptomEpisodeResolverTest extends TestCase
         $this->assertNull($episode['duration_days']);
     }
 
+    /** @return void */
     public function test_multiple_symptoms_are_tracked_independently(): void
     {
-        $plant = Plant::factory()->create();
-        $mites = Symptom::factory()->create(['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites']);
-        $gnats = Symptom::factory()->create(['category' => 'pest', 'key' => 'fungus_gnats', 'label' => 'Fungus gnats']);
+        $plant  = Plant::factory()->create();
+        $mites  = Symptom::factory()->create(['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites']);
+        $gnats  = Symptom::factory()->create(['category' => 'pest', 'key' => 'fungus_gnats', 'label' => 'Fungus gnats']);
         $mildew = Symptom::factory()->create(['category' => 'disease', 'key' => 'powdery_mildew', 'label' => 'Powdery mildew']);
 
         // obs1: mites and gnats; obs2: gnats and mildew (mites cleared, mildew appeared)
@@ -104,9 +109,10 @@ class SymptomEpisodeResolverTest extends TestCase
         $this->assertNull($byKey['powdery_mildew']['cleared_at']);
     }
 
+    /** @return void */
     public function test_symptom_that_reappears_creates_two_separate_episodes(): void
     {
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'pest', 'key' => 'mealybugs', 'label' => 'Mealybugs']);
 
         $this->observe($plant, '2026-01-01', [$symptom->id]);
@@ -119,7 +125,7 @@ class SymptomEpisodeResolverTest extends TestCase
         $this->assertCount(2, $episodes);
 
         $resolved = collect($episodes)->firstWhere('cleared_at', '!==', null);
-        $open = collect($episodes)->firstWhere('cleared_at', null);
+        $open     = collect($episodes)->firstWhere('cleared_at', null);
 
         $this->assertNotNull($resolved);
         $this->assertSame('2026-01-01', $resolved['appeared_at']);
@@ -131,9 +137,10 @@ class SymptomEpisodeResolverTest extends TestCase
         $this->assertNull($open['cleared_at']);
     }
 
+    /** @return void */
     public function test_health_at_appear_and_clear_are_captured(): void
     {
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'root', 'key' => 'root_rot', 'label' => 'Root rot']);
 
         $this->observe($plant, '2026-01-01', [$symptom->id], health: 2);
@@ -148,12 +155,18 @@ class SymptomEpisodeResolverTest extends TestCase
     }
 
     /**
-     * @param  list<int>  $symptomIds
+     * @param Plant         $plant
+     * @param string        $date
+     * @param list<integer> $symptomIds
+     * @param integer|null  $health
+     *
+     * @return void
      */
     private function observe(Plant $plant, string $date, array $symptomIds, ?int $health = null): void
     {
         $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => $date]);
-        $obs = Observation::factory()->create(['care_event_id' => $event->id, 'overall_health' => $health]);
+        $obs   = Observation::factory()->create(['care_event_id' => $event->id, 'overall_health' => $health]);
+
         if ($symptomIds !== []) {
             $obs->symptoms()->attach($symptomIds);
         }

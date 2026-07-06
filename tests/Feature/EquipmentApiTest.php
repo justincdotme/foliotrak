@@ -11,7 +11,7 @@ use function Pest\Laravel\actingAs;
 
 uses(RefreshDatabase::class);
 
-it('creates equipment, deriving a slug key and next sort order', function () {
+it('creates equipment, deriving a slug key and next sort order', function (): void {
     Equipment::query()->delete();
     Equipment::create(['key' => 'seed', 'label' => 'Seed', 'sort_order' => 3]);
 
@@ -23,7 +23,7 @@ it('creates equipment, deriving a slug key and next sort order', function () {
         ->assertJsonPath('data.sort_order', 4);
 });
 
-it('rejects a duplicate label', function () {
+it('rejects a duplicate label', function (): void {
     Equipment::create(['key' => 'humidifier', 'label' => 'Humidifier', 'sort_order' => 1]);
 
     actingAs(User::factory()->create())
@@ -31,7 +31,7 @@ it('rejects a duplicate label', function () {
         ->assertStatus(422);
 });
 
-it('renames equipment', function () {
+it('renames equipment', function (): void {
     $equipment = Equipment::create(['key' => 'fan', 'label' => 'Fan', 'sort_order' => 1]);
 
     actingAs(User::factory()->create())
@@ -40,9 +40,9 @@ it('renames equipment', function () {
         ->assertJsonPath('data.label', 'Oscillating Fan');
 });
 
-it('deletes equipment and cascade-detaches it from plants', function () {
+it('deletes equipment and cascade-detaches it from plants', function (): void {
     $equipment = Equipment::create(['key' => 'mat', 'label' => 'Heat Mat', 'sort_order' => 1]);
-    $plant = Plant::factory()->create();
+    $plant     = Plant::factory()->create();
     $plant->equipment()->attach($equipment->id);
 
     actingAs(User::factory()->create())

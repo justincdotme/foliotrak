@@ -13,6 +13,7 @@ class TagSeederTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     public function test_seeds_the_starter_tags(): void
     {
         $this->seed(TagSeeder::class);
@@ -23,6 +24,7 @@ class TagSeederTest extends TestCase
         );
     }
 
+    /** @return void */
     public function test_is_idempotent_so_re_seeding_on_boot_adds_no_duplicates(): void
     {
         $this->seed(TagSeeder::class);

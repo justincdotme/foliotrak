@@ -15,6 +15,12 @@ class PlantCareReminder extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * @param Plant   $plant
+     * @param string  $reminderType
+     * @param string  $dueOn
+     * @param integer $intervalDays
+     */
     public function __construct(
         public readonly Plant $plant,
         public readonly string $reminderType,
@@ -23,6 +29,8 @@ class PlantCareReminder extends Notification implements ShouldQueue
     ) {}
 
     /**
+     * @param object $notifiable
+     *
      * @return array<int, class-string>
      */
     public function via(object $notifiable): array
@@ -30,9 +38,14 @@ class PlantCareReminder extends Notification implements ShouldQueue
         return [PushoverChannel::class];
     }
 
+    /**
+     * @param object $notifiable
+     *
+     * @return PushoverMessage
+     */
     public function toPushover(object $notifiable): PushoverMessage
     {
-        $name = $this->plant->common_name ?? $this->plant->scientific_name ?? 'A plant';
+        $name   = $this->plant->common_name ?? $this->plant->scientific_name ?? 'A plant';
         $action = $this->reminderType === 'fertilizing' ? 'fertilizing' : 'watering';
 
         return PushoverMessage::create(

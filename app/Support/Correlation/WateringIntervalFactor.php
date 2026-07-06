@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Support\Correlation;
 
 use App\Models\CareEvent;
-use App\Models\Plant;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -16,11 +15,17 @@ use Illuminate\Support\Collection;
  */
 final class WateringIntervalFactor implements Factor
 {
+    /**
+     * @return string
+     */
     public function key(): string
     {
         return 'watering_interval_days';
     }
 
+    /**
+     * @return string
+     */
     public function outcomeKey(): string
     {
         return 'overall_health';
@@ -35,7 +40,8 @@ final class WateringIntervalFactor implements Factor
     }
 
     /**
-     * @param  Collection<int, Plant>  $plants
+     * @param Collection<int, Plant> $plants
+     *
      * @return list<array{x: float, y: float}>
      */
     public function pairs(Collection $plants): array
@@ -50,19 +56,22 @@ final class WateringIntervalFactor implements Factor
 
             foreach ($plant->observationEvents as $event) {
                 $health = $event->observation?->overall_health;
+
                 if ($health === null) {
                     continue;
                 }
 
                 $prior = $waterings->filter(fn (Carbon $w): bool => $w <= $event->occurred_at)->values()->all();
                 $count = count($prior);
+
                 if ($count < 2) {
                     continue;
                 }
 
                 $interval = (int) round(
-                    ($prior[$count - 1]->getTimestamp() - $prior[$count - 2]->getTimestamp()) / 86400
+                    ($prior[$count - 1]->getTimestamp() - $prior[$count - 2]->getTimestamp()) / 86400,
                 );
+
                 if ($interval <= 0) {
                     continue;
                 }

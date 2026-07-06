@@ -3,6 +3,7 @@
 set -e
 
 vendor/bin/pint --test
+vendor/bin/phpcs
 vendor/bin/phpstan analyse --no-progress --memory-limit=1G
 
 # The app container exports DB_CONNECTION=mysql and SCOUT_DRIVER=meilisearch,

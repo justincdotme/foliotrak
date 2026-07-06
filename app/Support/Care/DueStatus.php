@@ -8,8 +8,13 @@ enum DueStatus: string
 {
     case Overdue = 'overdue';
     case DueSoon = 'due-soon';
-    case Ok = 'ok';
+    case Ok      = 'ok';
 
+    /**
+     * @param integer $daysLeft
+     *
+     * @return self
+     */
     public static function fromDaysLeft(int $daysLeft): self
     {
         if ($daysLeft < 0) {

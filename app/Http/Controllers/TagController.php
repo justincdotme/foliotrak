@@ -17,6 +17,16 @@ class TagController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * Number of color palette entries
+     *
+     * @var int
+     */
+    private const PALETTE_SIZE = 8;
+
+    /**
+     * @return AnonymousResourceCollection
+     */
     public function index(): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Tag::class);
@@ -24,8 +34,11 @@ class TagController extends Controller
         return TagResource::collection(Tag::query()->orderBy('name')->get());
     }
 
-    private const PALETTE_SIZE = 8;
-
+    /**
+     * @param StoreTagRequest $request
+     *
+     * @return JsonResponse
+     */
     public function store(StoreTagRequest $request): JsonResponse
     {
         $this->authorize('create', Tag::class);
@@ -33,8 +46,8 @@ class TagController extends Controller
         $data = $request->validated();
 
         if (empty($data['color'])) {
-            $index = Tag::query()->count() % self::PALETTE_SIZE;
-            $data['color'] = 'var(--series-'.($index + 1).')';
+            $index         = Tag::query()->count() % self::PALETTE_SIZE;
+            $data['color'] = 'var(--series-' . ($index + 1) . ')';
         }
 
         $tag = Tag::create($data);
@@ -44,6 +57,12 @@ class TagController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    /**
+     * @param UpdateTagRequest $request
+     * @param Tag              $tag
+     *
+     * @return TagResource
+     */
     public function update(UpdateTagRequest $request, Tag $tag): TagResource
     {
         $this->authorize('update', $tag);
@@ -53,6 +72,11 @@ class TagController extends Controller
         return TagResource::make($tag);
     }
 
+    /**
+     * @param Tag $tag
+     *
+     * @return Response
+     */
     public function destroy(Tag $tag): Response
     {
         $this->authorize('delete', $tag);

@@ -9,8 +9,14 @@ use Illuminate\Database\Seeder;
 
 class TagSeeder extends Seeder
 {
+    /**
+     * Retired tag names removed during seeding.
+     *
+     * @var list<string>
+     */
     private const RETIRED = ['Living room', 'Bright window', 'Low light', 'Office'];
 
+    /** @return void */
     public function run(): void
     {
         Tag::whereIn('name', self::RETIRED)->delete();

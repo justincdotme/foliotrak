@@ -15,32 +15,14 @@ use Tests\TestCase;
 
 class CareDueTest extends TestCase
 {
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
         $this->travelTo(Carbon::parse('2026-06-26 09:00:00'));
     }
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     * @param  list<int>  $wateringDaysAgo
-     * @param  list<int>  $fertilizingDaysAgo
-     */
-    private function plant(array $attributes, array $wateringDaysAgo = [], array $fertilizingDaysAgo = []): Plant
-    {
-        $plant = new Plant($attributes);
-        $plant->setRelation('wateringEvents', new Collection(array_map(
-            fn (int $days): CareEvent => new CareEvent(['occurred_at' => now()->subDays($days)]),
-            $wateringDaysAgo,
-        )));
-        $plant->setRelation('fertilizingEvents', new Collection(array_map(
-            fn (int $days): CareEvent => new CareEvent(['occurred_at' => now()->subDays($days)]),
-            $fertilizingDaysAgo,
-        )));
-
-        return $plant;
-    }
-
+    /** @return void */
     public function test_for_plant_lists_watering_then_fertilizing(): void
     {
         $plant = $this->plant(
@@ -58,6 +40,7 @@ class CareDueTest extends TestCase
         );
     }
 
+    /** @return void */
     public function test_for_plant_drops_types_without_a_schedule_and_reindexes(): void
     {
         // Only fertilizing is derivable; the missing watering entry must not
@@ -71,11 +54,13 @@ class CareDueTest extends TestCase
         $this->assertSame(ScheduledCareType::Fertilizing, $dues[0]->type);
     }
 
+    /** @return void */
     public function test_for_returns_null_without_a_schedule(): void
     {
         $this->assertNull(CareDue::for($this->plant([]), ScheduledCareType::Watering));
     }
 
+    /** @return void */
     public function test_due_exactly_today_is_due(): void
     {
         $due = CareDue::for($this->plant(['watering_interval_days_override' => 7], [7]), ScheduledCareType::Watering);
@@ -84,5 +69,27 @@ class CareDueTest extends TestCase
         $this->assertSame(DueStatus::DueSoon, $due?->status);
         $this->assertTrue($due !== null && $due->isDue());
         $this->assertSame(0, $due?->daysOverdue());
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     * @param list<integer>        $wateringDaysAgo
+     * @param list<integer>        $fertilizingDaysAgo
+     *
+     * @return Plant
+     */
+    private function plant(array $attributes, array $wateringDaysAgo = [], array $fertilizingDaysAgo = []): Plant
+    {
+        $plant = new Plant($attributes);
+        $plant->setRelation('wateringEvents', new Collection(array_map(
+            fn (int $days): CareEvent => new CareEvent(['occurred_at' => now()->subDays($days)]),
+            $wateringDaysAgo,
+        )));
+        $plant->setRelation('fertilizingEvents', new Collection(array_map(
+            fn (int $days): CareEvent => new CareEvent(['occurred_at' => now()->subDays($days)]),
+            $fertilizingDaysAgo,
+        )));
+
+        return $plant;
     }
 }

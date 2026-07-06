@@ -14,11 +14,16 @@ use RuntimeException;
  */
 class SearchDegradedException extends RuntimeException
 {
+    /**
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
     public function render(Request $request): JsonResponse
     {
         return response()->json([
             'message' => 'Species search is temporarily unavailable. Please try again.',
-            'code' => 'search_degraded',
+            'code'    => 'search_degraded',
         ], JsonResponse::HTTP_SERVICE_UNAVAILABLE);
     }
 }

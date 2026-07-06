@@ -13,6 +13,7 @@ class ImportSpeciesSeedTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
@@ -21,15 +22,7 @@ class ImportSpeciesSeedTest extends TestCase
         Http::preventStrayRequests();
     }
 
-    private function writeSeed(string $name, string $contents, bool $gzip = false): string
-    {
-        $path = storage_path('app/'.$name);
-        @mkdir(dirname($path), 0777, true);
-        file_put_contents($path, $gzip ? (string) gzencode($contents) : $contents);
-
-        return $path;
-    }
-
+    /** @return void */
     public function test_imports_valid_lines_and_skips_invalid_ones(): void
     {
         $path = $this->writeSeed('test-seed.ndjson', implode("\n", [
@@ -49,11 +42,12 @@ class ImportSpeciesSeedTest extends TestCase
         @unlink($path);
     }
 
+    /** @return void */
     public function test_reads_gzip_and_is_idempotent(): void
     {
         $path = $this->writeSeed(
             'test-seed.ndjson.gz',
-            (string) json_encode(['gbif_key' => 2868241, 'scientific_name' => 'Monstera deliciosa Liebm.'])."\n",
+            (string) json_encode(['gbif_key' => 2868241, 'scientific_name' => 'Monstera deliciosa Liebm.']) . "\n",
             gzip: true,
         );
 
@@ -66,9 +60,26 @@ class ImportSpeciesSeedTest extends TestCase
         @unlink($path);
     }
 
+    /** @return void */
     public function test_fails_when_the_seed_file_is_missing(): void
     {
         $this->artisan('species:import-seed', ['path' => '/nonexistent/seed.ndjson.gz'])
             ->assertFailed();
+    }
+
+    /**
+     * @param string  $name
+     * @param string  $contents
+     * @param boolean $gzip
+     *
+     * @return string
+     */
+    private function writeSeed(string $name, string $contents, bool $gzip = false): string
+    {
+        $path = storage_path('app/' . $name);
+        @mkdir(dirname($path), 0777, true);
+        file_put_contents($path, $gzip ? (string) gzencode($contents) : $contents);
+
+        return $path;
     }
 }

@@ -13,26 +13,54 @@ use App\Models\User;
  */
 class SensorPolicy
 {
+    /**
+     * @param User $user
+     *
+     * @return boolean
+     */
     public function viewAny(User $user): bool
     {
         return true;
     }
 
+    /**
+     * @param User   $user
+     * @param Sensor $sensor
+     *
+     * @return boolean
+     */
     public function view(User $user, Sensor $sensor): bool
     {
         return true;
     }
 
+    /**
+     * @param User $user
+     *
+     * @return boolean
+     */
     public function create(User $user): bool
     {
         return true;
     }
 
+    /**
+     * @param User   $user
+     * @param Sensor $sensor
+     *
+     * @return boolean
+     */
     public function update(User $user, Sensor $sensor): bool
     {
         return true;
     }
 
+    /**
+     * @param User   $user
+     * @param Sensor $sensor
+     *
+     * @return boolean
+     */
     public function delete(User $user, Sensor $sensor): bool
     {
         return true;

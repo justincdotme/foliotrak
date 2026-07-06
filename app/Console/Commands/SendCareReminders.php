@@ -18,13 +18,19 @@ use Illuminate\Support\Facades\Notification;
 
 class SendCareReminders extends Command
 {
+    /** @var string */
     protected $signature = 'app:send-care-reminders';
 
+    /** @var string */
     protected $description = 'Send Pushover reminders for plants due for watering or fertilizing.';
 
+    /**
+     * @return integer
+     */
     public function handle(): int
     {
         $recipients = User::query()->whereNotNull('pushover_user_key')->get();
+
         if ($recipients->isEmpty()) {
             $this->info('No users have a Pushover key; nothing to send.');
 
@@ -37,6 +43,7 @@ class SendCareReminders extends Command
             ->get();
 
         $dispatched = 0;
+
         foreach ($plants as $plant) {
             foreach (ScheduledCareType::cases() as $type) {
                 $dispatched += $this->remind($plant, $type, $recipients);
@@ -52,11 +59,16 @@ class SendCareReminders extends Command
      * Claims the day's reminder before dispatch, so a missed or repeated run never
      * sends the same plant, type, and due date twice.
      *
-     * @param  Collection<int, User>  $recipients
+     * @param Plant                 $plant
+     * @param ScheduledCareType     $type
+     * @param Collection<int, User> $recipients
+     *
+     * @return integer
      */
     private function remind(Plant $plant, ScheduledCareType $type, Collection $recipients): int
     {
         $due = CareDue::for($plant, $type);
+
         if ($due === null || ! $due->isDue()) {
             return 0;
         }
@@ -65,6 +77,7 @@ class SendCareReminders extends Command
             ['plant_id' => $plant->id, 'reminder_type' => $type->value, 'due_on' => $due->dueDate->toDateString()],
             ['status' => 'sent', 'sent_at' => Carbon::now()],
         );
+
         if (! $reminder->wasRecentlyCreated) {
             return 0;
         }

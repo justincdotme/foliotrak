@@ -10,6 +10,9 @@ use Illuminate\Validation\Rules\File;
 
 class StorePhotoRequest extends FormRequest
 {
+    /**
+     * @return boolean
+     */
     public function authorize(): bool
     {
         return true;
@@ -21,20 +24,23 @@ class StorePhotoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'photo' => ['required', File::image()->max(25 * 1024)],
-            'taken_on' => ['nullable', 'date'],
-            'caption' => ['nullable', 'string', 'max:255'],
-            'set_as_cover' => ['nullable', 'boolean'],
+            'photo'         => ['required', File::image()->max(25 * 1024)],
+            'taken_on'      => ['nullable', 'date'],
+            'caption'       => ['nullable', 'string', 'max:255'],
+            'set_as_cover'  => ['nullable', 'boolean'],
             'care_event_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('care_events', 'id')->where('plant_id', $this->route('plant')->id),
             ],
-            'hero_crop' => ['nullable', 'json', 'required_with:thumb_crop', 'required_if_accepted:set_as_cover'],
+            'hero_crop'  => ['nullable', 'json', 'required_with:thumb_crop', 'required_if_accepted:set_as_cover'],
             'thumb_crop' => ['nullable', 'json', 'required_with:hero_crop', 'required_if_accepted:set_as_cover'],
         ];
     }
 
+    /**
+     * @return integer|null
+     */
     public function careEventId(): ?int
     {
         return $this->filled('care_event_id') ? $this->integer('care_event_id') : null;
@@ -57,11 +63,14 @@ class StorePhotoRequest extends FormRequest
     }
 
     /**
+     * @param string $field
+     *
      * @return array{x: int, y: int, width: int, height: int}|null
      */
     private function decodeCrop(string $field): ?array
     {
         $json = $this->input($field);
+
         if ($json === null) {
             return null;
         }
@@ -73,9 +82,9 @@ class StorePhotoRequest extends FormRequest
         }
 
         return [
-            'x' => max(0, (int) ($data['x'] ?? 0)),
-            'y' => max(0, (int) ($data['y'] ?? 0)),
-            'width' => max(1, (int) ($data['width'] ?? 1)),
+            'x'      => max(0, (int) ($data['x'] ?? 0)),
+            'y'      => max(0, (int) ($data['y'] ?? 0)),
+            'width'  => max(1, (int) ($data['width'] ?? 1)),
             'height' => max(1, (int) ($data['height'] ?? 1)),
         ];
     }

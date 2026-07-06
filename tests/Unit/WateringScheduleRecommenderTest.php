@@ -11,28 +11,34 @@ use PHPUnit\Framework\TestCase;
 
 class WateringScheduleRecommenderTest extends TestCase
 {
+    /** @var Carbon */
     private Carbon $now;
 
+    /** @var Carbon */
     private Carbon $earliest;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->now = Carbon::parse('2026-06-26 09:00:00');
+        $this->now      = Carbon::parse('2026-06-26 09:00:00');
         $this->earliest = $this->now->copy()->subDays(120);
     }
 
+    /** @return void */
     public function test_fewer_than_two_waterings_yields_no_recommendation(): void
     {
         $this->assertNull(
-            WateringScheduleRecommender::recommend([$this->now->copy()], [], [], $this->earliest, $this->now)
+            WateringScheduleRecommender::recommend([$this->now->copy()], [], [], $this->earliest, $this->now),
         );
     }
 
+    /** @return void */
     public function test_a_steady_cadence_recommends_the_plain_median(): void
     {
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 7) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -52,6 +58,7 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertStringContainsString('every 7 days', $result['rationale']);
     }
 
+    /** @return void */
     public function test_a_decline_after_slowing_down_recommends_reverting_to_the_healthier_cadence(): void
     {
         $result = WateringScheduleRecommender::recommend(
@@ -79,6 +86,7 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertStringNotContainsStringIgnoringCase('caused', $result['rationale']);
     }
 
+    /** @return void */
     public function test_an_improvement_after_speeding_up_recommends_keeping_the_recent_cadence(): void
     {
         $result = WateringScheduleRecommender::recommend(
@@ -103,6 +111,7 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertStringContainsString('Worth keeping', $result['rationale']);
     }
 
+    /** @return void */
     public function test_no_recent_waterings_falls_back_to_the_plain_median(): void
     {
         // All waterings sit inside the baseline window; the recent window has none to compare.
@@ -119,6 +128,7 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertSame(6, $result['interval_days']);
     }
 
+    /** @return void */
     public function test_a_young_plant_does_not_compare_overlapping_windows(): void
     {
         // Under 56 days, the baseline and recent windows overlap, so the two-window comparison is
@@ -141,6 +151,7 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertStringNotContainsString('returning', $result['rationale']);
     }
 
+    /** @return void */
     public function test_a_small_cadence_drift_within_tolerance_stays_stable(): void
     {
         $result = WateringScheduleRecommender::recommend(
@@ -159,6 +170,7 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertStringContainsString('held about steady', $result['rationale']);
     }
 
+    /** @return void */
     public function test_no_rationale_uses_causal_language(): void
     {
         $forbidden = ['caused', 'causes', 'leads to', 'because', 'due to', 'results in'];
@@ -189,39 +201,11 @@ class WateringScheduleRecommenderTest extends TestCase
         }
     }
 
-    /**
-     * @param  list<Carbon>  $waterings
-     * @param  list<array{date: Carbon, health: int}>  $observations
-     */
-    private function rationaleFor(array $waterings, array $observations): string
-    {
-        $result = WateringScheduleRecommender::recommend($waterings, $observations, [], $this->earliest, $this->now);
-        $this->assertNotNull($result);
-
-        return $result['rationale'];
-    }
-
-    private function day(int $offset): Carbon
-    {
-        return $this->earliest->copy()->addDays($offset);
-    }
-
-    private function beforeNow(int $offset): Carbon
-    {
-        return $this->now->copy()->subDays($offset);
-    }
-
-    /**
-     * @return array{date: Carbon, health: int}
-     */
-    private function obs(int $daysFromEarliest, int $health): array
-    {
-        return ['date' => $this->earliest->copy()->addDays($daysFromEarliest), 'health' => $health];
-    }
-
+    /** @return void */
     public function test_dry_soil_shortens_the_interval(): void
     {
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 10) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -249,9 +233,11 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertStringContainsString('dries out faster', $withDrySoil['rationale']);
     }
 
+    /** @return void */
     public function test_wet_soil_lengthens_the_interval(): void
     {
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 10) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -279,9 +265,11 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertStringContainsString('retains moisture', $withWetSoil['rationale']);
     }
 
+    /** @return void */
     public function test_soil_adjustment_is_capped_at_twenty_percent(): void
     {
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 10) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -309,9 +297,11 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertLessThanOrEqual($maxExtension, $extreme['interval_days']);
     }
 
+    /** @return void */
     public function test_normal_soil_does_not_adjust_the_interval(): void
     {
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 10) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -338,9 +328,11 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertSame($base['interval_days'], $neutral['interval_days']);
     }
 
+    /** @return void */
     public function test_soil_relative_enum_falls_back_when_precise_is_null(): void
     {
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 10) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -358,9 +350,11 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertStringContainsString('dries out faster', $withDryRelative['rationale']);
     }
 
+    /** @return void */
     public function test_precise_overrides_relative_when_both_are_set(): void
     {
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 10) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -387,9 +381,11 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertSame($base['interval_days'], $preciseWins['interval_days']);
     }
 
+    /** @return void */
     public function test_empty_soil_readings_leave_interval_unchanged(): void
     {
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 10) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -416,11 +412,13 @@ class WateringScheduleRecommenderTest extends TestCase
         $this->assertSame($base['interval_days'], $withEmpty['interval_days']);
     }
 
+    /** @return void */
     public function test_soil_rationale_uses_no_causal_language(): void
     {
         $forbidden = ['caused', 'causes', 'leads to', 'because', 'due to', 'results in'];
 
         $waterings = [];
+
         for ($day = 0; $day <= 119; $day += 10) {
             $waterings[] = $this->earliest->copy()->addDays($day);
         }
@@ -454,6 +452,54 @@ class WateringScheduleRecommenderTest extends TestCase
     }
 
     /**
+     * @param list<Carbon>                           $waterings
+     * @param list<array{date: Carbon, health: int}> $observations
+     *
+     * @return string
+     */
+    private function rationaleFor(array $waterings, array $observations): string
+    {
+        $result = WateringScheduleRecommender::recommend($waterings, $observations, [], $this->earliest, $this->now);
+        $this->assertNotNull($result);
+
+        return $result['rationale'];
+    }
+
+    /**
+     * @param integer $offset
+     *
+     * @return Carbon
+     */
+    private function day(int $offset): Carbon
+    {
+        return $this->earliest->copy()->addDays($offset);
+    }
+
+    /**
+     * @param integer $offset
+     *
+     * @return Carbon
+     */
+    private function beforeNow(int $offset): Carbon
+    {
+        return $this->now->copy()->subDays($offset);
+    }
+
+    /**
+     * @param integer $daysFromEarliest
+     * @param integer $health
+     *
+     * @return array{date: Carbon, health: int}
+     */
+    private function obs(int $daysFromEarliest, int $health): array
+    {
+        return ['date' => $this->earliest->copy()->addDays($daysFromEarliest), 'health' => $health];
+    }
+
+    /**
+     * @param integer $daysBeforeNow
+     * @param integer $health
+     *
      * @return array{date: Carbon, health: int}
      */
     private function obsBeforeNow(int $daysBeforeNow, int $health): array

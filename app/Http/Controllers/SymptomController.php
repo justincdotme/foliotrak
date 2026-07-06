@@ -10,10 +10,13 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SymptomController extends Controller
 {
+    /**
+     * @return AnonymousResourceCollection
+     */
     public function index(): AnonymousResourceCollection
     {
         return SymptomResource::collection(
-            Symptom::query()->orderBy('sort_order')->orderBy('id')->get()
+            Symptom::query()->orderBy('sort_order')->orderBy('id')->get(),
         );
     }
 }

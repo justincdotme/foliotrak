@@ -14,12 +14,14 @@ class LocationApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     protected function setUp(): void
     {
         parent::setUp();
         Sanctum::actingAs(User::factory()->create());
     }
 
+    /** @return void */
     public function test_list_returns_all_locations_sorted_by_name(): void
     {
         Location::factory()->create(['name' => 'Kitchen']);
@@ -34,6 +36,7 @@ class LocationApiTest extends TestCase
             ->assertJsonPath('data.2.name', 'Office');
     }
 
+    /** @return void */
     public function test_create_stores_and_returns_the_location(): void
     {
         $this->postJson('/api/locations', ['name' => 'South window'])
@@ -44,6 +47,7 @@ class LocationApiTest extends TestCase
         $this->assertDatabaseHas('locations', ['name' => 'South window']);
     }
 
+    /** @return void */
     public function test_create_trims_whitespace(): void
     {
         $this->postJson('/api/locations', ['name' => '  Office  '])
@@ -53,6 +57,7 @@ class LocationApiTest extends TestCase
         $this->assertDatabaseHas('locations', ['name' => 'Office']);
     }
 
+    /** @return void */
     public function test_create_rejects_duplicate_name_case_insensitively(): void
     {
         Location::factory()->create(['name' => 'Office']);
@@ -62,6 +67,7 @@ class LocationApiTest extends TestCase
             ->assertJsonValidationErrors('name');
     }
 
+    /** @return void */
     public function test_create_rejects_empty_name(): void
     {
         $this->postJson('/api/locations', ['name' => ''])
@@ -69,6 +75,7 @@ class LocationApiTest extends TestCase
             ->assertJsonValidationErrors('name');
     }
 
+    /** @return void */
     public function test_list_requires_authentication(): void
     {
         Sanctum::actingAs(User::factory()->create());

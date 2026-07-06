@@ -12,6 +12,11 @@ class PlantRecommendationController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * @param Plant $plant
+     *
+     * @return RecommendationResource
+     */
     public function show(Plant $plant): RecommendationResource
     {
         $this->authorize('view', $plant);

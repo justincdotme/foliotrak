@@ -14,12 +14,18 @@ use Normalizer;
 
 class PlantSearchService
 {
+    /**
+     * @param GbifClient $gbif
+     */
     public function __construct(private readonly GbifClient $gbif) {}
 
     /**
+     * @param string  $rawQuery
+     * @param integer $limit
+     *
      * @return Collection<int, SpeciesRow>
      *
-     * @throws SearchDegradedException when the query misses locally and GBIF is unavailable
+     * @throws SearchDegradedException When the query misses locally and GBIF is unavailable.
      */
     public function search(string $rawQuery, int $limit): Collection
     {
@@ -66,6 +72,11 @@ class PlantSearchService
         return collect($records)->take($limit)->values();
     }
 
+    /**
+     * @param string $rawQuery
+     *
+     * @return string
+     */
     private function normalize(string $rawQuery): string
     {
         $normalized = Normalizer::normalize($rawQuery, Normalizer::FORM_C);
@@ -78,6 +89,11 @@ class PlantSearchService
     }
 
     /**
+     * Search the local cache.
+     *
+     * @param string  $query
+     * @param integer $limit
+     *
      * @return Collection<int, SpeciesRow>
      */
     private function localSearch(string $query, int $limit): Collection
@@ -89,6 +105,8 @@ class PlantSearchService
      * Meilisearch returns the indexed documents directly under `hits`; the
      * collection engine used in tests returns models under `results`, projected
      * the same way. Either path yields rows without a database hydration.
+     *
+     * @param mixed $raw
      *
      * @return list<SpeciesRow>
      */
@@ -116,7 +134,9 @@ class PlantSearchService
     }
 
     /**
-     * @param  Collection<int, SpeciesRow>  $hits
+     * @param Collection<int, SpeciesRow> $hits
+     *
+     * @return boolean
      */
     private function hasStale(Collection $hits): bool
     {
@@ -126,18 +146,20 @@ class PlantSearchService
     }
 
     /**
-     * @param  list<SpeciesRow>  $records
+     * @param list<SpeciesRow> $records
+     *
+     * @return void
      */
     private function backfill(array $records): void
     {
         foreach ($records as $record) {
             $attributes = [
                 'scientific_name' => $record->scientificName,
-                'canonical_name' => $record->canonicalName,
-                'rank' => $record->rank,
-                'family' => $record->family,
-                'payload' => $record->payload,
-                'cached_at' => now(),
+                'canonical_name'  => $record->canonicalName,
+                'rank'            => $record->rank,
+                'family'          => $record->family,
+                'payload'         => $record->payload,
+                'cached_at'       => now(),
             ];
 
             if ($record->commonName !== null) {
@@ -160,7 +182,10 @@ class PlantSearchService
      * "ZZ Plant"). Only trust them when at least one result matches the query
      * on a name field; otherwise fall through to the GBIF cascade.
      *
-     * @param  Collection<int, SpeciesRow>  $hits
+     * @param Collection<int, SpeciesRow> $hits
+     * @param string                      $query
+     *
+     * @return boolean
      */
     private function hasRelevantMatch(Collection $hits, string $query): bool
     {
@@ -181,6 +206,9 @@ class PlantSearchService
         });
     }
 
+    /**
+     * @return integer
+     */
     private function ttlDays(): int
     {
         return (int) config('services.gbif.cache_ttl_days');

@@ -9,23 +9,23 @@ use App\Models\User;
 use Database\Seeders\CareLookupSeeder;
 use Laravel\Dusk\Browser;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->seed(CareLookupSeeder::class);
 });
 
-it('renders a plant card with all data points', function () {
-    $user = User::factory()->create();
+it('renders a plant card with all data points', function (): void {
+    $user     = User::factory()->create();
     $location = Location::factory()->create(['name' => 'Kitchen sill']);
-    $tag = Tag::factory()->create(['name' => 'Tropical']);
-    $plant = Plant::factory()->create([
-        'common_name' => 'Monstera',
+    $tag      = Tag::factory()->create(['name' => 'Tropical']);
+    $plant    = Plant::factory()->create([
+        'common_name'     => 'Monstera',
         'scientific_name' => 'Monstera deliciosa',
-        'nickname' => 'Big M',
-        'location_id' => $location->id,
+        'nickname'        => 'Big M',
+        'location_id'     => $location->id,
     ]);
     $plant->tags()->attach($tag->id);
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->loginAs($user)
             ->visit('/plants')
             ->waitFor('@app-shell')
@@ -42,16 +42,16 @@ it('renders a plant card with all data points', function () {
     });
 });
 
-it('filters plants by tag', function () {
-    $user = User::factory()->create();
-    $tagA = Tag::factory()->create(['name' => 'Succulent']);
-    $tagB = Tag::factory()->create(['name' => 'Trailing']);
+it('filters plants by tag', function (): void {
+    $user   = User::factory()->create();
+    $tagA   = Tag::factory()->create(['name' => 'Succulent']);
+    $tagB   = Tag::factory()->create(['name' => 'Trailing']);
     $plantA = Plant::factory()->create(['common_name' => 'Aloe']);
     $plantB = Plant::factory()->create(['common_name' => 'Pothos']);
     $plantA->tags()->attach($tagA->id);
     $plantB->tags()->attach($tagB->id);
 
-    $this->browse(function (Browser $browser) use ($user, $tagA) {
+    $this->browse(function (Browser $browser) use ($user, $tagA): void {
         $browser->loginAs($user)
             ->visit('/plants')
             ->waitFor('@app-shell')
@@ -71,13 +71,13 @@ it('filters plants by tag', function () {
     });
 });
 
-it('toggles status filter chips', function () {
+it('toggles status filter chips', function (): void {
     $user = User::factory()->create();
     Plant::factory()->create(['common_name' => 'Green Fern', 'status' => 'active']);
     Plant::factory()->create(['common_name' => 'Old Rose', 'status' => 'archived']);
     Plant::factory()->create(['common_name' => 'Gone Cactus', 'status' => 'dead']);
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->loginAs($user)
             ->visit('/plants')
             ->waitFor('@app-shell')
@@ -101,18 +101,18 @@ it('toggles status filter chips', function () {
     });
 });
 
-it('narrows plants by name search', function () {
+it('narrows plants by name search', function (): void {
     $user = User::factory()->create();
     Plant::factory()->create([
-        'common_name' => 'Pothos',
+        'common_name'     => 'Pothos',
         'scientific_name' => 'Epipremnum aureum',
     ]);
     Plant::factory()->create([
-        'common_name' => 'Snake plant',
+        'common_name'     => 'Snake plant',
         'scientific_name' => 'Dracaena trifasciata',
     ]);
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->loginAs($user)
             ->visit('/plants')
             ->waitFor('@app-shell')
@@ -130,10 +130,10 @@ it('narrows plants by name search', function () {
     });
 });
 
-it('shows empty state when no plants exist', function () {
+it('shows empty state when no plants exist', function (): void {
     $user = User::factory()->create();
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->loginAs($user)
             ->visit('/plants')
             ->waitFor('@app-shell')
@@ -142,11 +142,11 @@ it('shows empty state when no plants exist', function () {
     });
 });
 
-it('shows empty state when search matches nothing', function () {
+it('shows empty state when search matches nothing', function (): void {
     $user = User::factory()->create();
     Plant::factory()->create(['common_name' => 'Pothos']);
 
-    $this->browse(function (Browser $browser) use ($user) {
+    $this->browse(function (Browser $browser) use ($user): void {
         $browser->loginAs($user)
             ->visit('/plants')
             ->waitFor('@app-shell')
@@ -157,17 +157,17 @@ it('shows empty state when search matches nothing', function () {
     });
 });
 
-it('navigates to plant detail on card click', function () {
-    $user = User::factory()->create();
+it('navigates to plant detail on card click', function (): void {
+    $user  = User::factory()->create();
     $plant = Plant::factory()->create(['common_name' => 'Monstera']);
 
-    $this->browse(function (Browser $browser) use ($user, $plant) {
+    $this->browse(function (Browser $browser) use ($user, $plant): void {
         $browser->loginAs($user)
             ->visit('/plants')
             ->waitFor('@app-shell')
             ->waitFor('@plant-card')
             ->click('@plant-card')
-            ->waitForLocation('/plants/'.$plant->id)
-            ->assertPathIs('/plants/'.$plant->id);
+            ->waitForLocation('/plants/' . $plant->id)
+            ->assertPathIs('/plants/' . $plant->id);
     });
 });

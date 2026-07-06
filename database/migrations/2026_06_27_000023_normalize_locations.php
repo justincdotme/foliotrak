@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -72,21 +74,24 @@ return new class extends Migration
             ->values();
 
         $now = now();
+
         foreach ($names as $name) {
             DB::table('locations')->insert([
-                'name' => $name,
+                'name'       => $name,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
         }
 
         $lookup = [];
+
         foreach (DB::table('locations')->get() as $row) {
             $lookup[mb_strtolower($row->name)] = $row->id;
         }
 
         foreach (DB::table('plants')->whereNotNull('location')->cursor() as $plant) {
             $id = $lookup[mb_strtolower(trim($plant->location))] ?? null;
+
             if ($id !== null) {
                 DB::table('plants')->where('id', $plant->id)->update(['location_id' => $id]);
             }
@@ -94,18 +99,23 @@ return new class extends Migration
 
         foreach (DB::table('relocation_details')->cursor() as $detail) {
             $updates = [];
+
             if ($detail->from_location !== null) {
                 $id = $lookup[mb_strtolower(trim($detail->from_location))] ?? null;
+
                 if ($id !== null) {
                     $updates['from_location_id'] = $id;
                 }
             }
+
             if ($detail->to_location !== null) {
                 $id = $lookup[mb_strtolower(trim($detail->to_location))] ?? null;
+
                 if ($id !== null) {
                     $updates['to_location_id'] = $id;
                 }
             }
+
             if ($updates !== []) {
                 DB::table('relocation_details')->where('care_event_id', $detail->care_event_id)->update($updates);
             }
@@ -116,6 +126,7 @@ return new class extends Migration
     {
         foreach (DB::table('plants')->whereNotNull('location_id')->cursor() as $plant) {
             $name = DB::table('locations')->where('id', $plant->location_id)->value('name');
+
             if ($name !== null) {
                 DB::table('plants')->where('id', $plant->id)->update(['location' => $name]);
             }
@@ -123,18 +134,23 @@ return new class extends Migration
 
         foreach (DB::table('relocation_details')->cursor() as $detail) {
             $updates = [];
+
             if ($detail->from_location_id !== null) {
                 $name = DB::table('locations')->where('id', $detail->from_location_id)->value('name');
+
                 if ($name !== null) {
                     $updates['from_location'] = $name;
                 }
             }
+
             if ($detail->to_location_id !== null) {
                 $name = DB::table('locations')->where('id', $detail->to_location_id)->value('name');
+
                 if ($name !== null) {
                     $updates['to_location'] = $name;
                 }
             }
+
             if ($updates !== []) {
                 DB::table('relocation_details')->where('care_event_id', $detail->care_event_id)->update($updates);
             }

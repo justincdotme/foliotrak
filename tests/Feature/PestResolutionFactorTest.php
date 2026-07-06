@@ -17,6 +17,7 @@ class PestResolutionFactorTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** @return void */
     public function test_factor_key_and_outcome_key(): void
     {
         $factor = new PestResolutionFactor;
@@ -25,14 +26,16 @@ class PestResolutionFactorTest extends TestCase
         $this->assertSame('health_at_clear', $factor->outcomeKey());
     }
 
+    /** @return void */
     public function test_relations_include_the_symptoms_chain(): void
     {
         $this->assertContains('observationEvents.observation.symptoms', (new PestResolutionFactor)->relations());
     }
 
+    /** @return void */
     public function test_resolved_episode_with_health_at_clear_produces_a_pair(): void
     {
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites']);
 
         $this->observe($plant, '2026-01-01', [$symptom->id], health: 3);
@@ -46,9 +49,10 @@ class PestResolutionFactorTest extends TestCase
         $this->assertSame(5.0, $pairs[0]['y']); // health_at_clear
     }
 
+    /** @return void */
     public function test_open_episodes_do_not_produce_pairs(): void
     {
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites']);
 
         $this->observe($plant, '2026-01-01', [$symptom->id], health: 3);
@@ -58,9 +62,10 @@ class PestResolutionFactorTest extends TestCase
         $this->assertSame([], (new PestResolutionFactor)->pairs(collect([$plant])));
     }
 
+    /** @return void */
     public function test_resolved_episodes_without_health_at_clear_are_excluded(): void
     {
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites']);
 
         $this->observe($plant, '2026-01-01', [$symptom->id], health: 3);
@@ -70,6 +75,7 @@ class PestResolutionFactorTest extends TestCase
         $this->assertSame([], (new PestResolutionFactor)->pairs(collect([$plant])));
     }
 
+    /** @return void */
     public function test_pairs_are_pooled_across_multiple_plants(): void
     {
         $symptom = Symptom::factory()->create(['category' => 'disease', 'key' => 'powdery_mildew', 'label' => 'Powdery mildew']);
@@ -95,10 +101,11 @@ class PestResolutionFactorTest extends TestCase
         $this->assertContains(4.0, $yValues);
     }
 
+    /** @return void */
     public function test_factor_is_omitted_from_engine_output_when_fewer_than_five_resolved_episodes(): void
     {
         // One resolved episode -> one pair -> below CorrelationEngine::MIN_SAMPLES (5)
-        $plant = Plant::factory()->create();
+        $plant   = Plant::factory()->create();
         $symptom = Symptom::factory()->create(['category' => 'pest', 'key' => 'spider_mites', 'label' => 'Spider mites']);
         $this->observe($plant, '2026-01-01', [$symptom->id], health: 3);
         $this->observe($plant, '2026-01-08', [], health: 5);
@@ -110,12 +117,18 @@ class PestResolutionFactorTest extends TestCase
     }
 
     /**
-     * @param  list<int>  $symptomIds
+     * @param Plant        $plant
+     * @param string       $date
+     * @param integer[]    $symptomIds
+     * @param integer|null $health
+     *
+     * @return void
      */
     private function observe(Plant $plant, string $date, array $symptomIds, ?int $health = null): void
     {
         $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => $date]);
-        $obs = Observation::factory()->create(['care_event_id' => $event->id, 'overall_health' => $health]);
+        $obs   = Observation::factory()->create(['care_event_id' => $event->id, 'overall_health' => $health]);
+
         if ($symptomIds !== []) {
             $obs->symptoms()->attach($symptomIds);
         }

@@ -13,14 +13,15 @@ use Tests\TestCase;
 
 class ScheduledCareTypeTest extends TestCase
 {
+    /** @return void */
     public function test_each_type_reads_its_own_override_events_and_start_date(): void
     {
         $plant = new Plant([
-            'watering_interval_days_override' => 7,
+            'watering_interval_days_override'    => 7,
             'fertilizing_interval_days_override' => 30,
-            'watering_schedule_start_date' => '2026-06-01',
+            'watering_schedule_start_date'       => '2026-06-01',
         ]);
-        $watering = new Collection([new CareEvent(['occurred_at' => Carbon::parse('2026-06-10')])]);
+        $watering    = new Collection([new CareEvent(['occurred_at' => Carbon::parse('2026-06-10')])]);
         $fertilizing = new Collection([new CareEvent(['occurred_at' => Carbon::parse('2026-06-20')])]);
         $plant->setRelation('wateringEvents', $watering);
         $plant->setRelation('fertilizingEvents', $fertilizing);

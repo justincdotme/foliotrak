@@ -14,6 +14,13 @@ use Illuminate\Support\Carbon;
  */
 final readonly class CareDue
 {
+    /**
+     * @param ScheduledCareType $type
+     * @param integer           $intervalDays
+     * @param Carbon            $dueDate
+     * @param integer           $daysLeft
+     * @param DueStatus         $status
+     */
     public function __construct(
         public ScheduledCareType $type,
         public int $intervalDays,
@@ -22,12 +29,20 @@ final readonly class CareDue
         public DueStatus $status,
     ) {}
 
+    /**
+     * @param Plant             $plant
+     * @param ScheduledCareType $type
+     *
+     * @return self|null
+     */
     public static function for(Plant $plant, ScheduledCareType $type): ?self
     {
         return CareSchedule::for($plant, $type)?->due();
     }
 
     /**
+     * @param Plant $plant
+     *
      * @return list<self> one entry per care type with a derivable schedule
      */
     public static function forPlant(Plant $plant): array
@@ -38,11 +53,17 @@ final readonly class CareDue
         )));
     }
 
+    /**
+     * @return boolean
+     */
     public function isDue(): bool
     {
         return $this->daysLeft <= 0;
     }
 
+    /**
+     * @return integer
+     */
     public function daysOverdue(): int
     {
         return max(0, -$this->daysLeft);

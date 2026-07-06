@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\User;
@@ -12,13 +14,15 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * @return void
      */
     public function run(): void
     {
         $this->call(TagSeeder::class);
         $this->call(CareLookupSeeder::class);
 
-        $email = (string) env('FOLIOTRAK_ADMIN_EMAIL', 'admin@foliotrak.test');
+        $email    = (string) env('FOLIOTRAK_ADMIN_EMAIL', 'admin@foliotrak.test');
         $password = (string) env('FOLIOTRAK_ADMIN_PASSWORD', 'testing123');
 
         // Never seed the default development account into production; an operator
@@ -33,7 +37,7 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ['email' => $email],
             [
-                'name' => 'Admin',
+                'name'     => 'Admin',
                 'password' => $password,
             ],
         );

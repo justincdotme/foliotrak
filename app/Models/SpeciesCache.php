@@ -4,15 +4,24 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Database\Factories\SpeciesCacheFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 use Laravel\Scout\Searchable;
 
 /**
- * @property ?Carbon $cached_at
+ * @property int                             $id
+ * @property string                          $gbif_key
+ * @property string                          $scientific_name
+ * @property string|null                     $canonical_name
+ * @property string|null                     $common_name
+ * @property array<int, string>|null         $common_names
+ * @property string|null                     $rank
+ * @property string|null                     $family
+ * @property array<string, mixed>|null       $payload
+ * @property \Illuminate\Support\Carbon|null $cached_at
+ * @property \Illuminate\Support\Carbon      $created_at
+ * @property \Illuminate\Support\Carbon      $updated_at
  */
 #[Fillable([
     'gbif_key',
@@ -32,16 +41,8 @@ class SpeciesCache extends Model
 
     use Searchable;
 
+    /** @var string Table name */
     protected $table = 'species_cache';
-
-    protected function casts(): array
-    {
-        return [
-            'common_names' => 'array',
-            'payload' => 'array',
-            'cached_at' => 'datetime',
-        ];
-    }
 
     /**
      * Index the full display record so search reads serve straight from
@@ -53,14 +54,26 @@ class SpeciesCache extends Model
     public function toSearchableArray(): array
     {
         return [
-            'gbif_key' => $this->gbif_key,
+            'gbif_key'        => $this->gbif_key,
             'scientific_name' => $this->scientific_name,
-            'canonical_name' => $this->canonical_name,
-            'common_name' => $this->common_name,
-            'common_names' => $this->common_names,
-            'rank' => $this->rank,
-            'family' => $this->family,
-            'cached_at' => $this->cached_at,
+            'canonical_name'  => $this->canonical_name,
+            'common_name'     => $this->common_name,
+            'common_names'    => $this->common_names,
+            'rank'            => $this->rank,
+            'family'          => $this->family,
+            'cached_at'       => $this->cached_at,
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'common_names' => 'array',
+            'payload'      => 'array',
+            'cached_at'    => 'datetime',
         ];
     }
 }

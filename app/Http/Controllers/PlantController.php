@@ -39,6 +39,11 @@ class PlantController extends Controller
         'fertilizingEvents',
     ];
 
+    /**
+     * @param Request $request
+     *
+     * @return AnonymousResourceCollection
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Plant::class);
@@ -53,10 +58,16 @@ class PlantController extends Controller
             ->get();
 
         return PlantResource::collection(
-            $plants->map(fn (Plant $plant) => $this->present($plant))
+            $plants->map(fn (Plant $plant) => $this->present($plant)),
         );
     }
 
+    /**
+     * @param StorePlantRequest     $request
+     * @param RecordEquipmentChange $recordEquipmentChange
+     *
+     * @return JsonResponse
+     */
     public function store(StorePlantRequest $request, RecordEquipmentChange $recordEquipmentChange): JsonResponse
     {
         $this->authorize('create', Plant::class);
@@ -75,6 +86,11 @@ class PlantController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    /**
+     * @param Plant $plant
+     *
+     * @return PlantResource
+     */
     public function show(Plant $plant): PlantResource
     {
         $this->authorize('view', $plant);
@@ -82,6 +98,14 @@ class PlantController extends Controller
         return $this->present($plant->load(self::RELATIONS));
     }
 
+    /**
+     * @param UpdatePlantRequest    $request
+     * @param Plant                 $plant
+     * @param RecordRelocation      $recordRelocation
+     * @param RecordEquipmentChange $recordEquipmentChange
+     *
+     * @return PlantResource
+     */
     public function update(UpdatePlantRequest $request, Plant $plant, RecordRelocation $recordRelocation, RecordEquipmentChange $recordEquipmentChange): PlantResource
     {
         $this->authorize('update', $plant);
@@ -101,6 +125,11 @@ class PlantController extends Controller
         return $this->present($plant->load(self::RELATIONS));
     }
 
+    /**
+     * @param Plant $plant
+     *
+     * @return Response
+     */
     public function destroy(Plant $plant): Response
     {
         $this->authorize('delete', $plant);
@@ -113,6 +142,11 @@ class PlantController extends Controller
     /**
      * Sync tags only when the caller sent the key, so an unrelated update never
      * silently detaches a plant's tags.
+     *
+     * @param Request $request
+     * @param Plant   $plant
+     *
+     * @return void
      */
     private function syncTags(Request $request, Plant $plant): void
     {
@@ -121,6 +155,13 @@ class PlantController extends Controller
         }
     }
 
+    /**
+     * @param Request               $request
+     * @param Plant                 $plant
+     * @param RecordEquipmentChange $recordEquipmentChange
+     *
+     * @return void
+     */
     private function syncEquipment(Request $request, Plant $plant, RecordEquipmentChange $recordEquipmentChange): void
     {
         if ($request->has('equipment_ids')) {
@@ -128,6 +169,12 @@ class PlantController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param Plant   $plant
+     *
+     * @return void
+     */
     private function syncSensors(Request $request, Plant $plant): void
     {
         if ($request->has('sensor_ids')) {
@@ -135,6 +182,11 @@ class PlantController extends Controller
         }
     }
 
+    /**
+     * @param Plant $plant
+     *
+     * @return PlantResource
+     */
     private function present(Plant $plant): PlantResource
     {
         return new PlantResource($plant, $plant->condition(), CareDue::forPlant($plant));

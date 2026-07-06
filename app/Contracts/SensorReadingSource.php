@@ -4,17 +4,26 @@ declare(strict_types=1);
 
 namespace App\Contracts;
 
-use App\DTOs\SensorDevice;
 use App\DTOs\SensorGatewayStatus;
-use App\DTOs\SensorReading;
+use DateTimeInterface;
 
 interface SensorReadingSource
 {
-    /** @return iterable<SensorReading> */
-    public function readingsSince(string $mac, \DateTimeInterface $since): iterable;
+    /**
+     * @param string            $mac
+     * @param DateTimeInterface $since
+     *
+     * @return iterable<SensorReading>
+     */
+    public function readingsSince(string $mac, DateTimeInterface $since): iterable;
 
-    /** @return list<SensorDevice> */
+    /**
+     * @return list<SensorDevice>
+     */
     public function discoverSensors(): array;
 
+    /**
+     * @return SensorGatewayStatus
+     */
     public function testConnection(): SensorGatewayStatus;
 }
