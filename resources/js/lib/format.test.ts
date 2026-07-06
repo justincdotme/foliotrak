@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { ageDays, relDay } from './format'
+import { ageDays, relDay, formatSensorLabel } from './format'
 
 function isoAt(year: number, month: number, day: number, hour = 12): string {
   return new Date(year, month - 1, day, hour, 0, 0).toISOString()
@@ -55,5 +55,15 @@ describe('relDay', () => {
   it('returns N weeks ago for 14+ days', () => {
     vi.useFakeTimers({ now: new Date(2026, 5, 30, 10, 0, 0) })
     expect(relDay(isoAt(2026, 6, 15, 10))).toBe('2 weeks ago')
+  })
+})
+
+describe('formatSensorLabel', () => {
+  it('appends the location when present', () => {
+    expect(formatSensorLabel('Desk sensor', 'Living room')).toBe('Desk sensor - Living room')
+  })
+
+  it('returns just the name when location is null', () => {
+    expect(formatSensorLabel('Desk sensor', null)).toBe('Desk sensor')
   })
 })

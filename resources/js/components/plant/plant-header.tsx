@@ -4,7 +4,7 @@ import { Chip } from '@/components/app/chip'
 import { ConditionChip } from '@/components/app/condition-chip'
 import { IconButton } from '@/components/app/icon-button'
 import { StatusPill } from '@/components/app/status-pill'
-import { fmtDateY } from '@/lib/format'
+import { fmtDateY, formatSensorLabel } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { photoUrl } from '@/lib/photos'
 
@@ -86,6 +86,15 @@ export function PlantHeader({ plant, onEdit, onChangeCover }: PlantHeaderProps) 
             </Chip>
           ))}
         </div>
+        {plant.sensors && plant.sensors.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {plant.sensors.map(s => (
+              <Chip key={s.id} color={s.color || undefined}>
+                {formatSensorLabel(s.name, s.location)}
+              </Chip>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -14,6 +14,7 @@ import { ScheduleSection, type NextDue } from '@/components/plant/schedule-secti
 import { PlantHeader } from '@/components/plant/plant-header'
 import { PlantLogActions } from '@/components/plant/plant-log-actions'
 import { PlantEquipmentCard } from '@/components/plant/plant-equipment-card'
+import { PlantSensorsCard } from '@/components/plant/plant-sensors-card'
 import { PlantChartsPanel } from '@/components/plant/plant-charts-panel'
 import { PlantPhotosCard } from '@/components/plant/plant-photos-card'
 import { PlantCareTimeline } from '@/components/plant/plant-care-timeline'
@@ -82,6 +83,8 @@ export function PlantDetailPage({ id, go }: PlantDetailPageProps) {
       <PlantLogActions />
 
       <PlantEquipmentCard plant={plant} />
+
+      <PlantSensorsCard plant={plant} />
 
       <ScheduleSection
         plant={plant}

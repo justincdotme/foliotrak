@@ -39,3 +39,7 @@ export function relDay(value: string): string {
 export function ageDays(isoStr: string): number {
   return calendarDaysAgo(isoStr)
 }
+
+export function formatSensorLabel(name: string, location: string | null): string {
+  return location ? `${name} - ${location}` : name
+}
