@@ -8,7 +8,7 @@ interface LightSliderProps {
 
 export function LightSlider({ value, onChange }: LightSliderProps) {
   return (
-    <Field label="Light level" hint={`${value} / 10`}>
+    <Field label="Light level" hint={<span dusk="light-value">{value} / 10</span>}>
       <div className="flex items-center gap-3">
         <Moon size={18} className="shrink-0" style={{ color: 'var(--info)' }} />
         <input
@@ -20,6 +20,7 @@ export function LightSlider({ value, onChange }: LightSliderProps) {
           onChange={e => onChange(Number(e.target.value))}
           className="flex-1"
           aria-label="Light level"
+          dusk="light-slider"
         />
         <Sun size={18} className="shrink-0" style={{ color: 'var(--due-soon)' }} />
       </div>

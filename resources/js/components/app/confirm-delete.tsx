@@ -18,7 +18,7 @@ export function ConfirmDelete({ open, onClose, onConfirm, label }: ConfirmDelete
       subtitle="This cannot be undone."
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} dusk="cancel-delete">
             Cancel
           </Button>
           <Button

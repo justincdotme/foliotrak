@@ -25,9 +25,9 @@ interface EnvironmentChartProps {
 type Range = 'day' | 'week' | 'month'
 
 const RANGE_OPTIONS = [
-  { value: 'day', label: 'Day' },
-  { value: 'week', label: 'Week' },
-  { value: 'month', label: 'Month' },
+  { value: 'day', label: 'Day', dusk: 'env-granularity-day' },
+  { value: 'week', label: 'Week', dusk: 'env-granularity-week' },
+  { value: 'month', label: 'Month', dusk: 'env-granularity-month' },
 ]
 
 function formatXAxis(recorded_at: string, range: Range): string {
@@ -66,8 +66,8 @@ interface AxisSpec {
   unit: string
 }
 
-// Axis ids are no longer fixed to temp/humidity; a sensor type can place a field on
-// either side, so the set of Y axes is derived from whatever fields are present.
+// Y axes are derived from the fields present since any sensor type can place
+// a field on either side.
 function collectAxes(sensors: SensorSeries[]): AxisSpec[] {
   const byId = new Map<string, AxisSpec>()
   for (const sensor of sensors) {
@@ -93,9 +93,9 @@ interface LineSpec {
   dashed: boolean
 }
 
-// Grouped by field position rather than by sensor, so every sensor's first field
-// (e.g. temperature) draws and lists before any second field: same stacking order
-// and tooltip order the old hardcoded temp-then-humidity render produced.
+// Grouped by field position rather than by sensor so every sensor's first field
+// (e.g. temperature) draws before any second field, keeping a consistent stacking
+// and tooltip order.
 function collectLines(sensors: SensorSeries[]): LineSpec[] {
   const fieldCount = Math.max(0, ...sensors.map(s => s.fields.length))
   const lines: LineSpec[] = []
@@ -169,7 +169,7 @@ export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
       <div className="mb-3">
         <Segmented value={range} onChange={v => setRange(v as Range)} options={RANGE_OPTIONS} />
       </div>
-      <div style={{ height: 220 }}>
+      <div dusk="environment-chart" style={{ height: 220 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 6, right: 8, bottom: 0, left: -6 }}>
             <CartesianGrid stroke="var(--border)" vertical={false} />

@@ -97,6 +97,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
     customs: (detail?.symptoms ?? []).filter(s => s.is_custom).map(s => s.label),
   })
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
   const touchedRef = useRef<Set<string>>(new Set())
   const [sensorFilled, setSensorFilled] = useState<Set<string>>(new Set())
 
@@ -189,8 +190,9 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
       if (photoFile) {
         try {
           await uploadEventPhoto.mutateAsync({ file: photoFile, careEventId: saved.id })
-        } catch {
-          // The observation is saved; a failed photo can be re-added from the gallery.
+        } catch (err) {
+          setPhotoError(err instanceof Error ? err.message : 'Photo upload failed')
+          return
         }
       }
       onDone()
@@ -199,7 +201,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <DateTimeField register={register} name="occurred_at" />
+      <DateTimeField register={register} name="occurred_at" dusk="observation-date" />
 
       <FormSection title="Vitals" icon={HeartPulse}>
         <HealthPicker
@@ -213,6 +215,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
           <Segmented
             value={growth || ''}
             onChange={v => setValue('growth_rate', growth === v ? '' : v)}
+            dusk="growth-rate"
             options={[
               { value: 'none', label: 'None' },
               { value: 'slow', label: 'Slow' },
@@ -295,7 +298,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
         />
         <hr className="border-border" />
         <Field label="Leaf size" hint="mm, optional">
-          <Input type="number" placeholder="120" {...register('leaf_size_mm')} />
+          <Input type="number" placeholder="120" dusk="leaf-size" {...register('leaf_size_mm')} />
         </Field>
         <WeightInput defaultValue={weight} onChange={setWeight} />
       </FormSection>
@@ -314,10 +317,15 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
       </FormSection>
 
       <Field label="Health note" hint="optional">
-        <Textarea placeholder="What did you notice this week?" {...register('health_note')} />
+        <Textarea
+          placeholder="What did you notice this week?"
+          dusk="observation-note"
+          {...register('health_note')}
+        />
       </Field>
       <PhotoAttach onChange={setPhotoFile} />
-      <FormError message={formError} />
+      <FormError message={photoError} />
+      <FormError message={formError} dusk="form-error" />
       <div className="flex justify-end gap-2 pt-1">
         <TooltipButton
           type="submit"

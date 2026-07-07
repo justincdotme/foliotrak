@@ -149,7 +149,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
           onSelect={pick}
           getItemValue={g => g.canonical_name || ''}
           renderItem={g => (
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5" dusk="species-suggestion">
               <span className="text-[13px]">
                 <span className="italic">{g.canonical_name}</span>
                 {g.common_name && <span className="text-text-muted"> · {g.common_name}</span>}
@@ -172,6 +172,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
             <button
               type="button"
               onClick={keep}
+              dusk="species-custom"
               className="w-full border-t border-border px-3 py-2 text-left text-[13px] text-text-muted hover:bg-surface flex items-center gap-2"
             >
               <Plus size={14} />
@@ -179,6 +180,7 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
             </button>
           }
           dusk="add-plant-name"
+          contentDusk="species-suggestions"
         />
       </Field>
       <Field label="Scientific name" hint="italic, optional">

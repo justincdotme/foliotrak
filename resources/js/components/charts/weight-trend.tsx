@@ -34,7 +34,7 @@ export function WeightTrend({ data }: WeightTrendProps) {
       <div className="mb-3">
         <DateRangeFilter value={range} onChange={setRange} />
       </div>
-      <div style={{ height: 160 }}>
+      <div dusk="weight-trend-chart" style={{ height: 160 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={d} margin={{ top: 6, right: 8, bottom: 0, left: -6 }}>
             <CartesianGrid stroke="var(--border)" vertical={false} />

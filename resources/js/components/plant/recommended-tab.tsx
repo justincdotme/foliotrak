@@ -17,13 +17,19 @@ function CountdownGate({
   requiredDays: number
 }) {
   return (
-    <div className="rounded-[8px] border border-dashed border-border-strong bg-surface-raised p-4 text-center opacity-95">
+    <div
+      dusk="recommended-gate"
+      className="rounded-[8px] border border-dashed border-border-strong bg-surface-raised p-4 text-center opacity-95"
+    >
       <Clock size={22} className="mx-auto text-text-subtle mb-2" />
       <div className="font-medium">Keep logging.</div>
-      <div className="text-[13px] text-text-muted mt-1">
+      <div dusk="recommended-countdown" className="text-[13px] text-text-muted mt-1">
         {daysToGo} day{daysToGo === 1 ? '' : 's'} remaining to unlock recommendations.
       </div>
-      <div className="mt-3 h-1.5 rounded-full bg-border overflow-hidden">
+      <div
+        dusk="recommended-progress"
+        className="mt-3 h-1.5 rounded-full bg-border overflow-hidden"
+      >
         <div
           className="h-full bg-primary"
           style={{ width: Math.min(100, (historyDays / requiredDays) * 100) + '%' }}
@@ -103,32 +109,44 @@ export function RecommendedTab({
     }
   }
 
-  if (recommendationsLoading) return <Spinner />
-  if (recommendationsError || !recommendations || !gate) return <RecommendationsUnavailable />
+  if (recommendationsLoading)
+    return (
+      <div dusk="recommended-tab">
+        <Spinner />
+      </div>
+    )
+  if (recommendationsError || !recommendations || !gate)
+    return (
+      <div dusk="recommended-tab">
+        <RecommendationsUnavailable />
+      </div>
+    )
   if (gate.state === 'countdown')
     return (
-      <CountdownGate
-        historyDays={gate.history_days}
-        daysToGo={gate.days_to_go}
-        requiredDays={gate.required_days}
-      />
+      <div dusk="recommended-tab">
+        <CountdownGate
+          historyDays={gate.history_days}
+          daysToGo={gate.days_to_go}
+          requiredDays={gate.required_days}
+        />
+      </div>
     )
   if (gate.state === 'no_health_data')
     return (
-      <>
+      <div dusk="recommended-tab">
         <NoHealthDataGate />
         <FertilizerPending />
-      </>
+      </div>
     )
 
   return (
-    <>
+    <div dusk="recommended-tab">
       {watering ? (
         <div className="rounded-[8px] border border-border p-3">
           <div className="flex items-start gap-3">
             <Droplets size={18} className="text-info mt-0.5 shrink-0" />
             <div className="flex-1">
-              <div className="font-medium">
+              <div dusk="recommended-median" className="font-medium">
                 Water about every <span className="tnum">{watering.interval_days}</span> days
                 {watering.amount_ml != null && (
                   <>
@@ -141,6 +159,7 @@ export function RecommendedTab({
           </div>
           {plant.watering_interval_days_override !== watering.interval_days && (
             <TooltipButton
+              dusk="adopt-schedule"
               size="sm"
               variant="ghost"
               className="mt-2"
@@ -154,7 +173,10 @@ export function RecommendedTab({
           )}
         </div>
       ) : (
-        <div className="rounded-[8px] border border-border p-3 text-[13px] text-text-muted">
+        <div
+          dusk="recommended-empty"
+          className="rounded-[8px] border border-border p-3 text-[13px] text-text-muted"
+        >
           Not enough waterings logged yet to suggest a cadence.
         </div>
       )}
@@ -163,6 +185,6 @@ export function RecommendedTab({
         <Info size={12} />
         Suggestions reflect your own logged cadence, not a universal rule.
       </p>
-    </>
+    </div>
   )
 }

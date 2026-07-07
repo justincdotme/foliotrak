@@ -14,7 +14,7 @@ export function ActivityHeatmap({ events }: ActivityHeatmapProps) {
   // TimeRange renders a contiguous from->to strip, unlike the year-locked
   // Calendar, so the 60-day window stays compact.
   return (
-    <Card className="p-4">
+    <Card dusk="activity-heatmap" className="p-4">
       <div className="flex items-baseline gap-2 mb-3">
         <h3 className="text-[13px] font-semibold text-text">Care activity</h3>
         <span className="text-[11px] tnum text-text-subtle ml-auto">last 60 days</span>

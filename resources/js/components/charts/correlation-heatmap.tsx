@@ -18,7 +18,7 @@ export function CorrelationHeatmap({ pairs }: CorrelationHeatmapProps) {
   const data = pairsToHeatmapSeries(pairs)
 
   return (
-    <Card className="p-4">
+    <Card dusk="correlation-heatmap" className="p-4">
       <h3 className="text-[13px] font-semibold text-text mb-1">Correlation matrix</h3>
       <p className="text-[11px] text-text-subtle mb-3">
         Potential factors that coincided with outcomes across the group. Each cell shows the

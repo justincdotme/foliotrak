@@ -44,30 +44,40 @@ export function PlantHeader({ plant, onEdit, onChangeCover, onDelete }: PlantHea
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold truncate">{plant.common_name}</h1>
+            <h1 dusk="plant-common-name" className="text-xl font-semibold truncate">
+              {plant.common_name}
+            </h1>
             {plant.nickname && (
               <div className="text-[13px] text-text-muted truncate">{plant.nickname}</div>
             )}
-            <div className="italic text-text-muted text-[13px] truncate">
+            <div
+              dusk="plant-scientific-name"
+              className="italic text-text-muted text-[13px] truncate"
+            >
               {plant.scientific_name}
             </div>
           </div>
           <div className="ml-auto flex gap-1 shrink-0">
-            <IconButton label="Edit plant" onClick={onEdit} className="h-9 w-9">
+            <IconButton label="Edit plant" onClick={onEdit} className="h-9 w-9" dusk="edit-plant">
               <Pencil size={15} />
             </IconButton>
-            <IconButton label="Delete plant" onClick={onDelete} className="h-9 w-9">
+            <IconButton
+              label="Delete plant"
+              onClick={onDelete}
+              className="h-9 w-9"
+              dusk="delete-plant"
+            >
               <Trash2 size={15} />
             </IconButton>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[12px] text-text-muted">
-          <span className="flex items-center gap-1">
+          <span dusk="plant-location" className="flex items-center gap-1">
             <MapPin size={12} />
             {plant.location?.name || 'No location'}
           </span>
           {plant.acquired_on && (
-            <span className="flex items-center gap-1">
+            <span dusk="plant-acquired-date" className="flex items-center gap-1">
               <Calendar size={12} />
               Since {fmtDateY(plant.acquired_on)}
             </span>
@@ -77,6 +87,7 @@ export function PlantHeader({ plant, onEdit, onChangeCover, onDelete }: PlantHea
               href={`https://www.gbif.org/species/${plant.gbif_key}`}
               target="_blank"
               rel="noreferrer"
+              dusk="plant-gbif-link"
               className="flex items-center gap-1 text-primary hover:underline"
             >
               GBIF <ExternalLink size={11} />

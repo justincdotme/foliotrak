@@ -45,11 +45,23 @@ export function PlantChartsPanel({ plantId, timeline, recommendations }: PlantCh
       <SectionTitle icon={BarChart3}>Charts</SectionTitle>
       <Tabs defaultValue="trends">
         <TabsList className="overflow-x-auto w-full justify-start">
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="light">Light</TabsTrigger>
-          <TabsTrigger value="environment">Environment</TabsTrigger>
-          {showLocationTab && <TabsTrigger value="location">Location</TabsTrigger>}
+          <TabsTrigger value="trends" dusk="chart-tab-trends">
+            Trends
+          </TabsTrigger>
+          <TabsTrigger value="activity" dusk="chart-tab-activity">
+            Activity
+          </TabsTrigger>
+          <TabsTrigger value="light" dusk="chart-tab-light">
+            Light
+          </TabsTrigger>
+          <TabsTrigger value="environment" dusk="chart-tab-environment">
+            Environment
+          </TabsTrigger>
+          {showLocationTab && (
+            <TabsTrigger value="location" dusk="chart-tab-location">
+              Location
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="trends" forceMount className="data-[state=inactive]:hidden">

@@ -20,6 +20,7 @@ function DueRow({ item, onClick }: { item: DueForCare; onClick: () => void }) {
   const FertIcon = CARE_META.fertilizing.icon
   return (
     <button
+      dusk="due-care-item"
       onClick={onClick}
       className="w-full flex items-center gap-3 p-3 rounded-[8px] hover:bg-surface-raised text-left transition-colors"
     >
@@ -69,7 +70,7 @@ export function DashboardPage({ go }: DashboardPageProps) {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div dusk="dashboard-greeting">
         <h1 className="text-2xl font-semibold">
           {greeting}, {d.user.name.split(' ')[0]}
         </h1>
@@ -78,7 +79,7 @@ export function DashboardPage({ go }: DashboardPageProps) {
         </p>
       </div>
 
-      <Card className="p-4">
+      <Card className="p-4" dusk="due-for-care">
         <SectionTitle
           icon={Bell}
           action={
@@ -104,7 +105,7 @@ export function DashboardPage({ go }: DashboardPageProps) {
         )}
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4" dusk="flagged-problems">
         <SectionTitle icon={AlertTriangle}>Flagged problems</SectionTitle>
         {d.flagged_problems.length === 0 ? (
           <EmptyState title="Looking good">No flagged problems detected.</EmptyState>
@@ -114,6 +115,7 @@ export function DashboardPage({ go }: DashboardPageProps) {
               const worst = f.problems.some(p => p.severity === 'alert') ? 'alert' : 'warning'
               return (
                 <button
+                  dusk="flagged-item"
                   key={f.plant_id}
                   onClick={() => go(`/plants/${f.plant_id}`)}
                   className="w-full text-left flex items-start gap-3 p-3 rounded-[8px] border border-border hover:bg-surface-raised transition-colors"
@@ -151,7 +153,7 @@ export function DashboardPage({ go }: DashboardPageProps) {
         )}
       </Card>
 
-      <Card className="p-4">
+      <Card className="p-4" dusk="recent-activity">
         <SectionTitle icon={Clock}>Recent activity</SectionTitle>
         {d.recent_activity.length === 0 ? (
           <EmptyState title="No activity yet">

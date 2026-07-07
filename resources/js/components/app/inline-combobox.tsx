@@ -31,6 +31,7 @@ interface InlineComboboxProps<T> {
   className?: string
   icon?: ReactNode
   dusk?: string
+  contentDusk?: string
 }
 
 export function InlineCombobox<T>({
@@ -51,6 +52,7 @@ export function InlineCombobox<T>({
   className,
   icon = <Search size={16} />,
   dusk,
+  contentDusk,
 }: InlineComboboxProps<T>) {
   const [internalQuery, setInternalQuery] = useState('')
   const [internalOpen, setInternalOpen] = useState(false)
@@ -109,6 +111,7 @@ export function InlineCombobox<T>({
           </PopoverAnchor>
           <PopoverContent
             className="p-0 overflow-hidden"
+            dusk={contentDusk}
             style={{ width: 'var(--radix-popper-anchor-width)' }}
             onOpenAutoFocus={e => e.preventDefault()}
             onInteractOutside={e => {

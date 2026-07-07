@@ -83,12 +83,14 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       onClose={onClose}
       title="Edit plant"
       subtitle={plant.common_name || undefined}
+      dusk="edit-plant-modal"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
           <TooltipButton
+            dusk="edit-plant-save"
             onClick={save}
             disabled={update.isPending}
             tooltipContent={update.isPending ? 'Saving...' : undefined}
@@ -102,23 +104,27 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       <div className="space-y-4">
         <Field label="Nickname" hint="optional">
           <Input
+            dusk="edit-common-name"
             value={nickname}
             onChange={e => setNickname(e.target.value)}
             placeholder="Kitchen Pothos, Big Fern…"
           />
         </Field>
         <Field label="Location" hint="where it lives now">
-          <LocationCombobox value={locationId} onChange={setLocationId} />
+          <div dusk="location-combobox">
+            <LocationCombobox value={locationId} onChange={setLocationId} />
+          </div>
         </Field>
         <Field label="Notes">
           <Textarea
+            dusk="edit-notes"
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Anything worth remembering about this plant"
           />
         </Field>
         <Field label="Tags">
-          <div className="flex flex-wrap gap-1.5">
+          <div dusk="tag-combobox" className="flex flex-wrap gap-1.5">
             <TagInlineCreate allTags={allTags || []} selectedTags={tags} onToggle={toggleTag} />
           </div>
         </Field>
@@ -132,15 +138,17 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
           </div>
         </Field>
         <Field label="Status">
-          <Segmented
-            value={status}
-            onChange={v => setStatus(v as 'active' | 'archived' | 'dead')}
-            options={[
-              { value: 'active', label: 'Active' },
-              { value: 'archived', label: 'Archived' },
-              { value: 'dead', label: 'Dead' },
-            ]}
-          />
+          <div dusk="edit-status">
+            <Segmented
+              value={status}
+              onChange={v => setStatus(v as 'active' | 'archived' | 'dead')}
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'archived', label: 'Archived' },
+                { value: 'dead', label: 'Dead' },
+              ]}
+            />
+          </div>
           <div className="mt-1.5 text-[12px] text-text-subtle flex items-start gap-1.5">
             <Info size={13} className="mt-px shrink-0" />
             {STATUS_HELP[status]}

@@ -133,7 +133,7 @@ export function MyScheduleTab({ plant, due }: MyScheduleTabProps) {
   }
 
   return (
-    <>
+    <div dusk="my-schedule-tab">
       <NextDueRow due={due} lastWateredAt={plant.last_watered_at} />
       {!editing ? (
         <div className="space-y-2">
@@ -189,6 +189,7 @@ export function MyScheduleTab({ plant, due }: MyScheduleTabProps) {
         <div className="space-y-3 rounded-[8px] border border-border bg-surface-raised p-3">
           <Field label="Water every" hint="days">
             <Input
+              dusk="watering-interval"
               type="number"
               min="1"
               value={wInt}
@@ -206,6 +207,7 @@ export function MyScheduleTab({ plant, due }: MyScheduleTabProps) {
           </Field>
           <Field label="Fertilize every" hint="days, optional">
             <Input
+              dusk="fertilizing-interval"
               type="number"
               min="1"
               value={fInt}
@@ -218,6 +220,7 @@ export function MyScheduleTab({ plant, due }: MyScheduleTabProps) {
               Cancel
             </Button>
             <TooltipButton
+              dusk="schedule-save"
               size="sm"
               onClick={save}
               disabled={update.isPending}
@@ -233,6 +236,6 @@ export function MyScheduleTab({ plant, due }: MyScheduleTabProps) {
         <Bell size={12} />
         Reminders fire on this cadence. Leave unset to follow the recommended schedule.
       </p>
-    </>
+    </div>
   )
 }

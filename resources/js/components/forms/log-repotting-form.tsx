@@ -91,10 +91,16 @@ export function LogRepottingForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <DateTimeField register={register} name="occurred_at" error={errors.occurred_at?.message} />
+      <DateTimeField
+        register={register}
+        name="occurred_at"
+        error={errors.occurred_at?.message}
+        dusk="repotting-date"
+      />
       <Field label="Soil recipe" hint="freeform">
         <Textarea
           placeholder="5 parts bark, 2 parts coco coir, 1 part perlite"
+          dusk="soil-recipe"
           {...register('soil_recipe')}
         />
       </Field>
@@ -112,6 +118,7 @@ export function LogRepottingForm({
             <Segmented
               value={unit}
               onChange={v => setValue('pot_size_unit', v as 'in' | 'cm')}
+              dusk="pot-size-unit"
               options={[
                 { value: 'in', label: 'in' },
                 { value: 'cm', label: 'cm' },
@@ -126,8 +133,13 @@ export function LogRepottingForm({
             id="fertilizer-added"
             checked={fertAdded}
             onCheckedChange={v => setValue('fertilizer_added', v)}
+            dusk="fertilizer-toggle"
           />
-          <label htmlFor="fertilizer-added" className="cursor-pointer text-sm text-text">
+          <label
+            htmlFor="fertilizer-added"
+            className="cursor-pointer text-sm text-text"
+            dusk="fertilizer-toggle-label"
+          >
             Fertilizer added during repot
           </label>
         </div>
@@ -141,7 +153,7 @@ export function LogRepottingForm({
       <Field label="Note" hint="optional">
         <Textarea {...register('note')} />
       </Field>
-      <FormError message={formError} />
+      <FormError message={formError} dusk="form-error" />
       <div className="flex justify-end gap-2 pt-1">
         <TooltipButton
           type="submit"

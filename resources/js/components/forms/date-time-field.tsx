@@ -6,16 +6,18 @@ interface DateTimeFieldProps<T extends FieldValues> {
   register: UseFormRegister<T>
   name: Path<T>
   error?: string
+  dusk?: string
 }
 
 export function DateTimeField<T extends FieldValues>({
   register,
   name,
   error,
+  dusk,
 }: DateTimeFieldProps<T>) {
   return (
     <Field label="When" required error={error}>
-      <Input type="datetime-local" {...register(name)} />
+      <Input type="datetime-local" dusk={dusk} {...register(name)} />
     </Field>
   )
 }
