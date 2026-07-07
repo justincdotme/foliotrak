@@ -41,56 +41,58 @@ export function HealthByLocation({ data }: HealthByLocationProps) {
       height={240}
       note="Health readings that coincided with each spot, with each location's median marked. It shows where this plant has read healthiest, not proof a spot helps or harms; more readings per spot means a more reliable read."
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 6, right: 10, bottom: 4, left: -22 }}>
-          <CartesianGrid stroke="var(--border)" vertical={false} />
-          <XAxis type="category" dataKey="location" allowDuplicatedCategory={false} {...axis} />
-          <YAxis type="number" dataKey="y" domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} {...axis} />
-          <Tooltip
-            cursor={{ strokeDasharray: '3 3' }}
-            contentStyle={{
-              background: 'var(--surface-raised)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              fontSize: 12,
-            }}
-          />
-          <Legend
-            content={() => (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-text-muted">
-                <div className="flex items-center gap-1">
-                  <span
-                    className="inline-block h-2 w-2 rounded-full"
-                    style={{ background: 'var(--primary)', opacity: 0.55 }}
-                  />
-                  Reading
+      <div dusk="health-by-location-chart" style={{ height: '100%' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 6, right: 10, bottom: 4, left: -22 }}>
+            <CartesianGrid stroke="var(--border)" vertical={false} />
+            <XAxis type="category" dataKey="location" allowDuplicatedCategory={false} {...axis} />
+            <YAxis type="number" dataKey="y" domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} {...axis} />
+            <Tooltip
+              cursor={{ strokeDasharray: '3 3' }}
+              contentStyle={{
+                background: 'var(--surface-raised)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                fontSize: 12,
+              }}
+            />
+            <Legend
+              content={() => (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-text-muted">
+                  <div className="flex items-center gap-1">
+                    <span
+                      className="inline-block h-2 w-2 rounded-full"
+                      style={{ background: 'var(--primary)', opacity: 0.55 }}
+                    />
+                    Reading
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span
+                      className="inline-block h-2 w-2 rotate-45"
+                      style={{ background: 'var(--accent)' }}
+                    />
+                    Median
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span
-                    className="inline-block h-2 w-2 rotate-45"
-                    style={{ background: 'var(--accent)' }}
-                  />
-                  Median
-                </div>
-              </div>
-            )}
-          />
-          <Scatter
-            name="Reading"
-            data={readings}
-            fill="var(--primary)"
-            fillOpacity={0.55}
-            isAnimationActive={false}
-          />
-          <Scatter
-            name="Median"
-            data={medians}
-            fill="var(--accent)"
-            shape="diamond"
-            isAnimationActive={false}
-          />
-        </ScatterChart>
-      </ResponsiveContainer>
+              )}
+            />
+            <Scatter
+              name="Reading"
+              data={readings}
+              fill="var(--primary)"
+              fillOpacity={0.55}
+              isAnimationActive={false}
+            />
+            <Scatter
+              name="Median"
+              data={medians}
+              fill="var(--accent)"
+              shape="diamond"
+              isAnimationActive={false}
+            />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
     </ChartShell>
   )
 }

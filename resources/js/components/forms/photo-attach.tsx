@@ -18,11 +18,14 @@ export function PhotoAttach({ onChange }: PhotoAttachProps) {
     <Field label="Photo" hint="optional">
       <label className="flex h-11 cursor-pointer items-center gap-2 rounded-[8px] border border-dashed border-border-strong bg-surface-raised px-3 text-text-muted hover:text-text">
         <ImageIcon size={16} />
-        <span className="text-[13px]">{photoFile ? photoFile.name : 'Attach a photo'}</span>
+        <span className="text-[13px]" dusk="photo-preview">
+          {photoFile ? photoFile.name : 'Attach a photo'}
+        </span>
         <input
           type="file"
           accept="image/*"
           className="hidden"
+          dusk="photo-attach-input"
           onChange={e => handleChange(e.target.files?.[0] ?? null)}
         />
       </label>

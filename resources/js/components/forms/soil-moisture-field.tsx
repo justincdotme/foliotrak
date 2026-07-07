@@ -45,10 +45,11 @@ export function SoilMoistureField({
 
   return (
     <Field label="Soil moisture">
-      <div className="space-y-2">
+      <div className="space-y-2" dusk="soil-moisture-field">
         <div className="flex gap-1.5">
           <button
             type="button"
+            dusk="soil-moisture-toggle"
             className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] font-medium transition-colors ${
               mode === 'relative'
                 ? 'border-primary bg-primary/10 text-primary'
@@ -60,6 +61,7 @@ export function SoilMoistureField({
           </button>
           <button
             type="button"
+            dusk="soil-moisture-toggle"
             className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] font-medium transition-colors ${
               mode === 'precise'
                 ? 'border-primary bg-primary/10 text-primary'

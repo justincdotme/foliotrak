@@ -3,11 +3,11 @@ import { HEALTH_VAR } from '@/lib/domain'
 
 export type DateRange = '7d' | '30d' | '90d' | 'all'
 
-export const DATE_RANGE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: '7d', label: '7 d' },
-  { value: '30d', label: '30 d' },
-  { value: '90d', label: '90 d' },
-  { value: 'all', label: 'All' },
+export const DATE_RANGE_OPTIONS: Array<{ value: string; label: string; dusk?: string }> = [
+  { value: '7d', label: '7 d', dusk: 'chart-range-7d' },
+  { value: '30d', label: '30 d', dusk: 'chart-range-30d' },
+  { value: '90d', label: '90 d', dusk: 'chart-range-90d' },
+  { value: 'all', label: 'All', dusk: 'chart-range-all' },
 ]
 
 const RANGE_DAYS: Record<DateRange, number | null> = {

@@ -60,7 +60,12 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <DateTimeField register={register} name="occurred_at" error={errors.occurred_at?.message} />
+      <DateTimeField
+        register={register}
+        name="occurred_at"
+        error={errors.occurred_at?.message}
+        dusk="relocation-date"
+      />
       {event.relocation?.from_location && (
         <Field label="From">
           <div className="grid h-11 items-center rounded-[8px] border border-border bg-surface px-3 text-text-muted">
@@ -69,15 +74,20 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
         </Field>
       )}
       <Field label="To">
-        <LocationCombobox value={toLocationId} onChange={setToLocationId} />
+        <LocationCombobox
+          value={toLocationId}
+          onChange={setToLocationId}
+          dusk="relocation-destination"
+        />
       </Field>
       <Field label="Note" hint="optional">
-        <Textarea {...register('note')} />
+        <Textarea dusk="relocation-note" {...register('note')} />
       </Field>
-      <FormError message={formError} />
+      <FormError message={formError} dusk="form-error" />
       <div className="flex justify-end gap-2 pt-1">
         <TooltipButton
           type="submit"
+          dusk="relocation-save"
           disabled={isSubmitting || toLocationId == null}
           tooltipContent={
             isSubmitting ? 'Saving...' : toLocationId == null ? 'Select a location' : undefined

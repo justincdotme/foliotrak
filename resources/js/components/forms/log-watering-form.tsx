@@ -59,7 +59,12 @@ export function LogWateringForm({ plantId, onDone, event }: LogWateringFormProps
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <DateTimeField register={register} name="occurred_at" error={errors.occurred_at?.message} />
+      <DateTimeField
+        register={register}
+        name="occurred_at"
+        error={errors.occurred_at?.message}
+        dusk="watering-date"
+      />
       <Field label="Amount" hint="ml, optional">
         <Input
           type="number"
@@ -72,10 +77,11 @@ export function LogWateringForm({ plantId, onDone, event }: LogWateringFormProps
       <Field label="Note" hint="optional">
         <Textarea
           placeholder="Soil was bone dry; ran water through until it drained"
+          dusk="watering-note"
           {...register('note')}
         />
       </Field>
-      <FormError message={formError} />
+      <FormError message={formError} dusk="form-error" />
       <div className="flex justify-end gap-2 pt-1">
         <TooltipButton
           type="submit"

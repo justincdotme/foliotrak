@@ -117,6 +117,7 @@ function PushoverKeyForm({
       </label>
       <div className="flex gap-2">
         <Input
+          dusk="pushover-key"
           id="pushover-key"
           {...register('pushover_user_key')}
           placeholder="30-character key from Pushover"
@@ -128,6 +129,7 @@ function PushoverKeyForm({
           className="flex-1 tnum"
         />
         <TooltipButton
+          dusk="pushover-save"
           type="submit"
           disabled={isSubmitting}
           className="shrink-0"
@@ -196,7 +198,7 @@ function TagRow({
   }
 
   return (
-    <div className="flex items-center gap-2 py-1.5">
+    <div dusk="tag-item" className="flex items-center gap-2 py-1.5">
       <span
         className="h-3 w-3 rounded-full shrink-0"
         style={{ background: tag.color || 'var(--series-1)' }}
@@ -204,6 +206,7 @@ function TagRow({
       {editing ? (
         <div className="flex-1 flex items-center gap-1.5">
           <Input
+            dusk="tag-rename"
             ref={inputRef}
             value={name}
             onChange={e => {
@@ -236,6 +239,7 @@ function TagRow({
             <Pencil size={13} />
           </button>
           <button
+            dusk="tag-delete"
             type="button"
             onClick={() => onDelete(tag.id)}
             className="p-1 text-text-muted hover:text-overdue"
@@ -332,6 +336,7 @@ function TagManager() {
               className="h-8 text-[13px] flex-1"
             />
             <TooltipButton
+              dusk="tag-submit"
               size="sm"
               onClick={submitNew}
               disabled={createTag.isPending || !newName.trim()}
@@ -357,6 +362,7 @@ function TagManager() {
         </div>
       ) : (
         <button
+          dusk="tag-add"
           type="button"
           onClick={() => setAdding(true)}
           className="mt-2 flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text transition-colors"
@@ -581,6 +587,7 @@ function EquipmentManager() {
         </div>
       ) : (
         <button
+          dusk="equipment-add"
           type="button"
           onClick={() => setAdding(true)}
           className="mt-2 flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text transition-colors"
@@ -845,6 +852,7 @@ function RegisterForm({ device, onClose }: { device: DiscoveredSensor; onClose: 
       {error && <div className="text-[11px] text-overdue">{error}</div>}
       <div className="flex gap-2">
         <TooltipButton
+          dusk="sensor-save"
           size="sm"
           onClick={submit}
           disabled={createSensor.isPending || !name.trim() || !resolvedType}
@@ -922,6 +930,7 @@ function SensorManager() {
       <div>
         <div className="flex items-center gap-2 mb-2">
           <TooltipButton
+            dusk="test-connection"
             size="sm"
             variant="outline"
             onClick={() => testConn.mutate()}
@@ -963,6 +972,7 @@ function SensorManager() {
           {/* Discovery */}
           <div className="pt-2 border-t border-border">
             <TooltipButton
+              dusk="discover-sensors"
               size="sm"
               variant="outline"
               onClick={() => discovery.refetch()}
@@ -1050,15 +1060,15 @@ export function SettingsPage({ theme, setTheme, onLogout }: SettingsPageProps) {
         <SectionTitle icon={Radio}>Sensors</SectionTitle>
         <SensorManager />
       </Card>
-      <Card className="p-4">
+      <Card className="p-4" dusk="settings-theme">
         <SectionTitle icon={Sun}>Appearance</SectionTitle>
         <Segmented
           value={theme}
           onChange={v => setTheme(v as ThemeChoice)}
           options={[
-            { value: 'light', label: 'Light' },
-            { value: 'dark', label: 'Dark' },
-            { value: 'system', label: 'Follow system' },
+            { value: 'light', label: 'Light', dusk: 'theme-light' },
+            { value: 'dark', label: 'Dark', dusk: 'theme-dark' },
+            { value: 'system', label: 'Follow system', dusk: 'theme-system' },
           ]}
         />
       </Card>
@@ -1070,8 +1080,12 @@ export function SettingsPage({ theme, setTheme, onLogout }: SettingsPageProps) {
               {initials(user.name)}
             </span>
             <div>
-              <div className="font-medium">{user.name}</div>
-              <div className="tnum text-[12px] text-text-muted">{user.email}</div>
+              <div dusk="account-name" className="font-medium">
+                {user.name}
+              </div>
+              <div dusk="account-email" className="tnum text-[12px] text-text-muted">
+                {user.email}
+              </div>
             </div>
           </div>
         )}

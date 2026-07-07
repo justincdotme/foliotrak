@@ -9,12 +9,14 @@ interface LocationComboboxProps {
   value: number | null
   onChange: (locationId: number | null) => void
   placeholder?: string
+  dusk?: string
 }
 
 export function LocationCombobox({
   value,
   onChange,
   placeholder = 'Living room shelf',
+  dusk,
 }: LocationComboboxProps) {
   const { data: locations } = useLocations()
   const createLocation = useCreateLocation()
@@ -68,6 +70,7 @@ export function LocationCombobox({
         onCreate={handleCreate}
         placeholder={placeholder}
         icon={<MapPin size={16} />}
+        dusk={dusk}
       />
       <FormError message={createError} />
     </>

@@ -54,6 +54,7 @@ export function WeightInput({ defaultValue, onChange }: WeightInputProps) {
               type="number"
               min="0"
               aria-label="Pounds"
+              dusk="weight-lb"
               value={lbStr}
               onChange={e => setLbAndEmit(e.target.value)}
             />
@@ -66,6 +67,7 @@ export function WeightInput({ defaultValue, onChange }: WeightInputProps) {
               type="number"
               min="0"
               aria-label="Ounces"
+              dusk="weight-oz"
               value={ozStr}
               onChange={e => setOzAndEmit(e.target.value)}
             />
@@ -79,6 +81,7 @@ export function WeightInput({ defaultValue, onChange }: WeightInputProps) {
               min="0"
               step="0.1"
               aria-label="Grams"
+              dusk="weight-g"
               value={gStr}
               onChange={e => setGAndEmit(e.target.value)}
             />

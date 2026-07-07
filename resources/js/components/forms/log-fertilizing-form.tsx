@@ -144,7 +144,12 @@ export function LogFertilizingForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <DateTimeField register={register} name="occurred_at" error={errors.occurred_at?.message} />
+      <DateTimeField
+        register={register}
+        name="occurred_at"
+        error={errors.occurred_at?.message}
+        dusk="fertilizing-date"
+      />
       <Field label="Form" error={errors.fertilizer_form_id?.message}>
         <select
           {...register('fertilizer_form_id')}
@@ -174,6 +179,7 @@ export function LogFertilizingForm({
             step="0.1"
             placeholder="N"
             aria-label="Nitrogen"
+            dusk="npk-n"
             {...register('npk_n')}
           />
           <Input
@@ -181,6 +187,7 @@ export function LogFertilizingForm({
             step="0.1"
             placeholder="P"
             aria-label="Phosphorus"
+            dusk="npk-p"
             {...register('npk_p')}
           />
           <Input
@@ -188,6 +195,7 @@ export function LogFertilizingForm({
             step="0.1"
             placeholder="K"
             aria-label="Potassium"
+            dusk="npk-k"
             {...register('npk_k')}
           />
         </div>
@@ -197,11 +205,19 @@ export function LogFertilizingForm({
           <Input type="number" placeholder="50" {...register('dose_pct')} />
         </Field>
         <Field label="Amount" hint="ml, optional">
-          <Input type="number" placeholder="240" {...register('amount_ml')} />
+          <Input
+            type="number"
+            placeholder="240"
+            dusk="fertilizing-amount"
+            {...register('amount_ml')}
+          />
         </Field>
       </div>
       {isOrganic && (
-        <div className="rounded-[8px] border border-border bg-surface-raised p-3">
+        <div
+          className="rounded-[8px] border border-border bg-surface-raised p-3"
+          dusk="nutrient-chips"
+        >
           <div className="mb-2 flex items-center">
             <span className="text-[13px] font-medium">Nutrient components</span>
             <Button
@@ -252,7 +268,7 @@ export function LogFertilizingForm({
       <Field label="Note" hint="optional">
         <Textarea {...register('note')} />
       </Field>
-      <FormError message={formError} />
+      <FormError message={formError} dusk="form-error" />
       <div className="flex justify-end gap-2 pt-1">
         <TooltipButton
           type="submit"

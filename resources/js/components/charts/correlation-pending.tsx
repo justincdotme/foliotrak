@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 
 export function CorrelationPending() {
   return (
-    <Card className="p-6">
+    <Card dusk="correlation-pending" className="p-6">
       <div className="flex flex-col items-center text-center gap-2">
         <span className="text-text-subtle">
           <Activity size={22} />

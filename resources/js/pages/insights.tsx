@@ -26,7 +26,7 @@ export function InsightsPage() {
   const { data, loading, error } = useGroupInsights(params)
 
   return (
-    <div className="space-y-5">
+    <div dusk="insights-page" className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold">Insights</h1>
         <p className="text-text-muted text-[13px] mt-0.5">
@@ -37,7 +37,7 @@ export function InsightsPage() {
       {((tags && tags.length > 0) || locations.length > 0) && (
         <Card className="p-4 space-y-3">
           {tags && tags.length > 0 && (
-            <div>
+            <div dusk="insights-tag-picker">
               <div className="flex items-center gap-1.5 text-[12px] font-medium text-text-muted mb-1.5">
                 <TagIcon size={13} />
                 Filter by tag
@@ -58,7 +58,7 @@ export function InsightsPage() {
             </div>
           )}
           {locations.length > 0 && (
-            <div>
+            <div dusk="insights-location-filter">
               <div className="flex items-center gap-1.5 text-[12px] font-medium text-text-muted mb-1.5">
                 <MapPin size={13} />
                 Filter by location
@@ -80,7 +80,7 @@ export function InsightsPage() {
         </Card>
       )}
       {error ? (
-        <Card>
+        <Card dusk="insights-empty">
           <EmptyState icon={BarChart3} title="Unable to load insights">
             Something went wrong fetching this group. Try again.
           </EmptyState>
@@ -88,7 +88,7 @@ export function InsightsPage() {
       ) : loading || !data ? (
         <Spinner />
       ) : data.plants.length < 2 ? (
-        <Card>
+        <Card dusk="insights-gate">
           <EmptyState icon={BarChart3} title="Need at least 2 plants">
             {tagId != null || locationId != null
               ? 'This filter matches fewer than 2 active plants. Broaden the selection or add more plants.'
@@ -97,7 +97,9 @@ export function InsightsPage() {
         </Card>
       ) : (
         <>
-          <GroupComparison comparison={data.comparison} />
+          <div dusk="group-comparison">
+            <GroupComparison comparison={data.comparison} />
+          </div>
           {data.correlation_pairs.length === 0 ? (
             <CorrelationPending />
           ) : (

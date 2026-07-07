@@ -9,6 +9,7 @@ interface HealthSparklinesProps {
 export function HealthSparklines({ comparison }: HealthSparklinesProps) {
   return (
     <div
+      dusk="health-sparklines"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',

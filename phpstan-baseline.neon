@@ -1207,21 +1207,51 @@ parameters:
 			path: database/seeders/DatabaseSeeder.php
 
 		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 10
+			path: tests/Browser/AddPlantTest.php
+
+		-
 			message: '#^Access to property \$email on an unknown class Database\\Factories\\User\.$#'
 			identifier: class.notFound
-			count: 1
+			count: 2
+			path: tests/Browser/AuthTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 7
 			path: tests/Browser/AuthTest.php
 
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
 			count: 5
-			path: tests/Browser/AuthTest.php
+			path: tests/Browser/CacheStalenessTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/CacheStalenessTest.php
 
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
-			count: 4
+			count: 7
+			path: tests/Browser/CareFormValidationTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/CareFormValidationTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 13
 			path: tests/Browser/CareLoggingTest.php
 
 		-
@@ -1229,6 +1259,18 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: tests/Browser/CareLoggingTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 9
+			path: tests/Browser/ChartRangeTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/ChartRangeTest.php
 
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
@@ -1245,6 +1287,132 @@ parameters:
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
+			count: 3
+			path: tests/Browser/DarkModeVisualTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 11
+			path: tests/Browser/DashboardTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/DashboardTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Browser/ErrorVisibilityTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/ErrorVisibilityTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Browser/FormDefaultsTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/FormDefaultsTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: tests/Browser/InsightsCorrelationTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/InsightsCorrelationTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Browser/InsightsTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/InsightsTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: tests/Browser/LocationComboboxTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/LocationComboboxTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 7
+			path: tests/Browser/ObservationWidgetsTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/ObservationWidgetsTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: tests/Browser/PhotoGalleryTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/PhotoGalleryTest.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: tests/Browser/PhotoGalleryTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: tests/Browser/PlantDeleteTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: tests/Browser/PlantDetailHeaderTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/PlantDetailHeaderTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
 			count: 7
 			path: tests/Browser/PlantsListTest.php
 
@@ -1257,6 +1425,30 @@ parameters:
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
+			count: 7
+			path: tests/Browser/RelocationChainTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/RelocationChainTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: tests/Browser/SchedulePanelTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/SchedulePanelTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
 			count: 1
 			path: tests/Browser/ScheduleStartDateTest.php
 
@@ -1269,6 +1461,18 @@ parameters:
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
+			count: 3
+			path: tests/Browser/SettingsAccountTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Browser/SettingsTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
 			count: 8
 			path: tests/Browser/ShellNavigationTest.php
 
@@ -1277,6 +1481,48 @@ parameters:
 			identifier: method.notFound
 			count: 2
 			path: tests/Browser/SmokeTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Browser/StaleSessionTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/StaleSessionTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Browser/TagComboboxTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: tests/Browser/TimelineEditTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/TimelineEditTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: tests/Browser/WeightFieldTest.php
+
+		-
+			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Browser/WeightFieldTest.php
 
 		-
 			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'

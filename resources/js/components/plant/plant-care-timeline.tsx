@@ -22,12 +22,14 @@ export function PlantCareTimeline({ plantId, events, photos }: PlantCareTimeline
   const photosByEvent = useMemo(() => groupPhotosByCareEvent(photos), [photos])
 
   return (
-    <Card className="p-4">
+    <Card dusk="care-timeline" className="p-4">
       <SectionTitle icon={Clock}>Care timeline</SectionTitle>
       {events.length === 0 ? (
-        <EmptyState icon={Clock} title="No care events logged yet">
-          Start by logging a watering or observation.
-        </EmptyState>
+        <div dusk="timeline-empty">
+          <EmptyState icon={Clock} title="No care events logged yet">
+            Start by logging a watering or observation.
+          </EmptyState>
+        </div>
       ) : (
         <div className="mt-1">
           {events.map(e => (

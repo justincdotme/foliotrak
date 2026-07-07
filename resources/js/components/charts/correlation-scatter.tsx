@@ -40,45 +40,47 @@ export function CorrelationScatter({ pair }: CorrelationScatterProps) {
       height={220}
       note={`${describeCorrelation(pair)} ${stats}`}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart margin={{ top: 6, right: 10, bottom: 4, left: -22 }}>
-          <CartesianGrid stroke="var(--border)" />
-          <XAxis
-            type="number"
-            dataKey="x"
-            name={prettyVar(pair.x_variable)}
-            domain={['auto', 'auto']}
-            allowDecimals={false}
-            {...axis}
-          />
-          <YAxis type="number" dataKey="y" domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} {...axis} />
-          <Tooltip
-            cursor={{ strokeDasharray: '3 3' }}
-            contentStyle={{
-              background: 'var(--surface-raised)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              fontSize: 12,
-            }}
-          />
-          <Scatter data={points} fillOpacity={0.75} isAnimationActive={false}>
-            {points.map((p, i) => (
-              <Cell key={i} fill={fillFromHealth(p.y)} />
-            ))}
-          </Scatter>
-          {regLine && (
-            <Line
-              data={regLine}
-              dataKey="y"
-              dot={false}
-              stroke="var(--text-subtle)"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              isAnimationActive={false}
+      <div dusk="correlation-scatter" style={{ height: '100%' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart margin={{ top: 6, right: 10, bottom: 4, left: -22 }}>
+            <CartesianGrid stroke="var(--border)" />
+            <XAxis
+              type="number"
+              dataKey="x"
+              name={prettyVar(pair.x_variable)}
+              domain={['auto', 'auto']}
+              allowDecimals={false}
+              {...axis}
             />
-          )}
-        </ComposedChart>
-      </ResponsiveContainer>
+            <YAxis type="number" dataKey="y" domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} {...axis} />
+            <Tooltip
+              cursor={{ strokeDasharray: '3 3' }}
+              contentStyle={{
+                background: 'var(--surface-raised)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                fontSize: 12,
+              }}
+            />
+            <Scatter data={points} fillOpacity={0.75} isAnimationActive={false}>
+              {points.map((p, i) => (
+                <Cell key={i} fill={fillFromHealth(p.y)} />
+              ))}
+            </Scatter>
+            {regLine && (
+              <Line
+                data={regLine}
+                dataKey="y"
+                dot={false}
+                stroke="var(--text-subtle)"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                isAnimationActive={false}
+              />
+            )}
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
     </ChartShell>
   )
 }
