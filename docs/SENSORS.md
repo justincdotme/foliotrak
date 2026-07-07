@@ -1,6 +1,6 @@
 # Sensor Integration
 
-Foliotrak tracks ambient temperature and humidity around your plants using BLE sensors (Govee H5075) collected by a [Gondola](https://github.com/justincdotme/gondola) gateway on the LAN. A scheduled command pulls readings from the gateway, stores them locally, and the plant detail UI charts the data per associated sensor.
+Foliotrak tracks ambient conditions around your plants using BLE sensors collected by a [Gondola](https://github.com/justincdotme/gondola) gateway on the LAN. The gateway's parser registry identifies each device family (Govee H5075 hygrometers today) and Foliotrak assigns meaning through a per-type transformer. A scheduled command pulls readings from the gateway, stores them locally, and the plant detail UI charts the data per associated sensor.
 
 ## Environment Variables
 
@@ -28,7 +28,11 @@ SENSOR_API_KEY=your-api-key-here
 
 ## Ingestion
 
-The `sensors:ingest` artisan command runs on the scheduler every `SENSOR_GRANULARITY` minutes. It pages the gateway forward from a per-sensor UTC watermark, deduplicates via the `(sensor_id, recorded_at)` unique constraint, and backfills any outage up to the gateway's retention window (default 90 days). The command exits cleanly when the gateway is offline or unconfigured.
+The `sensors:ingest` artisan command runs on the scheduler every `SENSOR_GRANULARITY` minutes. It pages the gateway forward from a per-sensor UTC watermark, deduplicates via the `(sensor_id, recorded_at)` unique constraint, and backfills any outage up to the gateway's retention window (default 90 days). The command exits cleanly when the gateway is offline or unconfigured. The adapter accepts both gateway response generations: the flat legacy reading shape and the current one with a nested `measurements` dict plus `sensor_type`.
+
+## Sensor Types
+
+Each registered sensor has a Foliotrak type (`hygrometer` today) that selects the transformer used to normalize readings on write, hydrate them on read, and describe the chart fields. The gateway separately reports a hardware identity per device (for example `govee_h5075`), which Foliotrak stores at registration and uses to preselect the type for known hardware. Readings a sensor's transformer cannot normalize are skipped and logged instead of failing the run; a wrong sensor type is the usual cause.
 
 ## Writing a Custom Adapter
 
@@ -63,6 +67,6 @@ $this->app->singleton(SensorReadingSource::class, YourAdapter::class);
 
 1. **Settings > Sensors > Test Connection** verifies reachability and key validity.
 2. **Discover Sensors** lists what the gateway sees (unregistered only).
-3. **Register** names a sensor (color auto-assigned, optional location).
+3. **Register** names a sensor and sets its type, preselected when the gateway reports known hardware (color auto-assigned, optional location).
 4. **Add Plant** or **Edit Plant > Sensors** to associate sensors with plants.
-5. **Plant Detail > Environment** tab charts temperature (F) and humidity per sensor with Day/Week/Month range selection.
+5. **Plant Detail > Environment** tab charts each sensor's fields per its type (temperature (F) and humidity for hygrometers) with Day/Week/Month range selection.

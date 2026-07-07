@@ -13,12 +13,12 @@ interface SensorReadingSource
      * @param string            $mac
      * @param DateTimeInterface $since
      *
-     * @return iterable<SensorReading>
+     * @return iterable<\App\DTOs\SensorReading>
      */
     public function readingsSince(string $mac, DateTimeInterface $since): iterable;
 
     /**
-     * @return list<SensorDevice>
+     * @return list<\App\DTOs\SensorDevice>
      */
     public function discoverSensors(): array;
 

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int                        $id
  * @property string                     $mac
  * @property string|null                $device_name
+ * @property string|null                $hardware_type
  * @property string                     $name
  * @property string                     $color
  * @property string|null                $location
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'mac',
     'device_name',
+    'hardware_type',
     'name',
     'color',
     'location',

@@ -6,6 +6,7 @@ namespace App\Services\Sensors\Transformers;
 
 use App\Contracts\SensorTransformer;
 use App\Services\Sensors\ValueObjects\HygrometerReading;
+use InvalidArgumentException;
 
 final class HygrometerTransformer implements SensorTransformer
 {
@@ -16,6 +17,10 @@ final class HygrometerTransformer implements SensorTransformer
      */
     public function normalize(array $rawData): array
     {
+        if (! isset($rawData['temperature'], $rawData['humidity'])) {
+            throw new InvalidArgumentException('Hygrometer reading requires temperature and humidity keys.');
+        }
+
         return array_filter([
             'temperature' => (float) $rawData['temperature'],
             'humidity'    => (float) $rawData['humidity'],

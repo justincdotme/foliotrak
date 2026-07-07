@@ -432,6 +432,7 @@ export interface Sensor {
   id: number
   mac: string
   device_name: string | null
+  hardware_type: string | null
   type: string
   name: string
   color: string
@@ -441,17 +442,18 @@ export interface Sensor {
   updated_at: string
 }
 
+// Keys besides recorded_at vary by hardware type; hygrometers send
+// temperature/humidity plus battery/rssi.
 export interface DiscoveredSensorReading {
-  temperature: number
-  humidity: number
-  battery: number | null
-  rssi: number | null
   recorded_at: string
+  [key: string]: number | string | null
 }
 
 export interface DiscoveredSensor {
   mac: string
   device_name: string | null
+  sensor_type: string | null
+  suggested_type: string | null
   last_reading: DiscoveredSensorReading | null
   registered: boolean
 }

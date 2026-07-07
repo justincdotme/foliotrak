@@ -703,7 +703,8 @@ function SensorRow({
               )}
             </div>
             <div className="text-[11px] text-text-muted truncate">
-              {sensor.type.charAt(0).toUpperCase() + sensor.type.slice(1)} &middot; {sensor.mac}
+              {sensor.type.charAt(0).toUpperCase() + sensor.type.slice(1)}
+              {sensor.hardware_type && <> &middot; {sensor.hardware_type}</>} &middot; {sensor.mac}
               {sensor.location && <> &middot; {sensor.location}</>}
               {sensor.plant_count > 0 && (
                 <>
@@ -740,7 +741,7 @@ function DiscoverRow({
   onRegister,
 }: {
   device: DiscoveredSensor
-  onRegister: (mac: string, deviceName: string | null) => void
+  onRegister: (device: DiscoveredSensor) => void
 }) {
   return (
     <div className="flex items-center gap-2 py-1.5">
@@ -749,27 +750,19 @@ function DiscoverRow({
         <span className="text-[13px] truncate block">{device.device_name ?? device.mac}</span>
         <span className="text-[11px] text-text-muted">{device.mac}</span>
       </div>
-      <Button size="sm" onClick={() => onRegister(device.mac, device.device_name)}>
+      <Button size="sm" onClick={() => onRegister(device)}>
         Register
       </Button>
     </div>
   )
 }
 
-function RegisterForm({
-  mac,
-  deviceName,
-  onClose,
-}: {
-  mac: string
-  deviceName: string | null
-  onClose: () => void
-}) {
+function RegisterForm({ device, onClose }: { device: DiscoveredSensor; onClose: () => void }) {
   const createSensor = useCreateSensor()
   const { data: sensorTypes } = useSensorTypes()
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
-  const [type, setType] = useState('')
+  const [type, setType] = useState(device.suggested_type ?? '')
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -792,8 +785,9 @@ function RegisterForm({
     }
     try {
       await createSensor.mutateAsync({
-        mac,
-        device_name: deviceName,
+        mac: device.mac,
+        device_name: device.device_name,
+        hardware_type: device.sensor_type,
         name: trimmed,
         location: location.trim() || null,
         type: resolvedType,
@@ -806,7 +800,7 @@ function RegisterForm({
 
   return (
     <div className="border border-border rounded p-3 space-y-2">
-      <div className="text-[12px] text-text-muted">Registering {mac}</div>
+      <div className="text-[12px] text-text-muted">Registering {device.mac}</div>
       <Input
         ref={inputRef}
         value={name}
@@ -885,9 +879,7 @@ function SensorManager() {
   const updateSensor = useUpdateSensor()
   const deleteSensorMut = useDeleteSensor()
   const [deleteTarget, setDeleteTarget] = useState<Sensor | null>(null)
-  const [registering, setRegistering] = useState<{ mac: string; deviceName: string | null } | null>(
-    null
-  )
+  const [registering, setRegistering] = useState<DiscoveredSensor | null>(null)
 
   const discoveredMacs = discovery.data?.data ?? []
   const discoveryLoaded = discovery.isSuccess
@@ -993,21 +985,13 @@ function SensorManager() {
             {unregistered.length > 0 && (
               <div className="mt-2 divide-y divide-border">
                 {unregistered.map(d => (
-                  <DiscoverRow
-                    key={d.mac}
-                    device={d}
-                    onRegister={(mac, deviceName) => setRegistering({ mac, deviceName })}
-                  />
+                  <DiscoverRow key={d.mac} device={d} onRegister={setRegistering} />
                 ))}
               </div>
             )}
             {registering && (
               <div className="mt-2">
-                <RegisterForm
-                  mac={registering.mac}
-                  deviceName={registering.deviceName}
-                  onClose={() => setRegistering(null)}
-                />
+                <RegisterForm device={registering} onClose={() => setRegistering(null)} />
               </div>
             )}
           </div>

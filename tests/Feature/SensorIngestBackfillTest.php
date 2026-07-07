@@ -172,6 +172,106 @@ class SensorIngestBackfillTest extends TestCase
     }
 
     /** @return void */
+    public function test_ingests_legacy_flat_readings_shape(): void
+    {
+        Sensor::create([
+            'mac'         => self::MAC,
+            'device_name' => 'Test Sensor',
+            'name'        => 'Test',
+            'color'       => 'var(--series-1)',
+        ]);
+
+        Http::fake(function (Request $request) {
+            if (! str_contains($request->url(), '/api/v1/readings')) {
+                return Http::response('', 404);
+            }
+
+            return Http::response([
+                'mac'      => self::MAC,
+                'count'    => 2,
+                'has_more' => false,
+                'readings' => [
+                    [
+                        'temperature' => 21.5,
+                        'humidity'    => 48.5,
+                        'battery'     => 90,
+                        'rssi'        => -55,
+                        'recorded_at' => $this->startTime->format('Y-m-d\TH:i:s\Z'),
+                    ],
+                    [
+                        'temperature' => 21.7,
+                        'humidity'    => 48.7,
+                        'battery'     => 90,
+                        'rssi'        => -55,
+                        'recorded_at' => $this->startTime->copy()->addMinute()->format('Y-m-d\TH:i:s\Z'),
+                    ],
+                ],
+            ]);
+        });
+
+        $this->artisan('sensors:ingest')->assertExitCode(0);
+
+        $this->assertSame(2, SensorReading::count());
+
+        $reading = SensorReading::query()->orderBy('recorded_at')->first();
+        $this->assertEquals(21.5, $reading->data['temperature']);
+        $this->assertEquals(48.5, $reading->data['humidity']);
+        $this->assertSame(90, $reading->data['battery']);
+    }
+
+    /** @return void */
+    public function test_unreadable_readings_are_skipped_and_other_sensors_still_ingest(): void
+    {
+        $misregistered = Sensor::create([
+            'mac'         => '11:22:33:44:55:66',
+            'device_name' => 'ESP32 light',
+            'name'        => 'Light',
+            'color'       => 'var(--series-2)',
+        ]);
+        $healthy = Sensor::create([
+            'mac'         => self::MAC,
+            'device_name' => 'Test Sensor',
+            'name'        => 'Test',
+            'color'       => 'var(--series-1)',
+        ]);
+
+        Http::fake(function (Request $request) {
+            if (! str_contains($request->url(), '/api/v1/readings')) {
+                return Http::response('', 404);
+            }
+
+            parse_str(parse_url($request->url(), PHP_URL_QUERY) ?? '', $params);
+
+            if (($params['mac'] ?? '') === '11:22:33:44:55:66') {
+                // A photosensor payload for a sensor registered as a hygrometer.
+                return Http::response([
+                    'mac'      => '11:22:33:44:55:66',
+                    'count'    => 1,
+                    'has_more' => false,
+                    'readings' => [
+                        [
+                            'sensor_type'  => 'esp32_veml7700',
+                            'measurements' => ['lux' => 12000],
+                            'battery'      => 88,
+                            'rssi'         => -50,
+                            'recorded_at'  => $this->startTime->format('Y-m-d\TH:i:s\Z'),
+                        ],
+                    ],
+                ]);
+            }
+
+            return $this->gondolaResponse($request);
+        });
+
+        $this->artisan('sensors:ingest')
+            ->expectsOutputToContain('Skipped 1 unreadable readings for 11:22:33:44:55:66.')
+            ->assertExitCode(0);
+
+        $this->assertSame(0, SensorReading::where('sensor_id', $misregistered->id)->count());
+        $this->assertSame(250, SensorReading::where('sensor_id', $healthy->id)->count());
+    }
+
+    /** @return void */
     private function fakeGondolaHealthy(): void
     {
         Http::fake(fn (Request $request) => $this->gondolaResponse($request));
@@ -199,11 +299,22 @@ class SensorIngestBackfillTest extends TestCase
         $page    = array_slice($remaining, 0, 100);
         $hasMore = count($remaining) > 100;
 
+        // The fake speaks the gateway's current nested shape; the legacy flat
+        // shape is covered by its own test.
         return Http::response([
             'mac'      => self::MAC,
             'count'    => count($page),
             'has_more' => $hasMore,
-            'readings' => $page,
+            'readings' => array_map(static fn (array $row) => [
+                'sensor_type'  => 'govee_h5075',
+                'measurements' => [
+                    'temperature' => $row['temperature'],
+                    'humidity'    => $row['humidity'],
+                ],
+                'battery'     => $row['battery'],
+                'rssi'        => $row['rssi'],
+                'recorded_at' => $row['recorded_at'],
+            ], $page),
         ]);
     }
 }

@@ -143,9 +143,11 @@ class SensorController extends Controller
             $reading = $device->lastReading;
 
             return [
-                'mac'          => $device->mac,
-                'device_name'  => $device->deviceName,
-                'last_reading' => $reading ? array_merge(
+                'mac'            => $device->mac,
+                'device_name'    => $device->deviceName,
+                'sensor_type'    => $device->sensorType,
+                'suggested_type' => SensorType::forHardware($device->sensorType)?->value,
+                'last_reading'   => $reading ? array_merge(
                     $reading->data,
                     ['recorded_at' => $reading->recordedAt->format('Y-m-d\TH:i:s\Z')],
                 ) : null,

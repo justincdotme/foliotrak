@@ -62,11 +62,8 @@ final class GondolaAdapter implements SensorReadingSource
                 $recordedAt = new DateTimeImmutable($row['recorded_at']);
                 $from       = $recordedAt->format('Y-m-d\TH:i:s\Z');
 
-                $data = $row;
-                unset($data['recorded_at']);
-
                 yield new SensorReading(
-                    data: $data,
+                    data: $this->readingData($row),
                     recordedAt: $recordedAt,
                 );
             }
@@ -100,14 +97,11 @@ final class GondolaAdapter implements SensorReadingSource
             $lastReading = null;
 
             if (isset($entry['last_reading'])) {
-                $lr         = $entry['last_reading'];
-                $recordedAt = new DateTimeImmutable($lr['recorded_at']);
-                $data       = $lr;
-                unset($data['recorded_at']);
+                $lr = $entry['last_reading'];
 
                 $lastReading = new SensorReading(
-                    data: $data,
-                    recordedAt: $recordedAt,
+                    data: $this->readingData($lr),
+                    recordedAt: new DateTimeImmutable($lr['recorded_at']),
                 );
             }
 
@@ -115,6 +109,7 @@ final class GondolaAdapter implements SensorReadingSource
                 mac: $entry['mac'],
                 deviceName: $entry['device_name'] ?? '',
                 lastReading: $lastReading,
+                sensorType: $entry['sensor_type'] ?? null,
             );
         }
 
@@ -190,6 +185,30 @@ final class GondolaAdapter implements SensorReadingSource
             uptimeSeconds: $health['uptime_seconds'] ?? null,
             error: null,
         );
+    }
+
+    /**
+     * Accepts both gateway response generations: the original flat shape, and
+     * the current one where values nest under a measurements dict beside a
+     * per-row sensor_type.
+     *
+     * @param array<string, mixed> $row
+     *
+     * @return array<string, mixed>
+     */
+    private function readingData(array $row): array
+    {
+        unset($row['recorded_at'], $row['sensor_type']);
+
+        $measurements = $row['measurements'] ?? null;
+
+        if (is_array($measurements)) {
+            unset($row['measurements']);
+
+            return array_merge($row, $measurements);
+        }
+
+        return $row;
     }
 
     /**

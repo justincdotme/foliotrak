@@ -24,11 +24,12 @@ class StoreSensorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'mac'         => ['required', 'string', Rule::unique('sensors', 'mac')],
-            'device_name' => ['nullable', 'string'],
-            'name'        => ['required', 'string', 'max:255'],
-            'location'    => ['nullable', 'string', 'max:255'],
-            'type'        => ['required', 'string', Rule::in(array_column(SensorType::cases(), 'value'))],
+            'mac'           => ['required', 'string', Rule::unique('sensors', 'mac')],
+            'device_name'   => ['nullable', 'string'],
+            'hardware_type' => ['nullable', 'string', 'max:255'],
+            'name'          => ['required', 'string', 'max:255'],
+            'location'      => ['nullable', 'string', 'max:255'],
+            'type'          => ['required', 'string', Rule::in(array_column(SensorType::cases(), 'value'))],
         ];
     }
 }
