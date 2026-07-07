@@ -3,6 +3,7 @@ import {
   computeTickInterval,
   describeCorrelation,
   filterByDateRange,
+  filterByWindow,
   pairsToHeatmapSeries,
   prettyVar,
   regression,
@@ -235,5 +236,47 @@ describe('filterByDateRange', () => {
     ]
     const result = filterByDateRange(records, r => r.created, '7d')
     expect(result.map(r => r.id)).toEqual([2])
+  })
+})
+
+describe('filterByWindow', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const items = [
+    { date: '2024-07-01', v: 1 },
+    { date: '2026-06-01', v: 2 },
+    { date: '2026-06-30', v: 3 },
+    { date: '2026-07-05', v: 4 },
+    { date: '2026-07-06', v: 5 },
+  ]
+
+  it('filters to the last day', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    expect(filterByWindow(items, i => i.date, 'day').map(i => i.v)).toEqual([5])
+  })
+
+  it('filters to the last week', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    expect(filterByWindow(items, i => i.date, 'week').map(i => i.v)).toEqual([3, 4, 5])
+  })
+
+  it('filters to the last month', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    expect(filterByWindow(items, i => i.date, 'month').map(i => i.v)).toEqual([3, 4, 5])
+  })
+
+  it('filters to the last year, excluding anything older', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    expect(filterByWindow(items, i => i.date, 'year').map(i => i.v)).toEqual([2, 3, 4, 5])
   })
 })
