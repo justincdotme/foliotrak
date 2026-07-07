@@ -1,24 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Parameter \#2 \$dto of method App\\Console\\Commands\\IngestSensorReadings\:\:persist\(\) expects App\\DTOs\\SensorReading, App\\Contracts\\SensorReading given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Console/Commands/IngestSensorReadings.php
-
-		-
-			message: '#^Method App\\Contracts\\SensorReadingSource\:\:discoverSensors\(\) has invalid return type App\\Contracts\\SensorDevice\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Contracts/SensorReadingSource.php
-
-		-
-			message: '#^Method App\\Contracts\\SensorReadingSource\:\:readingsSince\(\) has invalid return type App\\Contracts\\SensorReading\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Contracts/SensorReadingSource.php
-
-		-
 			message: '#^Parameter \#1 \$plants of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Plant\>, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Plant\> given\.$#'
 			identifier: argument.type
 			count: 1
@@ -35,24 +17,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/PlantTimelineController.php
-
-		-
-			message: '#^Access to property \$deviceName on an unknown class App\\Contracts\\SensorDevice\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Http/Controllers/SensorController.php
-
-		-
-			message: '#^Access to property \$lastReading on an unknown class App\\Contracts\\SensorDevice\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Http/Controllers/SensorController.php
-
-		-
-			message: '#^Access to property \$mac on an unknown class App\\Contracts\\SensorDevice\.$#'
-			identifier: class.notFound
-			count: 2
-			path: app/Http/Controllers/SensorController.php
 
 		-
 			message: '#^Iterating over an object of an unknown class App\\Http\\Controllers\\Collection\.$#'
@@ -734,6 +698,12 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$device_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SensorResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\SensorResource\:\:\$hardware_type\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Http/Resources/SensorResource.php
@@ -1505,6 +1475,12 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: tests/Feature/SendCareRemindersTest.php
+
+		-
+			message: '#^Property Tests\\Feature\\SensorDiscoveryTest\:\:\$user \(App\\Models\\User\) does not accept Database\\Factories\\User\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: tests/Feature/SensorDiscoveryTest.php
 
 		-
 			message: '#^Property Tests\\Feature\\SensorSnapshotTest\:\:\$user \(App\\Models\\User\) does not accept Database\\Factories\\User\.$#'

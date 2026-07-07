@@ -277,6 +277,7 @@ export const listSensorTypes = async (): Promise<SensorTypeOption[]> =>
 export interface SensorPayload {
   mac: string
   device_name?: string | null
+  hardware_type?: string | null
   name: string
   location?: string | null
   type: string

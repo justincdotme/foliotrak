@@ -6,6 +6,7 @@ namespace Tests\Unit\Services\Sensors;
 
 use App\Services\Sensors\Transformers\HygrometerTransformer;
 use App\Services\Sensors\ValueObjects\HygrometerReading;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -97,6 +98,14 @@ class HygrometerTransformerTest extends TestCase
         $this->assertSame((float) $rawData['humidity'], $reading->humidity);
         $this->assertSame(isset($rawData['battery']) ? (int) $rawData['battery'] : null, $reading->battery);
         $this->assertSame(isset($rawData['rssi']) ? (int) $rawData['rssi'] : null, $reading->rssi);
+    }
+
+    /** @return void */
+    public function test_normalize_rejects_readings_missing_required_keys(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->transformer->normalize(['lux' => 12000, 'battery' => 90]);
     }
 
     /** @return void */

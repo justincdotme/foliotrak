@@ -12,6 +12,22 @@ enum SensorType: string
     case Hygrometer = 'hygrometer';
 
     /**
+     * Maps the gateway's hardware identity to the semantic type it measures,
+     * so registration can preselect the right type for known devices.
+     *
+     * @param string|null $hardwareType
+     *
+     * @return self|null
+     */
+    public static function forHardware(?string $hardwareType): ?self
+    {
+        return match ($hardwareType) {
+            'govee_h5075' => self::Hygrometer,
+            default       => null,
+        };
+    }
+
+    /**
      * @return string
      */
     public function label(): string
