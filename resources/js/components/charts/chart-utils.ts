@@ -29,6 +29,32 @@ export function filterByDateRange<T>(
   return data.filter(item => new Date(dateAccessor(item)) >= cutoff)
 }
 
+export type GroupChartWindow = 'day' | 'week' | 'month' | 'year'
+
+export const GROUP_CHART_WINDOW_OPTIONS: Array<{ value: string; label: string; dusk?: string }> = [
+  { value: 'day', label: 'Day', dusk: 'group-window-day' },
+  { value: 'week', label: 'Week', dusk: 'group-window-week' },
+  { value: 'month', label: 'Month', dusk: 'group-window-month' },
+  { value: 'year', label: 'Year', dusk: 'group-window-year' },
+]
+
+const GROUP_CHART_WINDOW_DAYS: Record<GroupChartWindow, number> = {
+  day: 1,
+  week: 7,
+  month: 30,
+  year: 365,
+}
+
+export function filterByWindow<T>(
+  data: T[],
+  dateAccessor: (item: T) => string,
+  window: GroupChartWindow
+): T[] {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - GROUP_CHART_WINDOW_DAYS[window])
+  return data.filter(item => new Date(dateAccessor(item)) >= cutoff)
+}
+
 // Keeps tick labels from overlapping by skipping intermediate ticks when the
 // dataset is wider than ~8 points.
 export function computeTickInterval(dataLength: number): number {
