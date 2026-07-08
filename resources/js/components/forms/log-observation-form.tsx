@@ -99,6 +99,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const touchedRef = useRef<Set<string>>(new Set())
+  const createdEventIdRef = useRef<number | null>(null)
   const [sensorFilled, setSensorFilled] = useState<Set<string>>(new Set())
 
   const healthStr = watch('overall_health')
@@ -167,7 +168,29 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
     setError,
   })
 
+  const attachPhotoAndFinish = async (careEventId: number) => {
+    if (photoFile) {
+      try {
+        await uploadEventPhoto.mutateAsync({ file: photoFile, careEventId })
+      } catch (err) {
+        setPhotoError(err instanceof Error ? err.message : 'Photo upload failed')
+        return
+      }
+    }
+    onDone()
+  }
+
   const onSubmit = async (v: z.infer<typeof schema>) => {
+    setPhotoError(null)
+
+    // A newly created observation must not be recreated on retry; only the
+    // photo upload needs another attempt. Edits always resubmit since
+    // updateFn re-saves the same row rather than duplicating it.
+    if (!event && createdEventIdRef.current != null) {
+      await attachPhotoAndFinish(createdEventIdRef.current)
+      return
+    }
+
     const payload = {
       occurred_at: toIso(v.occurred_at),
       overall_health: v.overall_health ? Number(v.overall_health) : null,
@@ -187,15 +210,8 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
     }
 
     await submit(payload, async saved => {
-      if (photoFile) {
-        try {
-          await uploadEventPhoto.mutateAsync({ file: photoFile, careEventId: saved.id })
-        } catch (err) {
-          setPhotoError(err instanceof Error ? err.message : 'Photo upload failed')
-          return
-        }
-      }
-      onDone()
+      if (!event) createdEventIdRef.current = saved.id
+      await attachPhotoAndFinish(saved.id)
     })
   }
 

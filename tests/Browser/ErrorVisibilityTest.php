@@ -12,6 +12,8 @@ beforeEach(function (): void {
 });
 
 /**
+ * Non-image file that triggers a server-side validation rejection.
+ *
  * @return string
  */
 function invalidPhotoFixture(): string
@@ -87,4 +89,24 @@ it('shows a visible error when a photo upload uses an invalid file', function ()
             ->waitFor('[role="alert"]')
             ->assertVisible('[role="alert"]');
     });
+});
+
+it('does not create a duplicate observation when resubmitting after a photo upload failure', function (): void {
+    $user  = User::factory()->create();
+    $plant = Plant::factory()->create(['common_name' => 'Dusk Retry Plant']);
+
+    $this->browse(function (Browser $browser) use ($user, $plant): void {
+        $browser->loginAs($user)
+            ->visit("/plants/{$plant->id}")
+            ->waitFor('@log-observation')
+            ->click('@log-observation')
+            ->waitFor('@log-modal')
+            ->attach('@photo-attach-input', invalidPhotoFixture())
+            ->click('@care-form-submit')
+            ->waitFor('[role="alert"]')
+            ->click('@care-form-submit')
+            ->waitFor('[dusk="care-form-submit"]:not([disabled])');
+    });
+
+    expect($plant->observationEvents()->count())->toBe(1);
 });
