@@ -33,7 +33,7 @@ final class GondolaAdapter implements SensorReadingSource
 
         do {
             try {
-                $response = $this->client()
+                $response = $this->client('GET', '/api/v1/readings')
                     ->get($this->url('/api/v1/readings'), [
                         'mac'  => $mac,
                         'from' => $from,
@@ -82,7 +82,7 @@ final class GondolaAdapter implements SensorReadingSource
         }
 
         try {
-            $response = $this->client()->get($this->url('/api/v1/sensors'));
+            $response = $this->client('GET', '/api/v1/sensors')->get($this->url('/api/v1/sensors'));
         } catch (ConnectionException) {
             return [];
         }
@@ -155,7 +155,7 @@ final class GondolaAdapter implements SensorReadingSource
         }
 
         try {
-            $sensorsResponse = $this->client()->get($this->url('/api/v1/sensors'));
+            $sensorsResponse = $this->client('GET', '/api/v1/sensors')->get($this->url('/api/v1/sensors'));
         } catch (ConnectionException $e) {
             return new SensorGatewayStatus(
                 status: 'unreachable',
@@ -231,11 +231,32 @@ final class GondolaAdapter implements SensorReadingSource
     }
 
     /**
+     * @param string $method
+     * @param string $path
+     *
+     * @return array<string, string>
+     */
+    private function hmacHeaders(string $method, string $path): array
+    {
+        $timestamp = (string) time();
+        $canonical = "{$method}\n{$path}\n{$timestamp}";
+        $signature = hash_hmac('sha256', $canonical, config('sensors.api_key'));
+
+        return [
+            'X-Signature' => $signature,
+            'X-Timestamp' => $timestamp,
+        ];
+    }
+
+    /**
+     * @param string $method
+     * @param string $path
+     *
      * @return PendingRequest
      */
-    private function client(): PendingRequest
+    private function client(string $method = 'GET', string $path = '/'): PendingRequest
     {
-        return Http::withHeaders(['X-API-Key' => config('sensors.api_key')])
+        return Http::withHeaders($this->hmacHeaders($method, $path))
             ->withOptions(['verify' => config('sensors.verify')]);
     }
 }
