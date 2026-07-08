@@ -71,10 +71,46 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
 
   return (
     <ChartShell
-      title="Care timeline overlay"
+      title="Health vs. care events"
       n={d.length}
       height={200}
-      note="Care events plotted against the health line. Small samples; read as context, not proof."
+      note="Watering, fertilizing, repotting, and moves plotted against the health line, to see whether one coincided with a change. Small samples; read as context, not proof."
+      legend={
+        <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-text-muted">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full" style={{ background: 'var(--primary)' }} />
+            Health
+          </span>
+          <span className="flex items-center gap-1">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ background: CARE_META.watering.color }}
+            />
+            Watering
+          </span>
+          <span className="flex items-center gap-1">
+            <span
+              className="w-2 h-2 rotate-45"
+              style={{ background: CARE_META.fertilizing.color }}
+            />
+            Fertilizing
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2" style={{ background: CARE_META.repotting.color }} />
+            Repotting
+          </span>
+          <span className="flex items-center gap-1">
+            <span
+              className="w-2 h-2"
+              style={{
+                background: CARE_META.relocation.color,
+                clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+              }}
+            />
+            Relocation
+          </span>
+        </div>
+      }
     >
       <div dusk="timeline-overlay" style={{ height: '100%' }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -157,35 +193,6 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
             />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
-
-      <div className="flex flex-wrap gap-3 mt-2 text-[11px] text-text-muted">
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full" style={{ background: 'var(--primary)' }} />
-          Health
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full" style={{ background: CARE_META.watering.color }} />
-          Watering
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rotate-45" style={{ background: CARE_META.fertilizing.color }} />
-          Fertilizing
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2" style={{ background: CARE_META.repotting.color }} />
-          Repotting
-        </span>
-        <span className="flex items-center gap-1">
-          <span
-            className="w-2 h-2"
-            style={{
-              background: CARE_META.relocation.color,
-              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-            }}
-          />
-          Relocation
-        </span>
       </div>
     </ChartShell>
   )
