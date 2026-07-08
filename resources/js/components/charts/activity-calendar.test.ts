@@ -23,10 +23,19 @@ describe('eventsToCalendar', () => {
 })
 
 describe('calendarRange', () => {
-  it('spans 60 days ending on the given day', () => {
+  it('spans 60 days ending on the given day, with `to` a day past it', () => {
+    // nivo's TimeRange passes `from`/`to` to d3.timeDays, which excludes the
+    // `to` bound, so today only renders if `to` is tomorrow.
     const { from, to } = calendarRange(new Date('2026-06-26T12:00:00.000Z'))
 
-    expect(to).toBe('2026-06-26')
-    expect(from).toBe('2026-04-27')
+    expect(to).toBe('2026-06-27')
+    expect(from).toBe('2026-04-28')
+  })
+
+  it('keeps today strictly before `to`, since nivo excludes the `to` day itself', () => {
+    const today = new Date('2026-06-26T12:00:00.000Z')
+    const { to } = calendarRange(today)
+
+    expect(new Date(`${to}T00:00:00.000Z`).getTime()).toBeGreaterThan(today.getTime())
   })
 })

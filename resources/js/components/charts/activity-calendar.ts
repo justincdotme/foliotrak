@@ -16,7 +16,12 @@ export function eventsToCalendar(events: CareEvent[]): Array<{ day: string; valu
 }
 
 // Rolling 60-day window keeps the calendar dense for the short histories a
-// household tracker holds.
+// household tracker holds. `to` is bumped a day past today because nivo's
+// TimeRange treats it as an exclusive bound (d3.timeDays), so today's cell
+// would otherwise never render.
 export function calendarRange(now: Date = new Date()): { from: string; to: string } {
-  return { from: toYmd(new Date(now.getTime() - 60 * DAY)), to: toYmd(now) }
+  return {
+    from: toYmd(new Date(now.getTime() - 59 * DAY)),
+    to: toYmd(new Date(now.getTime() + DAY)),
+  }
 }

@@ -8,9 +8,10 @@ interface ChartShellProps {
   children: ReactNode
   note?: string
   height?: number
+  legend?: ReactNode
 }
 
-export function ChartShell({ title, n, children, note, height = 180 }: ChartShellProps) {
+export function ChartShell({ title, n, children, note, height = 180, legend }: ChartShellProps) {
   return (
     <Card className="p-4">
       <div className="flex items-baseline gap-2 mb-3">
@@ -18,6 +19,7 @@ export function ChartShell({ title, n, children, note, height = 180 }: ChartShel
         {n != null && <span className="text-[11px] tnum text-text-subtle ml-auto">n = {n}</span>}
       </div>
       <div style={{ height }}>{children}</div>
+      {legend}
       {note && (
         <div className="mt-2 text-[11px] text-text-subtle flex items-center gap-1.5">
           <Info size={12} />
