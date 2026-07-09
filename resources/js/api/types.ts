@@ -493,8 +493,9 @@ export interface SensorReadingsResponse {
 }
 
 export interface SensorSnapshot {
-  ambient_temp_c: number
-  ambient_humidity_pct: number
+  ambient_temp_c?: number
+  ambient_humidity_pct?: number
+  ambient_lux?: number
   sensor_count: number
   matched_at?: string
 }

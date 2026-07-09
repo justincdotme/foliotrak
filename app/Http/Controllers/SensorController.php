@@ -13,12 +13,14 @@ use App\Models\Plant;
 use App\Models\Sensor;
 use App\Models\SensorReading;
 use App\Services\Sensors\Transformers\HygrometerTransformer;
+use App\Services\Sensors\Transformers\LuxTransformer;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Throwable;
 
 class SensorController extends Controller
@@ -275,14 +277,72 @@ class SensorController extends Controller
             ? Carbon::parse($request->query('at'))
             : Carbon::now();
 
-        $sensorIds = $plant->sensors()
+        $hygroIds = $plant->sensors()
             ->where('type', SensorType::Hygrometer)
             ->pluck('sensors.id');
 
-        if ($sensorIds->isEmpty()) {
+        $luxIds = $plant->sensors()
+            ->where('type', SensorType::LightSensor)
+            ->pluck('sensors.id');
+
+        if ($hygroIds->isEmpty() && $luxIds->isEmpty()) {
             return response()->noContent();
         }
 
+        $hygroReadings = $this->closestReadings($hygroIds, $at);
+        $luxReadings   = $this->closestReadings($luxIds, $at);
+
+        $allReadings = $hygroReadings->merge($luxReadings);
+
+        if ($allReadings->isEmpty()) {
+            return response()->noContent();
+        }
+
+        $response = ['sensor_count' => $allReadings->count()];
+
+        if ($hygroReadings->isNotEmpty()) {
+            $transformer = new HygrometerTransformer;
+
+            $response['ambient_temp_c'] = (float) number_format(
+                $hygroReadings->avg(fn ($r) => $transformer->hydrate($r->data)->temperature),
+                1,
+                '.',
+                '',
+            );
+            $response['ambient_humidity_pct'] = (float) number_format(
+                $hygroReadings->avg(fn ($r) => $transformer->hydrate($r->data)->humidity),
+                1,
+                '.',
+                '',
+            );
+        }
+
+        if ($luxReadings->isNotEmpty()) {
+            $luxTransformer = new LuxTransformer;
+
+            $response['ambient_lux'] = (float) number_format(
+                $luxReadings->avg(fn ($r) => $luxTransformer->hydrate($r->data)->lux),
+                2,
+                '.',
+                '',
+            );
+        }
+
+        if ($allReadings->count() === 1) {
+            $response['matched_at'] = $allReadings->first()->recorded_at->format('Y-m-d\TH:i:s\Z');
+        }
+
+        return response()->json(['data' => $response], options: JSON_PRESERVE_ZERO_FRACTION);
+    }
+
+    /**
+     * @param Collection<int, int> $sensorIds
+     * @param Carbon               $at
+     *
+     * @return Collection<int, SensorReading>
+     */
+    private function closestReadings(Collection $sensorIds, Carbon $at): Collection
+    {
         $readings = collect();
 
         foreach ($sensorIds as $sensorId) {
@@ -322,32 +382,6 @@ class SensorController extends Controller
             $readings->push($closest);
         }
 
-        if ($readings->isEmpty()) {
-            return response()->noContent();
-        }
-
-        $transformer = new HygrometerTransformer;
-
-        $response = [
-            'ambient_temp_c' => (float) number_format(
-                $readings->avg(fn ($r) => $transformer->hydrate($r->data)->temperature),
-                1,
-                '.',
-                '',
-            ),
-            'ambient_humidity_pct' => (float) number_format(
-                $readings->avg(fn ($r) => $transformer->hydrate($r->data)->humidity),
-                1,
-                '.',
-                '',
-            ),
-            'sensor_count' => $readings->count(),
-        ];
-
-        if ($readings->count() === 1) {
-            $response['matched_at'] = $readings->first()->recorded_at->format('Y-m-d\TH:i:s\Z');
-        }
-
-        return response()->json(['data' => $response], options: JSON_PRESERVE_ZERO_FRACTION);
+        return $readings;
     }
 }

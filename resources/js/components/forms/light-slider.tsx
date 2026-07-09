@@ -1,14 +1,26 @@
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Radar, Sun } from 'lucide-react'
 import { Field } from '@/components/app/field'
 
 interface LightSliderProps {
   value: number
   onChange: (value: number) => void
+  sensorFilled?: boolean
 }
 
-export function LightSlider({ value, onChange }: LightSliderProps) {
+export function LightSlider({ value, onChange, sensorFilled }: LightSliderProps) {
   return (
-    <Field label="Light level" hint={<span dusk="light-value">{value} / 10</span>}>
+    <Field
+      label="Light level"
+      hint={
+        sensorFilled ? (
+          <span className="inline-flex items-center gap-1" title="From sensor">
+            {value} / 10 <Radar size={12} />
+          </span>
+        ) : (
+          <span dusk="light-value">{value} / 10</span>
+        )
+      }
+    >
       <div className="flex items-center gap-3">
         <Moon size={18} className="shrink-0" style={{ color: 'var(--info)' }} />
         <input

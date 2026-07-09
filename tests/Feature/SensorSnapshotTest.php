@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\SensorType;
 use App\Models\Plant;
 use App\Models\Sensor;
 use App\Models\SensorReading;
@@ -120,5 +121,69 @@ class SensorSnapshotTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.ambient_temp_c', 21.0)
             ->assertJsonPath('data.sensor_count', 1);
+    }
+
+    /** @return void */
+    public function test_returns_ambient_lux_for_light_sensor(): void
+    {
+        $plant  = Plant::factory()->create();
+        $sensor = Sensor::create([
+            'mac'   => 'AA:BB:CC:DD:EE:10',
+            'name'  => 'Window lux',
+            'color' => 'var(--series-1)',
+            'type'  => SensorType::LightSensor,
+        ]);
+        $plant->sensors()->attach($sensor);
+
+        SensorReading::create([
+            'sensor_id'   => $sensor->id,
+            'data'        => ['lux' => 34.38, 'white' => 827, 'als' => 597],
+            'recorded_at' => '2026-07-05 14:00:00',
+        ]);
+
+        $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot?at=2026-07-05T14:02:00Z')
+            ->assertOk()
+            ->assertJsonPath('data.ambient_lux', 34.38)
+            ->assertJsonPath('data.sensor_count', 1)
+            ->assertJsonMissingPath('data.ambient_temp_c')
+            ->assertJsonMissingPath('data.ambient_humidity_pct');
+    }
+
+    /** @return void */
+    public function test_returns_both_hygrometer_and_lux_data_for_mixed_sensors(): void
+    {
+        $plant = Plant::factory()->create();
+        $hygro = Sensor::create([
+            'mac'   => 'AA:BB:CC:DD:EE:20',
+            'name'  => 'Desk hygro',
+            'color' => 'var(--series-1)',
+            'type'  => SensorType::Hygrometer,
+        ]);
+        $lux = Sensor::create([
+            'mac'   => 'AA:BB:CC:DD:EE:21',
+            'name'  => 'Window lux',
+            'color' => 'var(--series-2)',
+            'type'  => SensorType::LightSensor,
+        ]);
+        $plant->sensors()->attach([$hygro->id, $lux->id]);
+
+        SensorReading::create([
+            'sensor_id'   => $hygro->id,
+            'data'        => ['temperature' => 22.0, 'humidity' => 60.0],
+            'recorded_at' => '2026-07-05 14:00:00',
+        ]);
+        SensorReading::create([
+            'sensor_id'   => $lux->id,
+            'data'        => ['lux' => 500.0, 'white' => 1200, 'als' => 900],
+            'recorded_at' => '2026-07-05 14:01:00',
+        ]);
+
+        $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot?at=2026-07-05T14:00:30Z')
+            ->assertOk()
+            ->assertJsonPath('data.ambient_temp_c', 22.0)
+            ->assertJsonPath('data.ambient_humidity_pct', 60.0)
+            ->assertJsonPath('data.ambient_lux', 500.0)
+            ->assertJsonPath('data.sensor_count', 2)
+            ->assertJsonMissingPath('data.matched_at');
     }
 }
