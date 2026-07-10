@@ -162,6 +162,7 @@ export interface ObservationPayload {
   weight?: WeightInput | null
   ambient_humidity_pct?: number | null
   ambient_temp?: number | null
+  ambient_lux?: number | null
   soil_moisture_relative?: 'dry' | 'moist' | 'wet' | null
   soil_moisture_precise?: number | null
   symptom_ids?: number[]

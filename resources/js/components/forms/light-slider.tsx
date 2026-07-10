@@ -2,17 +2,21 @@ import { Moon, Radar, Sun } from 'lucide-react'
 import { Field } from '@/components/app/field'
 
 interface LightSliderProps {
-  value: number
+  value: number | null
   onChange: (value: number) => void
   sensorFilled?: boolean
 }
 
 export function LightSlider({ value, onChange, sensorFilled }: LightSliderProps) {
+  const active = value != null
+
   return (
     <Field
       label="Light level"
       hint={
-        sensorFilled ? (
+        !active ? (
+          'Not set'
+        ) : sensorFilled ? (
           <span className="inline-flex items-center gap-1" title="From sensor">
             {value} / 10 <Radar size={12} />
           </span>
@@ -28,9 +32,9 @@ export function LightSlider({ value, onChange, sensorFilled }: LightSliderProps)
           min={0}
           max={10}
           step={1}
-          value={value}
+          value={value ?? 5}
           onChange={e => onChange(Number(e.target.value))}
-          className="flex-1"
+          className={`flex-1${!active ? ' opacity-30' : ''}`}
           aria-label="Light level"
           dusk="light-slider"
         />

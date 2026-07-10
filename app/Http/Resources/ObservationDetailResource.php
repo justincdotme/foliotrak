@@ -36,6 +36,7 @@ class ObservationDetailResource extends JsonResource
             'ambient_temp_display' => $this->ambient_temp_c !== null
                 ? Temperature::fromCelsius((float) $this->ambient_temp_c)->toDisplay($this->temperatureUnit())
                 : null,
+            'ambient_lux'            => $this->ambient_lux,
             'temperature_unit'       => $this->temperatureUnit(),
             'soil_moisture_relative' => $this->soil_moisture_relative?->value,
             'soil_moisture_precise'  => $this->soil_moisture_precise,

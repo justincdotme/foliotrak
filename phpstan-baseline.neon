@@ -439,6 +439,12 @@ parameters:
 			path: app/Http/Resources/ObservationDetailResource.php
 
 		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$ambient_lux\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ObservationDetailResource.php
+
+		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\ObservationDetailResource\:\:\$ambient_temp_c\.$#'
 			identifier: property.notFound
 			count: 1
