@@ -3,13 +3,15 @@ import {
   createSensor,
   deleteSensor,
   discoverSensors,
+  getSensorCalibration,
   listSensors,
   listSensorTypes,
   testSensorConnection,
   updateSensor,
+  updateSensorCalibration,
 } from '@/api/client'
 import type { SensorPayload, SensorUpdatePayload } from '@/api/client'
-import type { Sensor } from '@/api/types'
+import type { Sensor, SensorCalibrationPoint } from '@/api/types'
 
 export function useSensors() {
   const query = useQuery({ queryKey: ['sensors'], queryFn: listSensors })
@@ -67,6 +69,24 @@ export function useDeleteSensor() {
       qc.setQueryData<Sensor[]>(['sensors'], old => (old ?? []).filter(s => s.id !== id))
       qc.invalidateQueries({ queryKey: ['plants'] })
       qc.invalidateQueries({ queryKey: ['sensor-readings'] })
+    },
+  })
+}
+
+export function useSensorCalibration(sensorId: number) {
+  return useQuery({
+    queryKey: ['sensors', sensorId, 'calibration'],
+    queryFn: () => getSensorCalibration(sensorId),
+  })
+}
+
+export function useUpdateSensorCalibration() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, points }: { id: number; points: SensorCalibrationPoint[] }) =>
+      updateSensorCalibration(id, points),
+    onSuccess: (calibration, { id }) => {
+      qc.setQueryData(['sensors', id, 'calibration'], calibration)
     },
   })
 }

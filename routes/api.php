@@ -14,6 +14,7 @@ use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\PlantController;
 use App\Http\Controllers\PlantRecommendationController;
 use App\Http\Controllers\PlantTimelineController;
+use App\Http\Controllers\SensorCalibrationController;
 use App\Http\Controllers\SensorController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SpeciesController;
@@ -62,4 +63,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::apiResource('sensors', SensorController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('plants/{plant}/sensor-readings', [SensorController::class, 'plantReadings']);
     Route::get('plants/{plant}/sensor-snapshot', [SensorController::class, 'snapshot']);
+    Route::get('sensors/{sensor}/calibration', [SensorCalibrationController::class, 'show']);
+    Route::put('sensors/{sensor}/calibration', [SensorCalibrationController::class, 'update']);
 });

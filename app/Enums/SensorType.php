@@ -7,11 +7,13 @@ namespace App\Enums;
 use App\Contracts\SensorTransformer;
 use App\Services\Sensors\Transformers\HygrometerTransformer;
 use App\Services\Sensors\Transformers\LuxTransformer;
+use App\Services\Sensors\Transformers\MoistureTransformer;
 
 enum SensorType: string
 {
     case Hygrometer  = 'hygrometer';
     case LightSensor = 'light_sensor';
+    case Moisture    = 'moisture';
 
     /**
      * Maps the gateway's hardware identity to the semantic type it measures,
@@ -24,9 +26,10 @@ enum SensorType: string
     public static function forHardware(?string $hardwareType): ?self
     {
         return match ($hardwareType) {
-            'govee_h5075' => self::Hygrometer,
-            'gondola_lux' => self::LightSensor,
-            default       => null,
+            'govee_h5075'      => self::Hygrometer,
+            'gondola_lux'      => self::LightSensor,
+            'gondola_moisture' => self::Moisture,
+            default            => null,
         };
     }
 
@@ -38,6 +41,7 @@ enum SensorType: string
         return match ($this) {
             self::Hygrometer  => 'Hygrometer',
             self::LightSensor => 'Light Sensor',
+            self::Moisture    => 'Soil Moisture',
         };
     }
 
@@ -49,6 +53,7 @@ enum SensorType: string
         return match ($this) {
             self::Hygrometer  => new HygrometerTransformer,
             self::LightSensor => new LuxTransformer,
+            self::Moisture    => new MoistureTransformer,
         };
     }
 }

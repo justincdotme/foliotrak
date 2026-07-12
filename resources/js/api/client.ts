@@ -18,6 +18,8 @@ import type {
   PlantTimeline,
   PlantWithTags,
   Sensor,
+  SensorCalibration,
+  SensorCalibrationPoint,
   SensorReadingsResponse,
   SensorSnapshot,
   SensorTypeOption,
@@ -331,3 +333,12 @@ export const fetchSensorSnapshot = async (
   if (res.status === 204) return null
   return (res.data as { data: SensorSnapshot }).data
 }
+
+export const getSensorCalibration = async (id: number): Promise<SensorCalibration> =>
+  unwrap(await api.get<{ data: SensorCalibration }>(`/api/sensors/${id}/calibration`))
+
+export const updateSensorCalibration = async (
+  id: number,
+  points: SensorCalibrationPoint[]
+): Promise<SensorCalibration> =>
+  unwrap(await api.put<{ data: SensorCalibration }>(`/api/sensors/${id}/calibration`, { points }))

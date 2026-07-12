@@ -50,6 +50,14 @@ class Sensor extends Model
     }
 
     /**
+     * @return HasMany<SensorCalibrationPoint, $this>
+     */
+    public function calibrationPoints(): HasMany
+    {
+        return $this->hasMany(SensorCalibrationPoint::class);
+    }
+
+    /**
      * @return array<string, class-string>
      */
     protected function casts(): array

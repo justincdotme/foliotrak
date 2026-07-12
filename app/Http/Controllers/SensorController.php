@@ -12,8 +12,10 @@ use App\Http\Resources\SensorResource;
 use App\Models\Plant;
 use App\Models\Sensor;
 use App\Models\SensorReading;
+use App\Services\Sensors\MoistureCalibration;
 use App\Services\Sensors\Transformers\HygrometerTransformer;
 use App\Services\Sensors\Transformers\LuxTransformer;
+use App\Services\Sensors\Transformers\MoistureTransformer;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -285,14 +287,19 @@ class SensorController extends Controller
             ->where('type', SensorType::LightSensor)
             ->pluck('sensors.id');
 
-        if ($hygroIds->isEmpty() && $luxIds->isEmpty()) {
+        $moistureIds = $plant->sensors()
+            ->where('type', SensorType::Moisture)
+            ->pluck('sensors.id');
+
+        if ($hygroIds->isEmpty() && $luxIds->isEmpty() && $moistureIds->isEmpty()) {
             return response()->noContent();
         }
 
-        $hygroReadings = $this->closestReadings($hygroIds, $at);
-        $luxReadings   = $this->closestReadings($luxIds, $at);
+        $hygroReadings    = $this->closestReadings($hygroIds, $at);
+        $luxReadings      = $this->closestReadings($luxIds, $at);
+        $moistureReadings = $this->closestReadings($moistureIds, $at);
 
-        $allReadings = $hygroReadings->merge($luxReadings);
+        $allReadings = $hygroReadings->merge($luxReadings)->merge($moistureReadings);
 
         if ($allReadings->isEmpty()) {
             return response()->noContent();
@@ -326,6 +333,21 @@ class SensorController extends Controller
                 '.',
                 '',
             );
+        }
+
+        if ($moistureReadings->isNotEmpty()) {
+            $moistureTransformer = new MoistureTransformer;
+
+            $positions = $moistureReadings
+                ->map(fn (SensorReading $reading): ?int => MoistureCalibration::scale(
+                    (float) $moistureTransformer->hydrate($reading->data)->moisture,
+                    MoistureCalibration::effectivePoints($reading->sensor),
+                ))
+                ->filter();
+
+            if ($positions->isNotEmpty()) {
+                $response['soil_moisture_precise'] = (int) round((float) $positions->avg());
+            }
         }
 
         if ($allReadings->count() === 1) {

@@ -186,4 +186,94 @@ class SensorSnapshotTest extends TestCase
             ->assertJsonPath('data.sensor_count', 2)
             ->assertJsonMissingPath('data.matched_at');
     }
+
+    /** @return void */
+    public function test_returns_calibrated_soil_moisture_for_moisture_sensor(): void
+    {
+        $plant  = Plant::factory()->create();
+        $sensor = Sensor::create([
+            'mac'   => 'AC:A7:04:BC:A5:62',
+            'name'  => 'Monstera probe',
+            'color' => 'var(--series-3)',
+            'type'  => SensorType::Moisture,
+        ]);
+        $plant->sensors()->attach($sensor);
+
+        $sensor->calibrationPoints()->createMany([
+            ['position' => 1, 'raw_value' => 3100],
+            ['position' => 5, 'raw_value' => 2200],
+            ['position' => 10, 'raw_value' => 1300],
+        ]);
+
+        SensorReading::create([
+            'sensor_id'   => $sensor->id,
+            'data'        => ['moisture' => 2650, 'rssi' => -75],
+            'recorded_at' => '2026-07-05 14:00:00',
+        ]);
+
+        $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot?at=2026-07-05T14:02:00Z')
+            ->assertOk()
+            ->assertJsonPath('data.soil_moisture_precise', 3)
+            ->assertJsonPath('data.sensor_count', 1)
+            ->assertJsonMissingPath('data.ambient_lux');
+    }
+
+    /** @return void */
+    public function test_soil_moisture_falls_back_to_the_hardware_range(): void
+    {
+        $plant  = Plant::factory()->create();
+        $sensor = Sensor::create([
+            'mac'   => 'AC:A7:04:BC:A5:62',
+            'name'  => 'Monstera probe',
+            'color' => 'var(--series-3)',
+            'type'  => SensorType::Moisture,
+        ]);
+        $plant->sensors()->attach($sensor);
+
+        // With no saved anchors the hardware envelope applies (1 => 4095,
+        // 5 => 2048, 10 => 0), so 2975 interpolates to 3.
+        SensorReading::create([
+            'sensor_id'   => $sensor->id,
+            'data'        => ['moisture' => 2975],
+            'recorded_at' => '2026-07-05 14:00:00',
+        ]);
+
+        $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot?at=2026-07-05T14:02:00Z')
+            ->assertOk()
+            ->assertJsonPath('data.soil_moisture_precise', 3)
+            ->assertJsonPath('data.sensor_count', 1);
+    }
+
+    /** @return void */
+    public function test_returns_hygrometer_and_moisture_data_for_mixed_sensors(): void
+    {
+        $plant = Plant::factory()->create();
+        $hygro = Sensor::create([
+            'mac'   => 'AA:BB:CC:DD:EE:20',
+            'name'  => 'Desk hygro',
+            'color' => 'var(--series-1)',
+            'type'  => SensorType::Hygrometer,
+        ]);
+        $probe = Sensor::create([
+            'mac'   => 'AC:A7:04:BC:A5:62',
+            'name'  => 'Monstera probe',
+            'color' => 'var(--series-3)',
+            'type'  => SensorType::Moisture,
+        ]);
+        $plant->sensors()->attach([$hygro->id, $probe->id]);
+
+        $probe->calibrationPoints()->createMany([
+            ['position' => 1, 'raw_value' => 3100],
+            ['position' => 10, 'raw_value' => 1300],
+        ]);
+
+        SensorReading::create(['sensor_id' => $hygro->id, 'data' => ['temperature' => 22.0, 'humidity' => 60.0], 'recorded_at' => '2026-07-05 14:00:00']);
+        SensorReading::create(['sensor_id' => $probe->id, 'data' => ['moisture' => 2200], 'recorded_at' => '2026-07-05 14:01:00']);
+
+        $this->getJson('/api/plants/' . $plant->id . '/sensor-snapshot?at=2026-07-05T14:00:30Z')
+            ->assertOk()
+            ->assertJsonPath('data.ambient_temp_c', 22.0)
+            ->assertJsonPath('data.soil_moisture_precise', 6)
+            ->assertJsonPath('data.sensor_count', 2);
+    }
 }

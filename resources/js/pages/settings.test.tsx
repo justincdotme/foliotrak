@@ -30,6 +30,8 @@ vi.mock('@/hooks/useSensors', () => ({
   useSensorTypes: vi.fn(),
   useUpdateSensor: vi.fn(),
   useDeleteSensor: vi.fn(),
+  useSensorCalibration: vi.fn(),
+  useUpdateSensorCalibration: vi.fn(),
 }))
 
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
@@ -49,6 +51,8 @@ import {
   useSensorTypes,
   useUpdateSensor,
   useDeleteSensor,
+  useSensorCalibration,
+  useUpdateSensorCalibration,
 } from '@/hooks/useSensors'
 
 const SAVED_KEY = 'z9y8x7w6v5'.repeat(3)
@@ -109,6 +113,11 @@ function mockSensorHooks() {
   })
   vi.mocked(useUpdateSensor).mockReturnValue({ mutateAsync: vi.fn() } as never)
   vi.mocked(useDeleteSensor).mockReturnValue({ mutate: vi.fn() } as never)
+  vi.mocked(useSensorCalibration).mockReturnValue({ data: undefined, isPending: true } as never)
+  vi.mocked(useUpdateSensorCalibration).mockReturnValue({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  } as never)
 }
 
 function setup(opts: {

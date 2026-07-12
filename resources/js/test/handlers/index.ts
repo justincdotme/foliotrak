@@ -37,6 +37,7 @@ import settingsUpdated from '../fixtures/settings/updated.json'
 import sensorsList from '../fixtures/sensors/list.json'
 import sensorReadingsWeek from '../fixtures/sensors/readings-week.json'
 import sensorTypes from '../fixtures/sensors/types.json'
+import sensorCalibration from '../fixtures/sensors/calibration.json'
 
 export const handlers = [
   http.get('/sanctum/csrf-cookie', () => new HttpResponse(null, { status: 204 })),
@@ -62,6 +63,8 @@ export const handlers = [
   http.get('/api/sensor-types', () => HttpResponse.json(sensorTypes)),
   http.get('/api/plants/:id/sensor-readings', () => HttpResponse.json(sensorReadingsWeek)),
   http.get('/api/plants/:id/sensor-snapshot', () => new HttpResponse(null, { status: 204 })),
+  http.get('/api/sensors/:id/calibration', () => HttpResponse.json(sensorCalibration)),
+  http.put('/api/sensors/:id/calibration', () => HttpResponse.json(sensorCalibration)),
 
   // auth
   http.post('/login', async ({ request }) => {

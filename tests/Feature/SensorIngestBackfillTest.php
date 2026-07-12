@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\SensorType;
 use App\Models\Sensor;
 use App\Models\SensorReading;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -269,6 +270,42 @@ class SensorIngestBackfillTest extends TestCase
 
         $this->assertSame(0, SensorReading::where('sensor_id', $misregistered->id)->count());
         $this->assertSame(250, SensorReading::where('sensor_id', $healthy->id)->count());
+    }
+
+    /** @return void */
+    public function test_moisture_readings_flow_through_the_moisture_transformer(): void
+    {
+        Sensor::create([
+            'mac'         => 'AC:A7:04:BC:A5:62',
+            'device_name' => 'Gondola-Moisture-01',
+            'name'        => 'Monstera probe',
+            'color'       => 'var(--series-3)',
+            'type'        => SensorType::Moisture,
+        ]);
+
+        $recordedAt = Carbon::now('UTC')->subMinutes(30)->format('Y-m-d\TH:i:s\Z');
+
+        Http::fake([
+            self::GATEWAY_URL . '/api/v1/readings*' => Http::response([
+                'mac'      => 'AC:A7:04:BC:A5:62',
+                'count'    => 1,
+                'has_more' => false,
+                'readings' => [
+                    [
+                        'sensor_type'  => 'gondola_moisture',
+                        'measurements' => ['moisture' => 2975],
+                        'battery'      => null,
+                        'rssi'         => -75,
+                        'recorded_at'  => $recordedAt,
+                    ],
+                ],
+            ]),
+        ]);
+
+        $this->artisan('sensors:ingest')->assertExitCode(0);
+
+        $reading = SensorReading::query()->sole();
+        $this->assertSame(['moisture' => 2975, 'rssi' => -75], $reading->data);
     }
 
     /** @return void */
