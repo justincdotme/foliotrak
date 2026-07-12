@@ -192,7 +192,7 @@ class SensorSnapshotTest extends TestCase
     {
         $plant  = Plant::factory()->create();
         $sensor = Sensor::create([
-            'mac'   => 'AC:A7:04:BC:A5:62',
+            'mac'   => 'AC:A7:04:AA:00:05',
             'name'  => 'Monstera probe',
             'color' => 'var(--series-3)',
             'type'  => SensorType::Moisture,
@@ -223,7 +223,7 @@ class SensorSnapshotTest extends TestCase
     {
         $plant  = Plant::factory()->create();
         $sensor = Sensor::create([
-            'mac'   => 'AC:A7:04:BC:A5:62',
+            'mac'   => 'AC:A7:04:AA:00:05',
             'name'  => 'Monstera probe',
             'color' => 'var(--series-3)',
             'type'  => SensorType::Moisture,
@@ -255,7 +255,7 @@ class SensorSnapshotTest extends TestCase
             'type'  => SensorType::Hygrometer,
         ]);
         $probe = Sensor::create([
-            'mac'   => 'AC:A7:04:BC:A5:62',
+            'mac'   => 'AC:A7:04:AA:00:05',
             'name'  => 'Monstera probe',
             'color' => 'var(--series-3)',
             'type'  => SensorType::Moisture,

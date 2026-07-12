@@ -29,6 +29,16 @@ class SendCareReminders extends Command
      */
     public function handle(): int
     {
+        // Without an application token every send fails at the Pushover API,
+        // so bail before any reminder is claimed and lost.
+        $token = config('services.pushover.token');
+
+        if (! is_string($token) || $token === '') {
+            $this->info('No Pushover application token is configured; nothing to send.');
+
+            return self::SUCCESS;
+        }
+
         $recipients = User::query()->whereNotNull('pushover_user_key')->get();
 
         if ($recipients->isEmpty()) {

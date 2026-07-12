@@ -58,8 +58,11 @@ RUN printf 'upload_max_filesize = 25M\npost_max_size = 30M\n' > /usr/local/etc/p
 
 RUN printf 'memory_limit = 512M\n' > /usr/local/etc/php/conf.d/memory.ini
 
-RUN addgroup -g 1000 laravel && \
-    adduser -D -u 1000 -G laravel laravel
+# Match the host user so files written to the bind mount stay editable on the host.
+ARG FOLIOTRAK_UID=1000
+ARG FOLIOTRAK_GID=1000
+RUN addgroup -g ${FOLIOTRAK_GID} laravel && \
+    adduser -D -u ${FOLIOTRAK_UID} -G laravel laravel
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 

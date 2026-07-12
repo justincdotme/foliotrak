@@ -27,6 +27,7 @@ class SendCareRemindersTest extends TestCase
         parent::setUp();
         $this->seed(CareLookupSeeder::class);
         $this->travelTo(Carbon::parse('2026-06-26 08:00:00'));
+        config(['services.pushover.token' => 'test-app-token']);
     }
 
     /** @return void */
@@ -155,6 +156,21 @@ class SendCareRemindersTest extends TestCase
     {
         Notification::fake();
         User::factory()->create(['pushover_user_key' => null]);
+        $plant = Plant::factory()->create(['watering_interval_days_override' => 7]);
+        $this->wateredDaysAgo($plant, 8);
+
+        $this->artisan('app:send-care-reminders')->assertSuccessful();
+
+        Notification::assertNothingSent();
+        $this->assertDatabaseCount('sent_reminders', 0);
+    }
+
+    /** @return void */
+    public function test_nothing_is_sent_or_claimed_without_an_application_token(): void
+    {
+        Notification::fake();
+        config(['services.pushover.token' => null]);
+        $this->userWithKey();
         $plant = Plant::factory()->create(['watering_interval_days_override' => 7]);
         $this->wateredDaysAgo($plant, 8);
 

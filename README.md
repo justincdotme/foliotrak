@@ -7,6 +7,7 @@ Self-hosted, LAN-first plant care tracker. Log care and observations per plant, 
 - **Backend**: Laravel 13 API with Sanctum authentication
 - **Frontend**: React 19 SPA with TypeScript (Vite)
 - **Database**: MySQL 8
+- **Search**: Meilisearch (species lookup, with live GBIF fallback)
 - **Server**: nginx (Docker Compose)
 - **Notifications**: Pushover
 - **Charts**: Recharts + Nivo
@@ -34,68 +35,21 @@ cd foliotrak
 
 Run it with no argument to default to `localhost`. The script generates a
 self-signed certificate for that host, writes `.env`, installs PHP dependencies,
-builds the frontend assets, and starts the stack; the `migrate` service runs
-migrations and seeds a development account on first boot. It is safe to re-run.
+builds the frontend assets, starts the stack, then runs database migrations and
+seeds a development account. It also runs the containers as your own user, so
+everything the stack writes stays editable on the host. It is safe to re-run.
+
+If you bring the stack up without `init.sh`, set `FOLIOTRAK_UID` and
+`FOLIOTRAK_GID` in `.env` to the output of `id -u` and `id -g` first.
 
 3. Trust the self-signed certificate (`docker/nginx/certs/dev.crt`) or accept the
 browser warning, then open `https://foliotrak.lan` and log in with the seeded
 account: `admin@foliotrak.test` / `testing123` (override via
 `FOLIOTRAK_ADMIN_EMAIL` and `FOLIOTRAK_ADMIN_PASSWORD` in `.env`).
 
-## Development
-
-For local development without Docker:
-
-1. Install PHP 8.4+ and Node.js 22+
-2. Run `composer install`
-3. Run `npm install`
-4. Run `php artisan migrate`
-5. Run `composer run dev` to start the dev server, queue listener, and Vite dev server
-
-## Commands
-
-### Backend checks
-
-```bash
-vendor/bin/pint --test          # Lint check
-vendor/bin/phpstan analyse      # Static analysis
-./bin/test                      # Tests (runs in the app container against an isolated sqlite DB)
-```
-
-### Frontend checks
-
-```bash
-npm run lint                    # Lint check
-npm run typecheck               # Type checking
-npm run build                   # Production build
-```
-
-## Committing
-
-Pre-commit checks (Pint, PHPStan) run inside the app container, so the host
-needs no PHP toolchain. Commit with:
-
-```bash
-./bin/commit -m "your message"
-```
-
-On a fresh clone, generate `vendor/` first:
-`docker compose run --rm --no-deps app composer install`.
-
-Push from the host as usual (`git push`); the SSH key never enters the
-container. A bare `git commit` on the host bypasses the checks, so prefer
-`./bin/commit`.
-
-## Architecture
-
-- **No tenancy**: One household per install; authentication is a gate only.
-- **Database spine**: Typed detail tables referenced from a unified care-event table.
-- **Weight storage**: Canonical grams; API layer splits to lb/oz/g for UI.
-- **UI language**: Insights never assert causation; use "coincided with", "may indicate", etc.
-
 ## Sensor Integration
 
-Optional ambient environment tracking via BLE sensors and a LAN gateway. Pulls temperature and humidity readings on a schedule and charts them per plant. See [docs/SENSORS.md](docs/SENSORS.md) for setup and configuration.
+Optional ambient environment tracking via BLE sensors and a LAN gateway. Pulls temperature, humidity, light level (lux), and soil moisture readings on a schedule and charts them per plant. See [docs/SENSORS.md](docs/SENSORS.md) for setup and configuration.
 
 ## Production hardening
 
@@ -104,12 +58,9 @@ trusted LAN, set the following in `.env`:
 
 - `APP_ENV=production` and `APP_DEBUG=false`.
 - Strong, unique `DB_PASSWORD`, `DB_ROOT_PASSWORD`, and `FOLIOTRAK_ADMIN_PASSWORD`.
-  The default development admin is never seeded when `APP_ENV=production`.
+  In production the admin account is only seeded once `FOLIOTRAK_ADMIN_PASSWORD`
+  is changed from the development default.
 - `SESSION_SECURE_COOKIE=true` when serving over HTTPS (generate certs with
   `docker/nginx/generate-certs.sh`).
 - `SANCTUM_STATEFUL_DOMAINS` and `CORS_ALLOWED_ORIGINS` set to the host and origin
   the browser actually uses, not `localhost`.
-
-## Documentation
-
-For detailed requirements and design, see `docs/project/foliotrak-spec.md` and `docs/project/` for multi-phase build tracking.

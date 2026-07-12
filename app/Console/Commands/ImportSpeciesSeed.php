@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
  * Loads a GBIF species seed dump so search works offline without per-query GBIF
  * calls. Pairs with the extraction step (init.sh / species:refresh-seed) that
  * produces the file. The dump is NDJSON (optionally gzipped), one species per
- * line; see ADR-0013 and docs/project for the field contract.
+ * line; see ADR-0013 for the field contract.
  */
 class ImportSpeciesSeed extends Command
 {

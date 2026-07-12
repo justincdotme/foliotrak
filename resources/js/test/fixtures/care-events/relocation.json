@@ -12,11 +12,11 @@
     "care_event_id": 41,
     "from_location": {
       "id": 1,
-      "name": "step shelf"
+      "name": "window shelf"
     },
     "to_location": {
       "id": 2,
-      "name": "Guest Bedroom"
+      "name": "Sunroom"
     }
   }
 }

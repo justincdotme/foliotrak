@@ -1,5 +1,6 @@
 import type { CorrelationPair, CorrelationPoint } from '@/api/types'
 import { HEALTH_VAR } from '@/lib/domain'
+import { parseDate } from '@/lib/format'
 
 export type DateRange = '7d' | '30d' | '90d' | 'all'
 
@@ -26,7 +27,10 @@ export function filterByDateRange<T>(
   if (days == null) return data
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - days)
-  return data.filter(item => new Date(dateAccessor(item)) >= cutoff)
+  // Date-only points sit at local midnight, so a time-of-day cutoff would
+  // silently drop the oldest day of the range.
+  cutoff.setHours(0, 0, 0, 0)
+  return data.filter(item => parseDate(dateAccessor(item)) >= cutoff)
 }
 
 export type GroupChartWindow = 'day' | 'week' | 'month' | 'year'
@@ -52,7 +56,8 @@ export function filterByWindow<T>(
 ): T[] {
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - GROUP_CHART_WINDOW_DAYS[window])
-  return data.filter(item => new Date(dateAccessor(item)) >= cutoff)
+  cutoff.setHours(0, 0, 0, 0)
+  return data.filter(item => parseDate(dateAccessor(item)) >= cutoff)
 }
 
 // Keeps tick labels from overlapping by skipping intermediate ticks when the

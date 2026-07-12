@@ -72,7 +72,7 @@ describe('PlantDetailPage', () => {
     const observationToggle = screen.getByRole('button', { name: /observation/i })
 
     await user.click(relocationToggle)
-    expect(screen.getByText('step shelf')).toBeInTheDocument()
+    expect(screen.getByText('window shelf')).toBeInTheDocument()
 
     await user.click(observationToggle)
     expect(screen.getByText('Showing some stress on lower leaves.')).toBeInTheDocument()
