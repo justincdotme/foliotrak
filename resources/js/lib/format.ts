@@ -3,12 +3,19 @@
 export const NOW = new Date()
 const DAY = 86400000
 
+// Date-only strings parse as UTC midnight per the ECMAScript spec, which puts
+// them on the previous calendar day for viewers west of UTC; pin them to local
+// midnight so a date renders as its own calendar day in every timezone.
+export function parseDate(value: string): Date {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00`) : new Date(value)
+}
+
 export function fmtDate(value: string): string {
-  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return parseDate(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 export function fmtDateY(value: string): string {
-  return new Date(value).toLocaleDateString('en-US', {
+  return parseDate(value).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -22,7 +29,7 @@ export function fmtTime(value: string): string {
 function calendarDaysAgo(isoStr: string): number {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const then = new Date(isoStr)
+  const then = parseDate(isoStr)
   then.setHours(0, 0, 0, 0)
   return Math.round((today.getTime() - then.getTime()) / DAY)
 }

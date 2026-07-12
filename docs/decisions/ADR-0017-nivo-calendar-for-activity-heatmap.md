@@ -93,7 +93,6 @@ Build the heatmap with Recharts primitives to avoid a second library.
 ## Related Decisions
 
 - [ADR-0007: Use Recharts for charts and Nivo for the two heatmaps](./ADR-0007-recharts-plus-nivo-for-charts.md). This concretizes ADR-0007 for the activity heatmap.
-- Recorded as D44 in `docs/project/decisions.md` (the build-log entry for this choice).
 - Future ADR or decision: Phase 5b Nivo correlation heatmap, which follows this pattern.
 
 ---

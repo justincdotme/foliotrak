@@ -4,7 +4,7 @@
 # re-run. Pass the domain to serve over HTTPS as the first argument (or the
 # DOMAIN env var); defaults to localhost.
 #
-#   ./init.sh foliotrak.justinc.srv
+#   ./init.sh foliotrak.lan
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -49,6 +49,9 @@ set_env SESSION_SECURE_COOKIE "true"
 set_env SANCTUM_STATEFUL_DOMAINS "$DOMAIN"
 set_env CORS_ALLOWED_ORIGINS "https://$DOMAIN"
 set_env NGINX_SERVER_NAME "$DOMAIN"
+# Containers run as the invoking user so bind-mounted files stay editable on the host.
+set_env FOLIOTRAK_UID "$(id -u)"
+set_env FOLIOTRAK_GID "$(id -g)"
 echo "    pinned HTTPS settings for $DOMAIN"
 
 echo "==> Building images"
@@ -75,6 +78,10 @@ $COMPOSE up -d
 # nginx picks its config from cert presence at startup; bounce it in case it was
 # already running before the certificate existed.
 $COMPOSE restart nginx
+
+echo "==> Database migrations and seeders"
+# Compose gates the app service on a healthy MySQL, so this can run immediately.
+$COMPOSE exec -T app php artisan migrate --force --seed
 
 echo "==> Species seed data"
 # `docker compose exec` ignores depends_on, so wait for the app container and a

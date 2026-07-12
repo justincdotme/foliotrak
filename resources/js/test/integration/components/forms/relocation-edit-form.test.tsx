@@ -23,8 +23,8 @@ function makeWrapper() {
 }
 
 // Field values mirror the captured resources/js/test/fixtures/care-events/relocation.json.
-// The lookup at fixtures/lookups/locations.json includes both endpoints: id 1 "step shelf"
-// (the origin) and id 2 "Guest Bedroom" (the current destination), plus id 3 "Wet Bar".
+// The lookup at fixtures/lookups/locations.json includes both endpoints: id 1 "window shelf"
+// (the origin) and id 2 "Sunroom" (the current destination), plus id 3 "Kitchen".
 const relocationEvent: CareEvent = {
   id: 41,
   plant_id: 3,
@@ -37,8 +37,8 @@ const relocationEvent: CareEvent = {
   updated_at: '2026-06-27T22:01:26.000000Z',
   relocation: {
     care_event_id: 41,
-    from_location: { id: 1, name: 'step shelf' },
-    to_location: { id: 2, name: 'Guest Bedroom' },
+    from_location: { id: 1, name: 'window shelf' },
+    to_location: { id: 2, name: 'Sunroom' },
   },
 }
 
@@ -56,7 +56,7 @@ describe('RelocationEditForm', () => {
       wrapper: makeWrapper(),
     })
 
-    expect(screen.getByText('step shelf')).toBeInTheDocument()
+    expect(screen.getByText('window shelf')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: /Save changes/ }))
 
@@ -82,12 +82,12 @@ describe('RelocationEditForm', () => {
 
     const combobox = screen.getByRole('combobox')
     // Wait for /api/locations to resolve so the prefilled id 2 renders as its real name.
-    await waitFor(() => expect(combobox).toHaveValue('Guest Bedroom'), { timeout: 2000 })
+    await waitFor(() => expect(combobox).toHaveValue('Sunroom'), { timeout: 2000 })
 
     await userEvent.click(combobox)
     await userEvent.clear(combobox)
-    await userEvent.type(combobox, 'Wet Bar')
-    await userEvent.click(screen.getByRole('option', { name: 'Wet Bar' }))
+    await userEvent.type(combobox, 'Kitchen')
+    await userEvent.click(screen.getByRole('option', { name: 'Kitchen' }))
 
     await userEvent.click(screen.getByRole('button', { name: /Save changes/ }))
 

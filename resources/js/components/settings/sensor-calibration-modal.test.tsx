@@ -11,7 +11,7 @@ import { SensorCalibrationModal } from './sensor-calibration-modal'
 
 const sensor: Sensor = {
   id: 9,
-  mac: 'AC:A7:04:BC:A5:62',
+  mac: 'AC:A7:04:AA:00:05',
   device_name: 'Gondola-Moisture-01',
   hardware_type: 'gondola_moisture',
   type: 'moisture',

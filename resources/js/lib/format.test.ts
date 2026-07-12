@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { ageDays, relDay, formatSensorLabel } from './format'
+import { ageDays, fmtDate, fmtDateY, relDay, formatSensorLabel } from './format'
 
 function isoAt(year: number, month: number, day: number, hour = 12): string {
   return new Date(year, month - 1, day, hour, 0, 0).toISOString()
@@ -55,6 +55,28 @@ describe('relDay', () => {
   it('returns N weeks ago for 14+ days', () => {
     vi.useFakeTimers({ now: new Date(2026, 5, 30, 10, 0, 0) })
     expect(relDay(isoAt(2026, 6, 15, 10))).toBe('2 weeks ago')
+  })
+})
+
+describe('fmtDate and fmtDateY', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  // A date-only string must render as its own calendar day in every timezone;
+  // UTC parsing shifted it to the previous day for viewers west of UTC.
+  it.each(['America/Denver', 'UTC', 'Pacific/Auckland'])(
+    'renders a date-only string on its own calendar day in %s',
+    tz => {
+      vi.stubEnv('TZ', tz)
+      expect(fmtDate('2026-06-26')).toBe('Jun 26')
+      expect(fmtDateY('2026-07-05')).toBe('Jul 5, 2026')
+    }
+  )
+
+  it('converts a full timestamp to the local calendar day', () => {
+    vi.stubEnv('TZ', 'America/Denver')
+    expect(fmtDate('2026-06-27T01:00:00Z')).toBe('Jun 26')
   })
 })
 

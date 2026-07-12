@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import {
   computeTickInterval,
   describeCorrelation,
@@ -179,8 +179,15 @@ describe('computeTickInterval', () => {
 })
 
 describe('filterByDateRange', () => {
+  // Calendar-day filtering depends on the viewer's local date, so pin the zone
+  // to keep the expectations deterministic.
+  beforeEach(() => {
+    vi.stubEnv('TZ', 'UTC')
+  })
+
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllEnvs()
   })
 
   const items = [
@@ -237,11 +244,27 @@ describe('filterByDateRange', () => {
     const result = filterByDateRange(records, r => r.created, '7d')
     expect(result.map(r => r.id)).toEqual([2])
   })
+
+  // Date-only points sit at local midnight; a cutoff carrying the current
+  // time of day dropped the oldest day of every range.
+  it('keeps a point dated exactly at the start of the range', () => {
+    vi.stubEnv('TZ', 'America/Denver')
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
+
+    const rows = [{ date: '2026-06-29', v: 1 }]
+    expect(filterByDateRange(rows, r => r.date, '7d').map(r => r.v)).toEqual([1])
+  })
 })
 
 describe('filterByWindow', () => {
+  beforeEach(() => {
+    vi.stubEnv('TZ', 'UTC')
+  })
+
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllEnvs()
   })
 
   const items = [
@@ -252,11 +275,12 @@ describe('filterByWindow', () => {
     { date: '2026-07-06', v: 5 },
   ]
 
-  it('filters to the last day', () => {
+  it('filters to the last day, keeping the boundary calendar day', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-07-06T12:00:00.000Z'))
 
-    expect(filterByWindow(items, i => i.date, 'day').map(i => i.v)).toEqual([5])
+    // The window is calendar-based, so yesterday's date-only point stays in.
+    expect(filterByWindow(items, i => i.date, 'day').map(i => i.v)).toEqual([4, 5])
   })
 
   it('filters to the last week', () => {

@@ -25,7 +25,7 @@ Separately, standing the stack up by hand (generate a cert, write the env, insta
 
 Terminate TLS at nginx with a self-signed certificate. The nginx start script selects the HTTPS server config when a certificate is present and falls back to HTTP otherwise; the HTTPS config redirects port 80 to 443.
 
-A single idempotent `init.sh` is the entry point. It generates a self-signed certificate for an operator-supplied domain (default `localhost`, e.g. `foliotrak.justinc.srv` on the household resolver), pins the HTTPS-related environment (`APP_URL`, `SESSION_DOMAIN`, `SESSION_SECURE_COOKIE=true`, `SANCTUM_STATEFUL_DOMAINS`, `CORS_ALLOWED_ORIGINS`), builds the images, installs PHP dependencies into the bind-mounted `vendor/`, builds the frontend assets in a Node container, and starts the stack with the base compose file so the database migrates and seeds on first boot. The domain is a runtime parameter so the shared repository carries no household's private hostname.
+A single idempotent `init.sh` is the entry point. It generates a self-signed certificate for an operator-supplied domain (default `localhost`, e.g. `foliotrak.lan` on the household resolver), pins the HTTPS-related environment (`APP_URL`, `SESSION_DOMAIN`, `SESSION_SECURE_COOKIE=true`, `SANCTUM_STATEFUL_DOMAINS`, `CORS_ALLOWED_ORIGINS`), builds the images, installs PHP dependencies into the bind-mounted `vendor/`, builds the frontend assets in a Node container, starts the stack with the base compose file, and runs the database migrations and seeders. The domain is a runtime parameter so the shared repository carries no household's private hostname.
 
 ---
 

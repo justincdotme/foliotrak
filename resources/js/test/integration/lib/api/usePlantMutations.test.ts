@@ -269,3 +269,24 @@ describe('useDeletePlant', () => {
     expect(readingsRequests).toBe(1)
   })
 })
+
+describe('useDeletePlant - onSuccess invalidation', () => {
+  it('invalidates the dashboard so a deleted plant drops from due and flagged lists', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children)
+    qc.setQueryData(['plants'], [])
+    qc.setQueryData(['dashboard'], { due_for_care: [] })
+
+    server.use(http.delete('/api/plants/:id', () => new HttpResponse(null, { status: 204 })))
+
+    const { result } = renderHook(() => useDeletePlant(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync(3)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(qc.getQueryState(['plants'])?.isInvalidated).toBe(true)
+    expect(qc.getQueryState(['dashboard'])?.isInvalidated).toBe(true)
+  })
+})

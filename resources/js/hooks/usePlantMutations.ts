@@ -104,7 +104,10 @@ export function useDeletePlant() {
   return useMutation({
     mutationFn: deletePlant,
     onSuccess: () => {
+      // The dashboard lists per-plant due-care and problem rows, so a deleted
+      // plant must drop from it too.
       queryClient.invalidateQueries({ queryKey: ['plants'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

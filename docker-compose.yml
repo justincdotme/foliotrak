@@ -44,8 +44,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
+        FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
     working_dir: /var/www/html
-    user: "1000:1000"
+    user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
     volumes:
       - .:/var/www/html
     depends_on:
@@ -60,8 +63,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
+        FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
     working_dir: /var/www/html
-    user: "1000:1000"
+    user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
     volumes:
       - .:/var/www/html
     command: php artisan queue:work
@@ -79,8 +85,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
+        FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
     working_dir: /var/www/html
-    user: "1000:1000"
+    user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
     volumes:
       - .:/var/www/html
     command: php artisan schedule:work
