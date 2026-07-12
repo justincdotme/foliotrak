@@ -1,13 +1,13 @@
 # Sensor Integration
 
-Foliotrak tracks ambient conditions around your plants using BLE sensors collected by a [Gondola](https://github.com/justincdotme/gondola) gateway on the LAN. The gateway's parser registry identifies each device family (Govee H5075 hygrometers today) and Foliotrak assigns meaning through a per-type transformer. A scheduled command pulls readings from the gateway, stores them locally, and the plant detail UI charts the data per associated sensor.
+Foliotrak tracks ambient conditions around your plants using BLE sensors collected by a [Gondola](https://github.com/justincdotme/gondola) gateway on the LAN. The gateway's parser registry identifies each device family (Govee H5075 hygrometers, gondola_lux light sensors, and gondola_moisture soil moisture probes) and Foliotrak assigns meaning through a per-type transformer. A scheduled command pulls readings from the gateway, stores them locally, and the plant detail UI charts the data per associated sensor.
 
 ## Environment Variables
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `SENSOR_BASE_URL` | Gateway base URL (HTTPS, port 8443) | `''` (disabled) |
-| `SENSOR_API_KEY` | Value sent in the `X-API-Key` header | `''` (disabled) |
+| `SENSOR_API_KEY` | Shared secret for HMAC request signing (`X-Signature` + `X-Timestamp` headers) | `''` (disabled) |
 | `SENSOR_GRANULARITY` | Minutes between scheduled ingest runs | `30` |
 | `SENSOR_TLS_VERIFY` | HTTP client certificate verification | `false` |
 
@@ -32,7 +32,9 @@ The `sensors:ingest` artisan command runs on the scheduler every `SENSOR_GRANULA
 
 ## Sensor Types
 
-Each registered sensor has a Foliotrak type (`hygrometer` today) that selects the transformer used to normalize readings on write, hydrate them on read, and describe the chart fields. The gateway separately reports a hardware identity per device (for example `govee_h5075`), which Foliotrak stores at registration and uses to preselect the type for known hardware. Readings a sensor's transformer cannot normalize are skipped and logged instead of failing the run; a wrong sensor type is the usual cause.
+Each registered sensor has a Foliotrak type (`hygrometer`, `light_sensor`, or `moisture`) that selects the transformer used to normalize readings on write, hydrate them on read, and describe the chart fields. The gateway separately reports a hardware identity per device (`govee_h5075`, `gondola_lux`, `gondola_moisture`), which Foliotrak stores at registration and uses to preselect the type for known hardware. Readings a sensor's transformer cannot normalize are skipped and logged instead of failing the run; a wrong sensor type is the usual cause.
+
+Moisture sensors report a raw capacitive ADC count (0-4095, higher = drier) that is stored and charted as-is. A per-sensor calibration (Settings > Sensors > gear icon on a moisture sensor) maps anchor positions on the 1-10 soil moisture scale to raw values; observation auto-fill interpolates between anchors, defaulting to the sensor's full hardware range (4095 driest at position 1, 0 wettest at position 10) until the user calibrates.
 
 ## Writing a Custom Adapter
 
@@ -68,5 +70,6 @@ $this->app->singleton(SensorReadingSource::class, YourAdapter::class);
 1. **Settings > Sensors > Test Connection** verifies reachability and key validity.
 2. **Discover Sensors** lists what the gateway sees (unregistered only).
 3. **Register** names a sensor and sets its type, preselected when the gateway reports known hardware (color auto-assigned, optional location).
-4. **Add Plant** or **Edit Plant > Sensors** to associate sensors with plants.
-5. **Plant Detail > Environment** tab charts each sensor's fields per its type (temperature (F) and humidity for hygrometers) with Day/Week/Month range selection.
+4. A gear icon on moisture sensor rows opens the calibration modal (raw value per 1-10 anchor position, autosaves on blur; clearing a value or clicking Remove drops that anchor).
+5. **Add Plant** or **Edit Plant > Sensors** to associate sensors with plants.
+6. **Plant Detail > Environment** tab charts each sensor's fields per its type (temperature (F) and humidity for hygrometers, lux for light sensors, raw soil moisture for moisture probes) with Day/Week/Month range selection.

@@ -10,6 +10,7 @@ import {
   Pencil,
   Plus,
   Radio,
+  Settings,
   Settings2,
   Sun,
   Tags,
@@ -48,6 +49,7 @@ import { SectionTitle } from '@/components/app/section-title'
 import { Segmented } from '@/components/app/segmented'
 import { Spinner } from '@/components/app/spinner'
 import { initials } from '@/components/shell/nav'
+import { SensorCalibrationModal } from '@/components/settings/sensor-calibration-modal'
 
 interface SettingsPageProps {
   theme: ThemeChoice
@@ -616,12 +618,14 @@ function SensorRow({
   discoveryLoaded,
   onUpdate,
   onDelete,
+  onCalibrate,
 }: {
   sensor: Sensor
   offline: boolean
   discoveryLoaded: boolean
   onUpdate: (id: number, payload: { name?: string; location?: string | null }) => Promise<unknown>
   onDelete: (id: number) => void
+  onCalibrate: (sensor: Sensor) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(sensor.name)
@@ -721,6 +725,17 @@ function SensorRow({
               )}
             </div>
           </div>
+          {sensor.type === 'moisture' && (
+            <button
+              type="button"
+              onClick={() => onCalibrate(sensor)}
+              className="p-1 text-text-muted hover:text-text"
+              aria-label={`Calibrate ${sensor.name}`}
+              dusk="sensor-calibrate"
+            >
+              <Settings size={13} />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setEditing(true)}
@@ -888,6 +903,7 @@ function SensorManager() {
   const deleteSensorMut = useDeleteSensor()
   const [deleteTarget, setDeleteTarget] = useState<Sensor | null>(null)
   const [registering, setRegistering] = useState<DiscoveredSensor | null>(null)
+  const [calibrating, setCalibrating] = useState<Sensor | null>(null)
 
   const discoveredMacs = discovery.data?.data ?? []
   const discoveryLoaded = discovery.isSuccess
@@ -965,6 +981,7 @@ function SensorManager() {
                   const found = (sensors ?? []).find(x => x.id === id)
                   if (found) setDeleteTarget(found)
                 }}
+                onCalibrate={setCalibrating}
               />
             ))}
           </div>
@@ -1018,6 +1035,9 @@ function SensorManager() {
             : undefined
         }
       />
+      {calibrating && (
+        <SensorCalibrationModal sensor={calibrating} onClose={() => setCalibrating(null)} />
+      )}
     </div>
   )
 }

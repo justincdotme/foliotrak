@@ -1,0 +1,15 @@
+{
+  "data": {
+    "points": [
+      { "position": 1, "value": 3100 },
+      { "position": 5, "value": 2200 },
+      { "position": 10, "value": 1300 }
+    ],
+    "suggested": [
+      { "position": 1, "value": 4095 },
+      { "position": 5, "value": 2048 },
+      { "position": 10, "value": 0 }
+    ],
+    "latest": { "value": 2975, "recorded_at": "2026-07-12T00:22:24Z" }
+  }
+}

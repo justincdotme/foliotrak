@@ -109,4 +109,58 @@ class SensorDiscoveryTest extends TestCase
 
         $this->assertSame('govee_h5075', Sensor::query()->sole()->hardware_type);
     }
+
+    /** @return void */
+    public function test_discover_suggests_the_moisture_type_for_gondola_moisture_hardware(): void
+    {
+        Http::fake([
+            'https://gateway.test/*' => Http::response([
+                'sensors' => [
+                    [
+                        'mac'          => 'AC:A7:04:BC:A5:62',
+                        'device_name'  => 'Gondola-Moisture-01',
+                        'sensor_type'  => 'gondola_moisture',
+                        'last_reading' => [
+                            'measurements' => ['moisture' => 2975],
+                            'battery'      => null,
+                            'rssi'         => -75,
+                            'recorded_at'  => '2026-07-12T00:22:24Z',
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $this->getJson('/api/sensors/discover')
+            ->assertOk()
+            ->assertJsonPath('data.0.sensor_type', 'gondola_moisture')
+            ->assertJsonPath('data.0.suggested_type', 'moisture')
+            ->assertJsonPath('data.0.last_reading.moisture', 2975);
+    }
+
+    /** @return void */
+    public function test_registration_accepts_the_moisture_type(): void
+    {
+        $this->postJson('/api/sensors', [
+            'mac'           => 'AC:A7:04:BC:A5:62',
+            'device_name'   => 'Gondola-Moisture-01',
+            'hardware_type' => 'gondola_moisture',
+            'name'          => 'Monstera probe',
+            'type'          => 'moisture',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.type', 'moisture');
+    }
+
+    /** @return void */
+    public function test_registration_rejects_unknown_types(): void
+    {
+        $this->postJson('/api/sensors', [
+            'mac'  => 'AC:A7:04:BC:A5:62',
+            'name' => 'Mystery sensor',
+            'type' => 'seismometer',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('type');
+    }
 }

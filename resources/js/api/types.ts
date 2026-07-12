@@ -497,6 +497,18 @@ export interface SensorSnapshot {
   ambient_temp_c?: number
   ambient_humidity_pct?: number
   ambient_lux?: number
+  soil_moisture_precise?: number
   sensor_count: number
   matched_at?: string
+}
+
+export interface SensorCalibrationPoint {
+  position: number
+  value: number
+}
+
+export interface SensorCalibration {
+  points: SensorCalibrationPoint[]
+  suggested: SensorCalibrationPoint[] | null
+  latest: { value: number; recorded_at: string } | null
 }

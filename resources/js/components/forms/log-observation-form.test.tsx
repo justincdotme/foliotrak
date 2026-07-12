@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
 import type { CareEvent } from '@/api/types'
 import { LogObservationForm } from './log-observation-form'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { server } from '@/test/handlers'
 
 const renderWithProvider = (ui: React.ReactElement) =>
   render(<TooltipProvider>{ui}</TooltipProvider>)
@@ -256,5 +258,28 @@ describe('LogObservationForm', () => {
       )
     )
     expect(createObservation.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('auto-fills soil moisture from the sensor snapshot onto the meter tab', async () => {
+    server.use(
+      http.get('/api/plants/:id/sensor-snapshot', () =>
+        HttpResponse.json({ data: { soil_moisture_precise: 7, sensor_count: 1 } })
+      )
+    )
+
+    renderWithProvider(<LogObservationForm plantId={3} onDone={vi.fn()} />)
+
+    await waitFor(
+      () => expect(screen.getByLabelText('Soil moisture level 1 to 10')).toHaveValue('7'),
+      { timeout: 2000 }
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /Log observation/ }))
+
+    await waitFor(() =>
+      expect(createObservation.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ soil_moisture_precise: 7, soil_moisture_relative: null })
+      )
+    )
   })
 })

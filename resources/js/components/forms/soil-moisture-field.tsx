@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Radar } from 'lucide-react'
 import type { SoilMoistureLevel } from '@/api/types'
 import { Field } from '@/components/app/field'
 import { Segmented } from '@/components/app/segmented'
@@ -9,47 +10,60 @@ export interface SoilMoistureValue {
 }
 
 interface SoilMoistureFieldProps {
-  defaultRelative?: SoilMoistureLevel | null
-  defaultPrecise?: number | null
+  value: SoilMoistureValue
   onChange: (value: SoilMoistureValue) => void
+  sensorFilled?: boolean
 }
 
-export function SoilMoistureField({
-  defaultRelative = null,
-  defaultPrecise = null,
-  onChange,
-}: SoilMoistureFieldProps) {
-  const initialMode =
-    defaultRelative != null ? 'relative' : defaultPrecise != null ? 'precise' : 'relative'
-  const [mode, setMode] = useState<'relative' | 'precise'>(initialMode)
-  const [relative, setRelative] = useState<SoilMoistureLevel | null>(defaultRelative)
-  const [precise, setPrecise] = useState(defaultPrecise ?? 5)
+export function SoilMoistureField({ value, onChange, sensorFilled }: SoilMoistureFieldProps) {
+  const [mode, setMode] = useState<'relative' | 'precise'>(
+    value.precise != null ? 'precise' : 'relative'
+  )
+  // Each tab remembers its last value so switching modes and back does not
+  // discard a choice; only the active mode's value reaches the parent.
+  const [lastRelative, setLastRelative] = useState<SoilMoistureLevel | null>(value.relative)
+  const [lastPrecise, setLastPrecise] = useState<number | null>(value.precise)
+
+  // A sensor auto-fill arrives as an external precise value; follow it so the
+  // meter tab activates and shows the filled reading.
+  useEffect(() => {
+    if (value.precise != null) {
+      setLastPrecise(value.precise)
+      setMode('precise')
+    } else if (value.relative != null) {
+      setLastRelative(value.relative)
+      setMode('relative')
+    }
+  }, [value.relative, value.precise])
+
+  const precise = value.precise ?? lastPrecise ?? 5
 
   const selectMode = (next: 'relative' | 'precise') => {
+    if (next === mode) return
     setMode(next)
     onChange({
-      relative: next === 'relative' ? relative : null,
-      precise: next === 'precise' ? precise : null,
+      relative: next === 'relative' ? lastRelative : null,
+      precise: next === 'precise' ? (lastPrecise ?? 5) : null,
     })
   }
 
-  const selectRelative = (next: SoilMoistureLevel | null) => {
-    setRelative(next)
-    onChange({ relative: next, precise: null })
-  }
-
-  const selectPrecise = (next: number) => {
-    setPrecise(next)
-    onChange({ relative: null, precise: next })
-  }
-
   return (
-    <Field label="Soil moisture">
+    <Field
+      label="Soil moisture"
+      hint={
+        sensorFilled ? (
+          <span className="inline-flex items-center gap-1" title="From sensor">
+            {precise} / 10 <Radar size={12} />
+          </span>
+        ) : undefined
+      }
+    >
       <div className="space-y-2" dusk="soil-moisture-field">
         <div className="flex gap-1.5">
           <button
             type="button"
             dusk="soil-moisture-toggle"
+            aria-label="Quick check"
             className={`flex-1 rounded-[8px] border px-2 py-1.5 text-[12px] font-medium transition-colors ${
               mode === 'relative'
                 ? 'border-primary bg-primary/10 text-primary'
@@ -74,8 +88,12 @@ export function SoilMoistureField({
         </div>
         {mode === 'relative' ? (
           <Segmented
-            value={relative ?? ''}
-            onChange={v => selectRelative(relative === v ? null : (v as SoilMoistureLevel))}
+            value={value.relative ?? ''}
+            onChange={v => {
+              const next = value.relative === v ? null : (v as SoilMoistureLevel)
+              setLastRelative(next)
+              onChange({ relative: next, precise: null })
+            }}
             options={[
               { value: 'dry', label: 'Dry' },
               { value: 'moist', label: 'Moist' },
@@ -91,7 +109,11 @@ export function SoilMoistureField({
               max={10}
               step={1}
               value={precise}
-              onChange={e => selectPrecise(Number(e.target.value))}
+              onChange={e => {
+                const next = Number(e.target.value)
+                setLastPrecise(next)
+                onChange({ relative: null, precise: next })
+              }}
               className="flex-1"
               aria-label="Soil moisture level 1 to 10"
             />

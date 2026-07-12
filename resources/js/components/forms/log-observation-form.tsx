@@ -144,6 +144,10 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
             setAmbientLux(snapshot.ambient_lux)
             filled.add('light_level')
           }
+          if (snapshot.soil_moisture_precise != null && !touchedRef.current.has('soil_moisture')) {
+            setSoilMoisture({ relative: null, precise: snapshot.soil_moisture_precise })
+            filled.add('soil_moisture')
+          }
           setSensorFilled(filled)
         })
         .catch(() => {})
@@ -331,9 +335,17 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
         </div>
         <hr className="border-border" />
         <SoilMoistureField
-          defaultRelative={soilMoisture.relative}
-          defaultPrecise={soilMoisture.precise}
-          onChange={setSoilMoisture}
+          value={soilMoisture}
+          onChange={v => {
+            touchedRef.current.add('soil_moisture')
+            setSensorFilled(prev => {
+              const next = new Set(prev)
+              next.delete('soil_moisture')
+              return next
+            })
+            setSoilMoisture(v)
+          }}
+          sensorFilled={sensorFilled.has('soil_moisture')}
         />
         <hr className="border-border" />
         <Field label="Leaf size" hint="mm, optional">
