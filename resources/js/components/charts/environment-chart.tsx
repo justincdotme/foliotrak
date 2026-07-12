@@ -75,7 +75,7 @@ function collectAxes(sensors: SensorSeries[]): AxisSpec[] {
       if (!byId.has(field.axis)) {
         byId.set(field.axis, {
           id: field.axis,
-          orientation: field.axis === 'right' ? 'right' : 'left',
+          orientation: field.axis === 'left' ? 'left' : 'right',
           unit: field.unit,
         })
       }

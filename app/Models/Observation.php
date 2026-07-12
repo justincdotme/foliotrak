@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int|null               $weight_grams
  * @property int|null               $ambient_humidity_pct
  * @property string|null            $ambient_temp_c
+ * @property float|null             $ambient_lux
  * @property SoilMoistureLevel|null $soil_moisture_relative
  * @property int|null               $soil_moisture_precise
  */
@@ -37,6 +38,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     'weight_grams',
     'ambient_humidity_pct',
     'ambient_temp_c',
+    'ambient_lux',
     'soil_moisture_relative',
     'soil_moisture_precise',
 ])]
@@ -86,6 +88,7 @@ class Observation extends Model
             'weight_grams'           => 'integer',
             'ambient_humidity_pct'   => 'integer',
             'ambient_temp_c'         => 'decimal:1',
+            'ambient_lux'            => 'float',
             'soil_moisture_relative' => SoilMoistureLevel::class,
             'soil_moisture_precise'  => 'integer',
         ];

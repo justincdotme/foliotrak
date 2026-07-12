@@ -194,6 +194,7 @@ final class CareEventService
             'weight_grams'           => $this->gramsFromComponents($data['weight'] ?? null),
             'ambient_humidity_pct'   => $data['ambient_humidity_pct'] ?? null,
             'ambient_temp_c'         => $this->celsiusFromDisplay($data['ambient_temp'] ?? null),
+            'ambient_lux'            => $data['ambient_lux'] ?? null,
             'soil_moisture_relative' => $data['soil_moisture_relative'] ?? null,
             'soil_moisture_precise'  => $data['soil_moisture_precise'] ?? null,
         ]);
@@ -277,7 +278,7 @@ final class CareEventService
      */
     private function editObservation(CareEvent $event, array $data): void
     {
-        $detail = $this->present($data, ['overall_health', 'health_note', 'light_level', 'growth_rate', 'growth_note', 'leaf_size_mm', 'ambient_humidity_pct', 'soil_moisture_relative', 'soil_moisture_precise']);
+        $detail = $this->present($data, ['overall_health', 'health_note', 'light_level', 'growth_rate', 'growth_note', 'leaf_size_mm', 'ambient_humidity_pct', 'ambient_lux', 'soil_moisture_relative', 'soil_moisture_precise']);
 
         if (array_key_exists('weight', $data)) {
             $detail['weight_grams'] = $this->gramsFromComponents($data['weight']);

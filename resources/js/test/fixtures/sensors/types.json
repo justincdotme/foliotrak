@@ -1,3 +1,6 @@
 {
-  "data": [{ "value": "hygrometer", "label": "Hygrometer" }]
+  "data": [
+    { "value": "hygrometer", "label": "Hygrometer" },
+    { "value": "light_sensor", "label": "Light Sensor" }
+  ]
 }

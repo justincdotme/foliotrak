@@ -48,6 +48,7 @@ const observationEvent: CareEvent = {
     ambient_humidity_pct: null,
     ambient_temp_c: null,
     ambient_temp_display: null,
+    ambient_lux: null,
     temperature_unit: 'F',
     soil_moisture_relative: null,
     soil_moisture_precise: null,

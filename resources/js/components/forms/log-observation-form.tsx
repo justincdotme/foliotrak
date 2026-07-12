@@ -13,6 +13,7 @@ import {
 import type { CareEvent, GrowthRate } from '@/api/types'
 import { weightToGrams } from '@/api/types'
 import { fetchSensorSnapshot } from '@/api/client'
+import { luxToLightLevel } from '@/utils/lux-to-light-level'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 import { useCareFormSubmit } from '@/hooks/useCareFormSubmit'
 import { useSymptoms } from '@/hooks/useCareLookups'
@@ -72,7 +73,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
       occurred_at: event ? isoToLocal(event.occurred_at) : nowLocal(),
       overall_health: detail?.overall_health != null ? String(detail.overall_health) : '',
       health_note: detail?.health_note ?? '',
-      light_level: detail?.light_level != null ? String(detail.light_level) : '5',
+      light_level: detail?.light_level != null ? String(detail.light_level) : '',
       growth_rate: detail?.growth_rate ?? '',
       growth_note: detail?.growth_note ?? '',
       leaf_size_mm: detail?.leaf_size_mm != null ? String(detail.leaf_size_mm) : '',
@@ -101,10 +102,11 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
   const touchedRef = useRef<Set<string>>(new Set())
   const createdEventIdRef = useRef<number | null>(null)
   const [sensorFilled, setSensorFilled] = useState<Set<string>>(new Set())
+  const [ambientLux, setAmbientLux] = useState<number | null>(detail?.ambient_lux ?? null)
 
   const healthStr = watch('overall_health')
   const lightStr = watch('light_level')
-  const light = Number(lightStr) || 5
+  const light = lightStr !== '' ? Number(lightStr) : null
   const growth = watch('growth_rate')
   const health = healthStr ? Number(healthStr) : null
   const grams = weightToGrams(weight)
@@ -122,17 +124,25 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
           if (ignore || !snapshot) return
           const filled = new Set<string>()
 
-          if (!touchedRef.current.has('ambient_humidity_pct')) {
+          if (
+            snapshot.ambient_humidity_pct != null &&
+            !touchedRef.current.has('ambient_humidity_pct')
+          ) {
             setValue('ambient_humidity_pct', String(Math.round(snapshot.ambient_humidity_pct)))
             filled.add('ambient_humidity_pct')
           }
-          if (!touchedRef.current.has('ambient_temp')) {
+          if (snapshot.ambient_temp_c != null && !touchedRef.current.has('ambient_temp')) {
             const temp =
               tempUnit === 'F'
                 ? Math.round(((snapshot.ambient_temp_c * 9) / 5 + 32) * 10) / 10
                 : snapshot.ambient_temp_c
             setValue('ambient_temp', String(temp))
             filled.add('ambient_temp')
+          }
+          if (snapshot.ambient_lux != null && !touchedRef.current.has('light_level')) {
+            setValue('light_level', String(luxToLightLevel(snapshot.ambient_lux)))
+            setAmbientLux(snapshot.ambient_lux)
+            filled.add('light_level')
           }
           setSensorFilled(filled)
         })
@@ -195,7 +205,8 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
       occurred_at: toIso(v.occurred_at),
       overall_health: v.overall_health ? Number(v.overall_health) : null,
       health_note: v.health_note || null,
-      light_level: Number(v.light_level),
+      light_level: v.light_level ? Number(v.light_level) : null,
+      ambient_lux: ambientLux,
       growth_rate: (v.growth_rate || null) as GrowthRate | null,
       growth_note: v.growth_note || null,
       leaf_size_mm: v.leaf_size_mm ? Number(v.leaf_size_mm) : null,
@@ -225,7 +236,19 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
           onChange={v => setValue('overall_health', v == null ? '' : String(v))}
         />
         <hr className="border-border" />
-        <LightSlider value={light} onChange={v => setValue('light_level', String(v))} />
+        <LightSlider
+          value={light}
+          onChange={v => {
+            touchedRef.current.add('light_level')
+            setSensorFilled(prev => {
+              const next = new Set(prev)
+              next.delete('light_level')
+              return next
+            })
+            setValue('light_level', String(v))
+          }}
+          sensorFilled={sensorFilled.has('light_level')}
+        />
         <hr className="border-border" />
         <Field label="Growth rate">
           <Segmented

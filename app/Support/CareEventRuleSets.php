@@ -90,6 +90,7 @@ final class CareEventRuleSets
                 'weight.g'               => ['nullable', 'numeric', 'min:0', 'max:999999'],
                 'ambient_humidity_pct'   => self::opt($partial, ['integer', 'min:0', 'max:100']),
                 'ambient_temp'           => self::opt($partial, ['numeric', ...self::tempRange()]),
+                'ambient_lux'            => self::opt($partial, ['numeric', 'min:0']),
                 'soil_moisture_relative' => self::opt($partial, [Rule::enum(SoilMoistureLevel::class)]),
                 'soil_moisture_precise'  => self::opt($partial, ['integer', 'min:1', 'max:10']),
                 'symptom_ids'            => self::opt($partial, ['array']),

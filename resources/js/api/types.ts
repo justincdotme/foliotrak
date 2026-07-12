@@ -156,6 +156,7 @@ export interface ObservationDetail {
   ambient_humidity_pct: number | null
   ambient_temp_c: number | null
   ambient_temp_display: number | null
+  ambient_lux: number | null
   temperature_unit: 'F' | 'C'
   soil_moisture_relative: SoilMoistureLevel | null
   soil_moisture_precise: number | null
@@ -493,8 +494,9 @@ export interface SensorReadingsResponse {
 }
 
 export interface SensorSnapshot {
-  ambient_temp_c: number
-  ambient_humidity_pct: number
+  ambient_temp_c?: number
+  ambient_humidity_pct?: number
+  ambient_lux?: number
   sensor_count: number
   matched_at?: string
 }

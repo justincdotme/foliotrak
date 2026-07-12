@@ -172,6 +172,11 @@ export function EventDetail({ e }: EventDetailProps) {
             </span>
           </span>
         )}
+        {o.ambient_lux != null && (
+          <span>
+            Light: <span className="tnum text-text">{o.ambient_lux} lx</span>
+          </span>
+        )}
         {o.soil_moisture_relative != null && (
           <span>
             Soil: <span className="text-text capitalize">{o.soil_moisture_relative}</span>
