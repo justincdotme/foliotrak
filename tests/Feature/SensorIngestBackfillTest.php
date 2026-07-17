@@ -41,7 +41,10 @@ class SensorIngestBackfillTest extends TestCase
             'sensors.api_key'  => self::API_KEY,
         ]);
 
-        $this->startTime = Carbon::now('UTC')->subHours(5);
+        $raw = Carbon::now('UTC')->subDays(3);
+        // Align to the previous quarter-hour so all readings sit on exact
+        // 15-minute boundaries and survive the ingestion snap unchanged.
+        $this->startTime = $raw->copy()->setMinute((int) (floor($raw->minute / 15) * 15))->setSecond(0);
 
         for ($i = 0; $i < 250; $i++) {
             $this->dataset[] = [
@@ -49,7 +52,7 @@ class SensorIngestBackfillTest extends TestCase
                 'humidity'    => round(50.0 + $i * 0.05, 2),
                 'battery'     => 95,
                 'rssi'        => -60,
-                'recorded_at' => $this->startTime->copy()->addSeconds($i * 60)->format('Y-m-d\TH:i:s\Z'),
+                'recorded_at' => $this->startTime->copy()->addMinutes($i * 15)->format('Y-m-d\TH:i:s\Z'),
             ];
         }
     }
@@ -204,7 +207,7 @@ class SensorIngestBackfillTest extends TestCase
                         'humidity'    => 48.7,
                         'battery'     => 90,
                         'rssi'        => -55,
-                        'recorded_at' => $this->startTime->copy()->addMinute()->format('Y-m-d\TH:i:s\Z'),
+                        'recorded_at' => $this->startTime->copy()->addMinutes(15)->format('Y-m-d\TH:i:s\Z'),
                     ],
                 ],
             ]);

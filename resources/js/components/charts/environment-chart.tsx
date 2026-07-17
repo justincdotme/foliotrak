@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -120,7 +120,14 @@ function collectLines(sensors: SensorSeries[]): LineSpec[] {
 
 export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
   const [range, setRange] = useState<Range>('week')
-  const { data, isPending } = useSensorReadings(plantId, range)
+  const { data, isPending, isFetching } = useSensorReadings(plantId, range)
+
+  const sensors = useMemo(() => data?.sensors ?? [], [data?.sensors])
+  const hasReadings = sensors.some(s => s.readings.length > 0)
+  const chartData = useMemo(() => buildChartData(sensors), [sensors])
+  const axes = useMemo(() => collectAxes(sensors), [sensors])
+  const lines = useMemo(() => collectLines(sensors), [sensors])
+  const unitByKey = useMemo(() => new Map(lines.map(l => [l.dataKey, l.unit])), [lines])
 
   if (isPending) {
     return (
@@ -131,9 +138,6 @@ export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
       </ChartShell>
     )
   }
-
-  const sensors = data?.sensors ?? []
-  const hasReadings = sensors.some(s => s.readings.length > 0)
 
   if (sensors.length === 0) {
     return (
@@ -159,17 +163,17 @@ export function EnvironmentChart({ plantId }: EnvironmentChartProps) {
     )
   }
 
-  const chartData = buildChartData(sensors)
-  const axes = collectAxes(sensors)
-  const lines = collectLines(sensors)
-  const unitByKey = new Map(lines.map(l => [l.dataKey, l.unit]))
-
   return (
     <ChartShell title="Environment" height={280}>
       <div className="mb-3">
         <Segmented value={range} onChange={v => setRange(v as Range)} options={RANGE_OPTIONS} />
       </div>
-      <div dusk="environment-chart" style={{ height: 220 }}>
+      <div dusk="environment-chart" className="relative" style={{ height: 220 }}>
+        {isFetching && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
+            <Spinner />
+          </div>
+        )}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 6, right: 8, bottom: 0, left: -6 }}>
             <CartesianGrid stroke="var(--border)" vertical={false} />
