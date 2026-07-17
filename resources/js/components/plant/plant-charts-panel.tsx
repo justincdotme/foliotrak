@@ -110,7 +110,7 @@ export function PlantChartsPanel({ plantId, timeline, recommendations }: PlantCh
           </div>
         </TabsContent>
 
-        <TabsContent value="environment" forceMount className="data-[state=inactive]:hidden">
+        <TabsContent value="environment">
           <EnvironmentChart plantId={plantId} />
         </TabsContent>
 
