@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    /**
+     * @return void
+     */
     public function up(): void
     {
         if (DB::connection()->getDriverName() !== 'mysql') {
@@ -35,6 +38,9 @@ return new class extends Migration
         );
     }
 
+    /**
+     * @return void
+     */
     public function down(): void
     {
         // Destructive data consolidation; original per-minute rows cannot be restored.
