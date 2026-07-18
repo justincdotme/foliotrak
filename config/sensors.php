@@ -7,5 +7,5 @@ return [
     'api_key'  => env('SENSOR_API_KEY', ''),
     // A zero or empty value would crash the scheduler's modulo gate.
     'granularity' => ((int) env('SENSOR_GRANULARITY', 30)) ?: 30,
-    'verify'      => env('SENSOR_TLS_VERIFY', false),
+    'verify'      => env('SENSOR_TLS_VERIFY', true),
 ];
