@@ -114,7 +114,7 @@ services:
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
       - .:/var/www/html
-      - ./docker/nginx/certs:/etc/nginx/certs:ro
+      - ../certs:/etc/nginx/certs:ro
     depends_on:
       - app
     networks:
