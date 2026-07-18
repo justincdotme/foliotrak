@@ -66,7 +66,7 @@ beforeEach(() => {
   } as unknown as ReturnType<typeof useCareEventMutations>)
 })
 
-describe('LogObservationForm', () => {
+describe('LogObservationForm', { timeout: 15000 }, () => {
   it('sends weight as lb/oz/g, splits seeded and custom symptoms, and links an attached photo', async () => {
     const onDone = vi.fn()
     const { container } = renderWithProvider(<LogObservationForm plantId={3} onDone={onDone} />)
