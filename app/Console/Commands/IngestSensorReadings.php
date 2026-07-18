@@ -111,7 +111,7 @@ class IngestSensorReadings extends Command
             return Carbon::parse($latest);
         }
 
-        return Carbon::now('UTC')->subDay();
+        return Carbon::now('UTC')->subWeek();
     }
 
     /**
@@ -124,10 +124,13 @@ class IngestSensorReadings extends Command
     {
         $transformer = $sensor->type->transformer();
 
+        $ts      = $dto->recordedAt->getTimestamp();
+        $snapped = (int) (round($ts / 900) * 900);
+
         return SensorReading::insertOrIgnore([
             'sensor_id'   => $sensor->id,
             'data'        => json_encode($transformer->normalize($dto->data)),
-            'recorded_at' => $dto->recordedAt->format('Y-m-d H:i:s'),
+            'recorded_at' => Carbon::createFromTimestamp($snapped)->format('Y-m-d H:i:s'),
             'created_at'  => now(),
             'updated_at'  => now(),
         ]);
