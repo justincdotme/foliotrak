@@ -1,4 +1,10 @@
-import { useState, type ChangeEvent, type SyntheticEvent } from 'react'
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type MutableRefObject,
+  type SyntheticEvent,
+} from 'react'
 import { Check, ImageIcon, Plus } from 'lucide-react'
 import type { CropArea, PlantSensor, SpeciesSuggestion, Tag } from '@/api/types'
 import { useSpeciesSuggest } from '@/hooks/useSpeciesSuggest'
@@ -19,9 +25,10 @@ import { CropWorkflow } from '@/components/plant/crop-workflow'
 
 interface AddPlantFormProps {
   onDone: () => void
+  dirtyRef?: MutableRefObject<boolean>
 }
 
-export function AddPlantForm({ onDone }: AddPlantFormProps) {
+export function AddPlantForm({ onDone, dirtyRef }: AddPlantFormProps) {
   const { data: allTags } = useTags()
   const { data: allSensors } = useSensors()
   const create = useCreatePlant()
@@ -41,6 +48,22 @@ export function AddPlantForm({ onDone }: AddPlantFormProps) {
   const [speciesOpen, setSpeciesOpen] = useState(false)
   const [partialError, setPartialError] = useState<string | null>(null)
   const { results, loading } = useSpeciesSuggest(common)
+
+  const dirty = !!(
+    common ||
+    sci ||
+    nickname ||
+    gbifKey ||
+    locationId ||
+    acquired ||
+    selectedTags.length ||
+    selectedSensors.length ||
+    photoFile
+  )
+
+  useEffect(() => {
+    if (dirtyRef) dirtyRef.current = dirty
+  }, [dirty, dirtyRef])
 
   const { submit, formError } = useCareFormSubmit({
     createFn: (args: any) => create.mutateAsync(args), // eslint-disable-line @typescript-eslint/no-explicit-any

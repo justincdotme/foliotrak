@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { MutableRefObject } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -23,18 +24,20 @@ interface RelocationEditFormProps {
   plantId: number
   event: CareEvent
   onDone: () => void
+  dirtyRef?: MutableRefObject<boolean>
 }
 
-export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFormProps) {
+export function RelocationEditForm({ plantId, event, onDone, dirtyRef }: RelocationEditFormProps) {
   const { updateEvent } = useCareEventMutations(plantId)
   const [toLocationId, setToLocationId] = useState<number | null>(
     event.relocation?.to_location?.id ?? null
   )
+  const [extraDirty, setExtraDirty] = useState(false)
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -48,6 +51,12 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
     eventId: event.id,
     setError,
   })
+
+  const isFormDirty = isDirty || extraDirty
+
+  useEffect(() => {
+    if (dirtyRef) dirtyRef.current = isFormDirty
+  }, [isFormDirty, dirtyRef])
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
     const payload = {
@@ -76,7 +85,10 @@ export function RelocationEditForm({ plantId, event, onDone }: RelocationEditFor
       <Field label="To">
         <LocationCombobox
           value={toLocationId}
-          onChange={setToLocationId}
+          onChange={v => {
+            setToLocationId(v)
+            setExtraDirty(true)
+          }}
           dusk="relocation-destination"
         />
       </Field>

@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import type { MutableRefObject } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -23,15 +25,16 @@ interface LogWateringFormProps {
   plantId: number
   onDone: () => void
   event?: CareEvent
+  dirtyRef?: MutableRefObject<boolean>
 }
 
-export function LogWateringForm({ plantId, onDone, event }: LogWateringFormProps) {
+export function LogWateringForm({ plantId, onDone, event, dirtyRef }: LogWateringFormProps) {
   const { createWatering, updateEvent } = useCareEventMutations(plantId)
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -47,6 +50,10 @@ export function LogWateringForm({ plantId, onDone, event }: LogWateringFormProps
     eventId: event?.id,
     setError,
   })
+
+  useEffect(() => {
+    if (dirtyRef) dirtyRef.current = isDirty
+  }, [isDirty, dirtyRef])
 
   const onSubmit = async (v: { occurred_at: string; amount_ml: string; note: string }) => {
     const payload = {

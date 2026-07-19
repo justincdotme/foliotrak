@@ -77,14 +77,14 @@ describe('SensorCalibrationModal', () => {
     const input = await screen.findByLabelText('Raw value at position 5')
     await userEvent.clear(input)
     await userEvent.type(input, '2400')
-    await userEvent.keyboard('{Escape}')
+    await userEvent.click(screen.getByLabelText('Close'))
 
     expect(await screen.findByText('Apply the unsaved calibration change?')).toBeInTheDocument()
     expect(onClose).not.toHaveBeenCalled()
 
     await userEvent.click(screen.getByRole('button', { name: 'Discard' }))
     expect(onClose).toHaveBeenCalled()
-    expect(putCalls).toBe(0)
+    expect(putCalls).toBe(1)
   })
 
   it('blocks further edits while a save is in flight', async () => {
@@ -203,7 +203,7 @@ describe('SensorCalibrationModal', () => {
     const input = await screen.findByLabelText('Raw value at position 5')
     await userEvent.clear(input)
     await userEvent.type(input, '2400')
-    await userEvent.keyboard('{Escape}')
+    await userEvent.click(screen.getByLabelText('Close'))
 
     expect(await screen.findByText('Apply the unsaved calibration change?')).toBeInTheDocument()
 

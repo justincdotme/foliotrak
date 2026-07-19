@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { AppContext } from '@/components/app/app-context'
 import { ErrorBanner } from '@/components/app/error-banner'
 import { Modal } from '@/components/app/modal'
 import { AddPlantForm } from '@/components/forms/add-plant-form'
 import { CareLogProvider } from '@/components/plant/care-log-provider'
+import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useTheme } from '@/hooks/useTheme'
 import api from '@/lib/api'
@@ -23,6 +24,23 @@ export function Shell() {
   const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const [addOpen, setAddOpen] = useState(false)
+  const addDirtyRef = useRef(false)
+  const [addConfirming, setAddConfirming] = useState(false)
+
+  const requestAddClose = () => {
+    if (addDirtyRef.current) {
+      setAddConfirming(true)
+      return
+    }
+    setAddOpen(false)
+  }
+
+  useEffect(() => {
+    if (!addOpen) {
+      setAddConfirming(false)
+      addDirtyRef.current = false
+    }
+  }, [addOpen])
 
   const go = (to: string) => navigate(to)
   const onLogout = async () => {
@@ -69,13 +87,28 @@ export function Shell() {
 
         <Modal
           open={addOpen}
-          onClose={() => setAddOpen(false)}
+          onClose={requestAddClose}
           title="Add a plant"
           subtitle="Search a species or keep your own name."
           wide={!mobile}
           dusk="add-plant-modal"
+          footer={
+            addConfirming ? (
+              <div className="-m-4 flex w-[calc(100%+2rem)] items-center gap-2 rounded-b-card bg-overdue/10 p-4">
+                <span className="mr-auto text-[13px] font-medium text-overdue">
+                  You have unsaved changes.
+                </span>
+                <Button variant="ghost" size="sm" onClick={() => setAddConfirming(false)}>
+                  Keep editing
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => setAddOpen(false)}>
+                  Discard
+                </Button>
+              </div>
+            ) : undefined
+          }
         >
-          <AddPlantForm onDone={() => setAddOpen(false)} />
+          <AddPlantForm onDone={() => setAddOpen(false)} dirtyRef={addDirtyRef} />
         </Modal>
       </div>
     </AppContext.Provider>

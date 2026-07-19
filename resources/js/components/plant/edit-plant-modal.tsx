@@ -40,6 +40,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const [sensors, setSensors] = useState<PlantSensor[]>(plant.sensors ?? [])
   const [nickname, setNickname] = useState(plant.nickname || '')
   const [formError, setFormError] = useState<string | null>(null)
+  const [confirmingClose, setConfirmingClose] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -50,9 +51,43 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       setSensors(plant.sensors ?? [])
       setNickname(plant.nickname || '')
       setFormError(null)
+      setConfirmingClose(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, plant.id])
+
+  const tagIds = tags
+    .map(t => t.id)
+    .sort()
+    .join(',')
+  const plantTagIds = plant.tags
+    .map(t => t.id)
+    .sort()
+    .join(',')
+  const sensorIds = sensors
+    .map(s => s.id)
+    .sort()
+    .join(',')
+  const plantSensorIds = (plant.sensors ?? [])
+    .map(s => s.id)
+    .sort()
+    .join(',')
+
+  const dirty =
+    nickname !== (plant.nickname || '') ||
+    notes !== (plant.notes || '') ||
+    status !== plant.status ||
+    locationId !== (plant.location?.id ?? null) ||
+    tagIds !== plantTagIds ||
+    sensorIds !== plantSensorIds
+
+  const requestClose = () => {
+    if (dirty) {
+      setConfirmingClose(true)
+      return
+    }
+    onClose()
+  }
 
   const toggleTag = (t: Tag) =>
     setTags(ts => (ts.find(x => x.id === t.id) ? ts.filter(x => x.id !== t.id) : [...ts, t]))
@@ -80,25 +115,39 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       title="Edit plant"
       subtitle={plant.common_name || undefined}
       dusk="edit-plant-modal"
       footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <TooltipButton
-            dusk="edit-plant-save"
-            onClick={save}
-            disabled={update.isPending}
-            tooltipContent={update.isPending ? 'Saving...' : undefined}
-          >
-            <Check size={16} />
-            Save changes
-          </TooltipButton>
-        </>
+        confirmingClose ? (
+          <div className="-m-4 flex w-[calc(100%+2rem)] items-center gap-2 rounded-b-card bg-overdue/10 p-4">
+            <span className="mr-auto text-[13px] font-medium text-overdue">
+              You have unsaved changes.
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmingClose(false)}>
+              Keep editing
+            </Button>
+            <Button variant="danger" size="sm" onClick={onClose}>
+              Discard
+            </Button>
+          </div>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={requestClose}>
+              Cancel
+            </Button>
+            <TooltipButton
+              dusk="edit-plant-save"
+              onClick={save}
+              disabled={update.isPending}
+              tooltipContent={update.isPending ? 'Saving...' : undefined}
+            >
+              <Check size={16} />
+              Save changes
+            </TooltipButton>
+          </>
+        )
       }
     >
       <div className="space-y-4">

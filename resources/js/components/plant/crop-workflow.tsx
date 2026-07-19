@@ -29,6 +29,9 @@ export function CropWorkflow({
   const [step, setStep] = useState<'hero' | 'thumb'>('hero')
   const [heroCropArea, setHeroCropArea] = useState<CropArea | null>(null)
   const [thumbCropArea, setThumbCropArea] = useState<CropArea | null>(null)
+  const [confirmingClose, setConfirmingClose] = useState(false)
+
+  const requestClose = () => setConfirmingClose(true)
 
   const handleBack = useCallback(() => {
     if (step === 'thumb') {
@@ -53,12 +56,22 @@ export function CropWorkflow({
   return (
     <Modal
       open
-      onClose={onClose}
+      onClose={requestClose}
       title={title}
       subtitle={subtitle}
       wide
       footer={
-        step === 'hero' ? (
+        confirmingClose ? (
+          <div className="-m-4 flex w-[calc(100%+2rem)] items-center gap-2 rounded-b-card bg-overdue/10 p-4">
+            <span className="mr-auto text-[13px] font-medium text-overdue">Discard this crop?</span>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmingClose(false)}>
+              Keep editing
+            </Button>
+            <Button variant="danger" size="sm" onClick={onClose}>
+              Discard
+            </Button>
+          </div>
+        ) : step === 'hero' ? (
           <div className="flex w-full items-center justify-between">
             <Button variant="ghost" onClick={handleBack}>
               <ChevronLeft size={16} />
