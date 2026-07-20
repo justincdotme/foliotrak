@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import type { MutableRefObject } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -31,6 +33,7 @@ interface LogRepottingFormProps {
   // Chains a linked fertilizing entry at the same timestamp when fertilizer was
   // added during the repot, so fertilizer is always tracked the same way.
   onLogFertilizer?: (occurredAtIso: string) => void
+  dirtyRef?: MutableRefObject<boolean>
 }
 
 export function LogRepottingForm({
@@ -38,6 +41,7 @@ export function LogRepottingForm({
   onDone,
   event,
   onLogFertilizer,
+  dirtyRef,
 }: LogRepottingFormProps) {
   const { createRepotting, updateEvent } = useCareEventMutations(plantId)
   const {
@@ -46,7 +50,7 @@ export function LogRepottingForm({
     setError,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -69,6 +73,10 @@ export function LogRepottingForm({
     eventId: event?.id,
     setError,
   })
+
+  useEffect(() => {
+    if (dirtyRef) dirtyRef.current = isDirty
+  }, [isDirty, dirtyRef])
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
     const occurredAt = toIso(v.occurred_at)

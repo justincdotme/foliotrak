@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { MutableRefObject } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -41,6 +42,7 @@ interface LogFertilizingFormProps {
   onDone: () => void
   event?: CareEvent
   seedOccurredAt?: string
+  dirtyRef?: MutableRefObject<boolean>
 }
 
 export function LogFertilizingForm({
@@ -48,6 +50,7 @@ export function LogFertilizingForm({
   onDone,
   event,
   seedOccurredAt,
+  dirtyRef,
 }: LogFertilizingFormProps) {
   const { createFertilizing, updateEvent } = useCareEventMutations(plantId)
   const { data: forms } = useFertilizerForms()
@@ -66,7 +69,7 @@ export function LogFertilizingForm({
     setError,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -86,6 +89,7 @@ export function LogFertilizingForm({
   const [nutrients, setNutrients] = useState<NutrientRow[]>(
     detail?.nutrients?.map(n => ({ nutrient_id: String(n.nutrient_id), note: n.note ?? '' })) ?? []
   )
+  const [extraDirty, setExtraDirty] = useState(false)
 
   const { submit, formError } = useCareFormSubmit({
     createFn: createFertilizing.mutateAsync,
@@ -93,6 +97,12 @@ export function LogFertilizingForm({
     eventId: event?.id,
     setError,
   })
+
+  const isFormDirty = isDirty || extraDirty
+
+  useEffect(() => {
+    if (dirtyRef) dirtyRef.current = isFormDirty
+  }, [isFormDirty, dirtyRef])
 
   const formValue = watch('fertilizer_form_id')
 
@@ -110,9 +120,13 @@ export function LogFertilizingForm({
     const first = nutrientOptions[0]
     if (!first) return
     setNutrients(n => [...n, { nutrient_id: String(first.nutrient_id), note: '' }])
+    setExtraDirty(true)
   }
-  const removeNutrient = (i: number) => setNutrients(n => n.filter((_, idx) => idx !== i))
-  const updateNutrient = (i: number, field: 'nutrient_id' | 'note', value: string) =>
+  const removeNutrient = (i: number) => {
+    setNutrients(n => n.filter((_, idx) => idx !== i))
+    setExtraDirty(true)
+  }
+  const updateNutrient = (i: number, field: 'nutrient_id' | 'note', value: string) => {
     setNutrients(n => {
       const next = [...n]
       if (next[i]) {
@@ -120,6 +134,8 @@ export function LogFertilizingForm({
       }
       return next
     })
+    setExtraDirty(true)
+  }
 
   const onSubmit = async (v: z.infer<typeof schema>) => {
     const payload = {

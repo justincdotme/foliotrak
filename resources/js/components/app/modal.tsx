@@ -15,8 +15,8 @@ interface ModalProps {
   dusk?: string
 }
 
-// Radix Dialog supplies the focus trap, escape handling, and scroll lock; the styling
-// handles layout (centered on desktop, bottom sheet on mobile) to match the prototype.
+// Radix Dialog supplies the focus trap and scroll lock; overlay click and Escape are
+// blocked so modals only close via explicit button actions.
 export function Modal({
   open,
   onClose,
@@ -40,6 +40,8 @@ export function Modal({
         <Dialog.Content
           dusk={dusk}
           aria-describedby={undefined}
+          onInteractOutside={e => e.preventDefault()}
+          onEscapeKeyDown={e => e.preventDefault()}
           className={cn(
             'fixed z-50 flex flex-col border border-border bg-surface shadow-xl focus:outline-none',
             mobile

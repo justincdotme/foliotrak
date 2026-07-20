@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { MutableRefObject } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -51,9 +52,10 @@ interface LogObservationFormProps {
   plantId: number
   onDone: () => void
   event?: CareEvent
+  dirtyRef?: MutableRefObject<boolean>
 }
 
-export function LogObservationForm({ plantId, onDone, event }: LogObservationFormProps) {
+export function LogObservationForm({ plantId, onDone, event, dirtyRef }: LogObservationFormProps) {
   const { createObservation, updateEvent, uploadEventPhoto } = useCareEventMutations(plantId)
   const { data: allSymptoms } = useSymptoms()
   const { data: settings } = useSettings()
@@ -66,7 +68,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
     setError,
     setValue,
     watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -99,6 +101,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
   })
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
+  const [extraDirty, setExtraDirty] = useState(false)
   const touchedRef = useRef<Set<string>>(new Set())
   const createdEventIdRef = useRef<number | null>(null)
   const [sensorFilled, setSensorFilled] = useState<Set<string>>(new Set())
@@ -181,6 +184,12 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
     eventId: event?.id,
     setError,
   })
+
+  const isFormDirty = isDirty || extraDirty
+
+  useEffect(() => {
+    if (dirtyRef) dirtyRef.current = isFormDirty
+  }, [isFormDirty, dirtyRef])
 
   const attachPhotoAndFinish = async (careEventId: number) => {
     if (photoFile) {
@@ -344,6 +353,7 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
               return next
             })
             setSoilMoisture(v)
+            setExtraDirty(true)
           }}
           sensorFilled={sensorFilled.has('soil_moisture')}
         />
@@ -351,7 +361,13 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
         <Field label="Leaf size" hint="mm, optional">
           <Input type="number" placeholder="120" dusk="leaf-size" {...register('leaf_size_mm')} />
         </Field>
-        <WeightInput defaultValue={weight} onChange={setWeight} />
+        <WeightInput
+          defaultValue={weight}
+          onChange={v => {
+            setWeight(v)
+            setExtraDirty(true)
+          }}
+        />
       </FormSection>
 
       <FormSection
@@ -363,7 +379,10 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
           allSymptoms={allSymptoms}
           defaultIds={symptomData.ids}
           defaultCustoms={symptomData.customs}
-          onChange={setSymptomData}
+          onChange={v => {
+            setSymptomData(v)
+            setExtraDirty(true)
+          }}
         />
       </FormSection>
 
@@ -374,7 +393,12 @@ export function LogObservationForm({ plantId, onDone, event }: LogObservationFor
           {...register('health_note')}
         />
       </Field>
-      <PhotoAttach onChange={setPhotoFile} />
+      <PhotoAttach
+        onChange={v => {
+          setPhotoFile(v)
+          setExtraDirty(true)
+        }}
+      />
       <FormError message={photoError} />
       <FormError message={formError} dusk="form-error" />
       <div className="flex justify-end gap-2 pt-1">
