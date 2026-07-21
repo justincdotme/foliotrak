@@ -8,7 +8,7 @@
       "gbif_key": "2765120",
       "location": {
         "id": 2,
-        "name": "Sunroom"
+        "name": "Room B"
       },
       "acquired_on": "2026-06-27",
       "status": "dead",
@@ -80,11 +80,11 @@
           "care_event_id": 41,
           "from_location": {
             "id": 1,
-            "name": "window shelf"
+            "name": "Shelf A"
           },
           "to_location": {
             "id": 2,
-            "name": "Sunroom"
+            "name": "Room B"
           }
         }
       },

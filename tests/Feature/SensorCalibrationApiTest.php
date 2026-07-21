@@ -43,7 +43,7 @@ class SensorCalibrationApiTest extends TestCase
     /** @return void */
     public function test_calibration_is_rejected_for_non_moisture_sensors(): void
     {
-        $sensor = Sensor::create(['mac' => 'A4:C1:38:AA:00:01', 'name' => 'Hygro', 'color' => 'var(--series-1)']);
+        $sensor = Sensor::create(['mac' => '02:00:5E:AA:00:01', 'name' => 'Hygro', 'color' => 'var(--series-1)']);
 
         $this->getJson("/api/sensors/{$sensor->id}/calibration")->assertStatus(422);
         $this->putJson("/api/sensors/{$sensor->id}/calibration", [
@@ -139,7 +139,7 @@ class SensorCalibrationApiTest extends TestCase
     private function moistureSensor(): Sensor
     {
         return Sensor::create([
-            'mac'   => 'AC:A7:04:AA:00:05',
+            'mac'   => '02:00:5E:AA:00:05',
             'name'  => 'Monstera probe',
             'color' => 'var(--series-3)',
             'type'  => SensorType::Moisture,
