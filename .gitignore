@@ -1,7 +1,5 @@
 /vendor/
 node_modules/
-npm-debug.log
-yarn-error.log
 
 # Laravel 4 specific
 bootstrap/compiled.php
@@ -24,7 +22,54 @@ Homestead.json
 
 /public/build
 /storage/pail
+
+# Vitest coverage report output
+/coverage
+
+# GBIF backbone seed data, built by `php artisan species:refresh-seed`.
+# Third-party data is downloaded at setup, never committed.
+/storage/app/seed/
 .env.backup
 .env.production
 .phpactor.json
 auth.json
+
+# Local tooling and project docs (not for the shared repo)
+/.claude
+/.superpowers
+/docs/superpowers
+/docs/project
+/docs/testing
+/CLAUDE.md
+/temp
+AGENTS.md
+/codex
+
+
+# Laravel default .gitignore (latest), duplicates of the above omitted
+*.log
+.DS_Store
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+Thumbs.db
+
+# Docker bind-mounted MySQL data and generated TLS certs. Keep the certs
+# directory in the repo so Docker does not root-create it on first boot.
+/docker/data
+/docker/nginx/certs/*
+!/docker/nginx/certs/.gitkeep
+
+# Linked git worktrees
+.worktrees/
+
+# Dusk test artifacts (screenshots, console logs, page source on failure)
+/tests/Browser/screenshots
+/tests/Browser/console
+/tests/Browser/source
+
+# Gondola gateway SQLite database (not part of this project)
+readings.db

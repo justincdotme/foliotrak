@@ -1,0 +1,7 @@
+{
+  "data": [
+    { "value": "hygrometer", "label": "Hygrometer" },
+    { "value": "light_sensor", "label": "Light Sensor" },
+    { "value": "moisture", "label": "Soil Moisture" }
+  ]
+}

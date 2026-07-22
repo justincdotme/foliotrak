@@ -1,0 +1,89 @@
+{
+  "data": {
+    "user": {
+      "id": 2,
+      "name": "Claude",
+      "email": "claude@claude.ai",
+      "pushover_user_key": null
+    },
+    "due_for_care": [
+      {
+        "plant_id": 5,
+        "common_name": "Snakeplant",
+        "scientific_name": "Nassauvia serpens",
+        "status": "ok",
+        "due_date": "2026-07-05",
+        "type": "watering",
+        "daysLeft": 5,
+        "interval": 7
+      }
+    ],
+    "recent_activity": [
+      {
+        "event_id": 45,
+        "plant_id": 13,
+        "plant_common_name": "golden hunter's-robe",
+        "type": "watering",
+        "occurred_at": "2026-06-29T15:00:00.000000Z",
+        "note": null
+      },
+      {
+        "event_id": 46,
+        "plant_id": 10,
+        "plant_common_name": "Inchplant",
+        "type": "watering",
+        "occurred_at": "2026-06-29T15:00:00.000000Z",
+        "note": null
+      },
+      {
+        "event_id": 47,
+        "plant_id": 19,
+        "plant_common_name": "baby rubberplant",
+        "type": "watering",
+        "occurred_at": "2026-06-29T15:00:00.000000Z",
+        "note": null
+      },
+      {
+        "event_id": 42,
+        "plant_id": 5,
+        "plant_common_name": "Snakeplant",
+        "type": "watering",
+        "occurred_at": "2026-06-28T18:45:00.000000Z",
+        "note": "Soil was dry, gave a thorough watering."
+      },
+      {
+        "event_id": 44,
+        "plant_id": 16,
+        "plant_common_name": "ten-commandments",
+        "type": "watering",
+        "occurred_at": "2026-06-28T15:00:00.000000Z",
+        "note": null
+      },
+      {
+        "event_id": 43,
+        "plant_id": 17,
+        "plant_common_name": "ten-commandments",
+        "type": "watering",
+        "occurred_at": "2026-06-28T14:00:00.000000Z",
+        "note": null
+      },
+      {
+        "event_id": 41,
+        "plant_id": 3,
+        "plant_common_name": "Tradescantia sillamontana",
+        "type": "relocation",
+        "occurred_at": "2026-06-27T22:01:26.000000Z",
+        "note": null
+      },
+      {
+        "event_id": 40,
+        "plant_id": 4,
+        "plant_common_name": "ten-commandments",
+        "type": "observation",
+        "occurred_at": "2026-06-27T15:00:00.000000Z",
+        "note": null
+      }
+    ],
+    "flagged_problems": []
+  }
+}

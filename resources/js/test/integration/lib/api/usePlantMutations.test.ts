@@ -1,0 +1,292 @@
+import { renderHook, waitFor, act } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
+import React from 'react'
+import { describe, expect, it } from 'vitest'
+import {
+  useCreatePlant,
+  useUpdatePlant,
+  useUploadPhoto,
+  useSetCoverPhoto,
+  useDeletePhoto,
+  useDeletePlant,
+} from '@/hooks/usePlantMutations'
+import { useSensorReadings } from '@/hooks/useSensorReadings'
+import { server } from '../../../handlers'
+import { jsonMessage } from '../../../handlers/_helpers'
+import plantCreatedFixture from '../../../fixtures/plants/created-201.json'
+import plantDetailFixture from '../../../fixtures/plants/detail-1.json'
+import sensorReadingsFixture from '../../../fixtures/sensors/readings-week.json'
+import photoCreatedFixture from '../../../fixtures/photos/created-201.json'
+
+const makeWrapper = () => {
+  const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return React.createElement(QueryClientProvider, { client: qc }, children)
+  }
+}
+
+describe('useCreatePlant', () => {
+  it('creates a plant and resolves the real created shape', async () => {
+    const requests: Array<{ body: unknown }> = []
+    server.use(
+      http.post('/api/plants', async ({ request }) => {
+        requests.push({ body: await request.json() })
+        return HttpResponse.json(plantCreatedFixture, { status: 201 })
+      })
+    )
+    const { result } = renderHook(() => useCreatePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync({ payload: { common_name: 'Pothos' } })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.plant.id).toBe(plantCreatedFixture.data.id)
+    expect(result.current.data?.plant.common_name).toBe(plantCreatedFixture.data.common_name)
+    expect(result.current.data?.coverUploadFailed).toBe(false)
+    expect(requests[0]).toMatchObject({ body: { common_name: 'Pothos' } })
+  })
+
+  it('sends crop coordinates and set_as_cover with the cover upload', async () => {
+    const uploadForms: FormData[] = []
+    server.use(
+      http.post('/api/plants', () => HttpResponse.json(plantCreatedFixture, { status: 201 })),
+      http.post('/api/plants/:id/photos', async ({ request }) => {
+        uploadForms.push(await request.formData())
+        return HttpResponse.json(photoCreatedFixture, { status: 201 })
+      })
+    )
+    const { result } = renderHook(() => useCreatePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      const outcome = await result.current.mutateAsync({
+        payload: { common_name: 'Crops Plant' },
+        cover: {
+          file: new File(['x'], 'cover.jpg', { type: 'image/jpeg' }),
+          heroCrop: { x: 1, y: 2, width: 300, height: 450 },
+          thumbCrop: { x: 5, y: 6, width: 200, height: 200 },
+        },
+      })
+      expect(outcome.coverUploadFailed).toBe(false)
+    })
+    expect(uploadForms[0]?.get('set_as_cover')).toBe('1')
+    expect(JSON.parse(uploadForms[0]?.get('hero_crop') as string)).toEqual({
+      x: 1,
+      y: 2,
+      width: 300,
+      height: 450,
+    })
+    expect(JSON.parse(uploadForms[0]?.get('thumb_crop') as string)).toEqual({
+      x: 5,
+      y: 6,
+      width: 200,
+      height: 200,
+    })
+  })
+
+  it('reports a failed cover upload without losing the created plant', async () => {
+    server.use(
+      http.post('/api/plants', () => HttpResponse.json(plantCreatedFixture, { status: 201 })),
+      http.post('/api/plants/:id/photos', () => jsonMessage(500, 'boom'))
+    )
+    const { result } = renderHook(() => useCreatePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      const outcome = await result.current.mutateAsync({
+        payload: { common_name: 'Partial Plant' },
+        cover: {
+          file: new File(['x'], 'cover.jpg', { type: 'image/jpeg' }),
+          heroCrop: { x: 0, y: 0, width: 100, height: 150 },
+          thumbCrop: { x: 0, y: 0, width: 100, height: 100 },
+        },
+      })
+      expect(outcome.plant.id).toBe(plantCreatedFixture.data.id)
+      expect(outcome.coverUploadFailed).toBe(true)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+  })
+
+  it('surfaces an error when the API fails', async () => {
+    server.use(http.post('/api/plants', () => jsonMessage(500, 'boom')))
+    const { result } = renderHook(() => useCreatePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync({ payload: { common_name: 'Pothos' } }).catch(() => {})
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toBeTruthy()
+  })
+})
+
+describe('useUpdatePlant', () => {
+  it('updates a plant and resolves the real updated shape', async () => {
+    const requests: Array<{ plantId: string; body: unknown }> = []
+    server.use(
+      http.patch('/api/plants/:id', async ({ request, params }) => {
+        requests.push({ plantId: params.id as string, body: await request.json() })
+        return HttpResponse.json(plantDetailFixture, { status: 200 })
+      })
+    )
+    const { result } = renderHook(() => useUpdatePlant(1), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync({ common_name: 'Updated Pothos' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.id).toBe(plantDetailFixture.data.id)
+    expect(result.current.data?.common_name).toBe(plantDetailFixture.data.common_name)
+    expect(requests[0]).toMatchObject({ plantId: '1', body: { common_name: 'Updated Pothos' } })
+  })
+})
+
+describe('useUpdatePlant - onSuccess invalidation', () => {
+  it('invalidates recommendations and dashboard in addition to plant/plants/timeline', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children)
+    qc.setQueryData(['recommendations', 1], { gate: 'ready' })
+    qc.setQueryData(['dashboard'], { due_for_care: [] })
+
+    server.use(
+      http.patch('/api/plants/:id', () => HttpResponse.json(plantDetailFixture, { status: 200 }))
+    )
+    const { result } = renderHook(() => useUpdatePlant(1), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ common_name: 'Updated Pothos' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(qc.getQueryState(['recommendations', 1])?.isInvalidated).toBe(true)
+    expect(qc.getQueryState(['dashboard'])?.isInvalidated).toBe(true)
+  })
+})
+
+describe('useUploadPhoto', () => {
+  it('uploads a photo and resolves the real created shape', async () => {
+    const requests: Array<{ plantId: string; photo: File | null }> = []
+    server.use(
+      http.post('/api/plants/:id/photos', async ({ request, params }) => {
+        const form = await request.formData()
+        requests.push({ plantId: params.id as string, photo: form.get('photo') as File | null })
+        return HttpResponse.json(photoCreatedFixture, { status: 201 })
+      })
+    )
+    const { result } = renderHook(() => useUploadPhoto(5), { wrapper: makeWrapper() })
+    const file = new File(['x'], 'capture.png', { type: 'image/png' })
+    await act(async () => {
+      await result.current.mutateAsync({ file })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.id).toBe(photoCreatedFixture.data.id)
+    expect(result.current.data?.path).toBe(photoCreatedFixture.data.path)
+    // MSW's parsed File loses the original name in jsdom, so the content type
+    // confirms the right field made it onto the request.
+    expect(requests[0]?.plantId).toBe('5')
+    expect(requests[0]?.photo?.type).toBe('image/png')
+  })
+})
+
+describe('useSetCoverPhoto', () => {
+  it('sets the cover photo and resolves the real updated plant shape', async () => {
+    const requests: Array<{ plantId: string; body: unknown }> = []
+    server.use(
+      http.patch('/api/plants/:id', async ({ request, params }) => {
+        requests.push({ plantId: params.id as string, body: await request.json() })
+        return HttpResponse.json(plantDetailFixture, { status: 200 })
+      })
+    )
+    const { result } = renderHook(() => useSetCoverPhoto(3), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync(4)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.id).toBe(plantDetailFixture.data.id)
+    expect(result.current.data?.cover_photo_id).toBe(plantDetailFixture.data.cover_photo_id)
+    expect(requests[0]).toMatchObject({ plantId: '3', body: { cover_photo_id: 4 } })
+  })
+})
+
+describe('useDeletePhoto', () => {
+  it('deletes a photo and resolves with no body', async () => {
+    const requests: Array<{ photoId: string }> = []
+    server.use(
+      http.delete('/api/photos/:id', ({ params }) => {
+        requests.push({ photoId: params.id as string })
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
+    const { result } = renderHook(() => useDeletePhoto(3), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync(4)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toBeFalsy()
+    expect(requests[0]).toMatchObject({ photoId: '4' })
+  })
+})
+
+describe('useDeletePlant', () => {
+  it('deletes a plant and resolves with no body', async () => {
+    const requests: Array<{ plantId: string }> = []
+    server.use(
+      http.delete('/api/plants/:id', ({ params }) => {
+        requests.push({ plantId: params.id as string })
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
+    const { result } = renderHook(() => useDeletePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync(3)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toBeFalsy()
+    expect(requests[0]).toMatchObject({ plantId: '3' })
+  })
+
+  it('surfaces an error when the API fails', async () => {
+    server.use(http.delete('/api/plants/:id', () => jsonMessage(500, 'boom')))
+    const { result } = renderHook(() => useDeletePlant(), { wrapper: makeWrapper() })
+    await act(async () => {
+      await result.current.mutateAsync(1).catch(() => {})
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error).toBeTruthy()
+  })
+
+  it("does not refetch the deleted plant's sensor readings", async () => {
+    let readingsRequests = 0
+    server.use(
+      http.get('/api/plants/:id/sensor-readings', () => {
+        readingsRequests++
+        return HttpResponse.json(sensorReadingsFixture)
+      })
+    )
+    const wrapper = makeWrapper()
+    const readings = renderHook(() => useSensorReadings(1, 'week'), { wrapper })
+    await waitFor(() => expect(readings.result.current.isSuccess).toBe(true))
+    expect(readingsRequests).toBe(1)
+
+    const { result } = renderHook(() => useDeletePlant(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync(1)
+    })
+    await waitFor(() => expect(readings.result.current.isFetching).toBe(false))
+    expect(readingsRequests).toBe(1)
+  })
+})
+
+describe('useDeletePlant - onSuccess invalidation', () => {
+  it('invalidates the dashboard so a deleted plant drops from due and flagged lists', async () => {
+    const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: qc }, children)
+    qc.setQueryData(['plants'], [])
+    qc.setQueryData(['dashboard'], { due_for_care: [] })
+
+    server.use(http.delete('/api/plants/:id', () => new HttpResponse(null, { status: 204 })))
+
+    const { result } = renderHook(() => useDeletePlant(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync(3)
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(qc.getQueryState(['plants'])?.isInvalidated).toBe(true)
+    expect(qc.getQueryState(['dashboard'])?.isInvalidated).toBe(true)
+  })
+})

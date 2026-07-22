@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Run the PHP test suite in a one-off app container. phpunit.xml drives the
+# testing profile (sqlite :memory:, Scout's collection engine), so the suite
+# never touches the dev MySQL data or the live Meilisearch container. --no-deps
+# skips mysql/meilisearch since the suite needs neither.
+set -euo pipefail
+exec docker compose run --rm --no-deps app php artisan test "$@"

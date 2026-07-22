@@ -1,0 +1,17 @@
+{
+  "data": {
+    "id": 50,
+    "plant_id": 5,
+    "care_event_type_id": 1,
+    "type": "watering",
+    "occurred_at": "2026-06-30T12:00:00.000000Z",
+    "logged_by_user_id": 2,
+    "note": "Checked the soil moisture.",
+    "created_at": "2026-07-01T00:18:55.000000Z",
+    "updated_at": "2026-07-01T00:18:55.000000Z",
+    "watering": {
+      "care_event_id": 50,
+      "amount_ml": null
+    }
+  }
+}

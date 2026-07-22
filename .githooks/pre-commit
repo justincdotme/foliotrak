@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+# Runs in the app container, where PHP, Node, vendor, and node_modules are present.
+set -e
+
+vendor/bin/pint --test
+vendor/bin/phpcs
+vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+# The app container exports DB_CONNECTION=mysql and SCOUT_DRIVER=meilisearch,
+# which override phpunit.xml, so force the isolated test config inline the same
+# way bin/test does. Otherwise tests would reach for MySQL/Meilisearch (absent
+# under --no-deps) and fail.
+APP_ENV=testing DB_CONNECTION=sqlite DB_DATABASE=:memory: SCOUT_DRIVER=collection \
+  php artisan test
+
+npm run lint
+npm run typecheck
+npm run test

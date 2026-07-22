@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * @mixin Symptom
+ */
+class SymptomResource extends JsonResource
+{
+    /**
+     * @param Request $request
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id'         => $this->id,
+            'category'   => $this->category,
+            'key'        => $this->key,
+            'label'      => $this->label,
+            'sort_order' => $this->sort_order,
+            'is_custom'  => $this->is_custom,
+        ];
+    }
+}

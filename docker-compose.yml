@@ -1,0 +1,152 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-foliotrak}
+      MYSQL_USER: ${DB_USERNAME:-foliotrak}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secret}
+    ports:
+      - "${DB_FORWARD_HOST:-127.0.0.1}:${DB_FORWARD_PORT:-3306}:3306"
+    volumes:
+      - ./docker/data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - app-network
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-foliotrak_local_meili_master_key}
+      MEILI_ENV: ${MEILI_ENV:-production}
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - ./docker/data/meilisearch:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - app-network
+
+  # The PHP services (app, worker, scheduler) read all Laravel
+  # configuration from the bind-mounted .env. Do not add config as `environment:`
+  # here: OS-level env vars override .env and .env.testing, which silently breaks
+  # `php artisan test` (it can no longer switch into the testing environment).
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
+        FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
+    working_dir: /var/www/html
+    user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      meilisearch:
+        condition: service_started
+    networks:
+      - app-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
+        FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
+    working_dir: /var/www/html
+    user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
+    volumes:
+      - .:/var/www/html
+    command: php artisan queue:work
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
+      meilisearch:
+        condition: service_started
+    networks:
+      - app-network
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
+        FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
+    working_dir: /var/www/html
+    user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
+    volumes:
+      - .:/var/www/html
+    command: php artisan schedule:work
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
+      meilisearch:
+        condition: service_started
+    networks:
+      - app-network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    environment:
+      SERVER_NAME: ${NGINX_SERVER_NAME:-_}
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - .:/var/www/html
+      - ../certs:/etc/nginx/certs:ro
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: 2gb
+    profiles: [testing]
+    networks:
+      - app-network
+
+  test-mysql:
+    image: mysql:8.0
+    profiles: [testing]
+    environment:
+      MYSQL_DATABASE: foliotrak_dusk
+      MYSQL_USER: foliotrak
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

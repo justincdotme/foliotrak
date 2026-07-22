@@ -1,0 +1,1 @@
+{"data":{"plant_id":3,"gate":{"state":"countdown","history_days":4,"required_days":28,"days_to_go":24},"watering":null,"position_insights":[],"health_by_location":[{"location":{"id":1,"name":"Shelf A"},"median_health":1,"sample_size":1,"healths":[1]}],"symptom_episodes":[]}}

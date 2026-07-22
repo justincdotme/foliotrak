@@ -1,0 +1,87 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import type { CareEvent, Photo } from '@/api/types'
+import { CareLogContext } from './care-log-context'
+import { TimelineItem } from './timeline-item'
+
+const relocation: CareEvent = {
+  id: 9,
+  plant_id: 1,
+  care_event_type_id: 5,
+  type: 'relocation',
+  occurred_at: '2026-06-20T12:00:00.000Z',
+  logged_by_user_id: 1,
+  note: null,
+  created_at: '2026-06-20T12:00:00.000Z',
+  updated_at: '2026-06-20T12:00:00.000Z',
+  relocation: {
+    care_event_id: 9,
+    from_location: { id: 1, name: 'shelf' },
+    to_location: { id: 2, name: 'bright window' },
+  },
+}
+
+const linkedPhoto: Photo = {
+  id: 3,
+  plant_id: 1,
+  care_event_id: 9,
+  path: '/storage/photos/move.jpg',
+  thumb_path: null,
+  original_filename: 'move.jpg',
+  taken_on: '2026-06-20',
+  caption: 'after the move',
+  created_at: '2026-06-20T12:00:00.000Z',
+  updated_at: '2026-06-20T12:00:00.000Z',
+}
+
+const equipmentEvent: CareEvent = {
+  id: 20,
+  plant_id: 1,
+  care_event_type_id: 6,
+  type: 'equipment',
+  occurred_at: '2026-07-04T12:00:00.000Z',
+  logged_by_user_id: 1,
+  note: null,
+  created_at: '2026-07-04T12:00:00.000Z',
+  updated_at: '2026-07-04T12:00:00.000Z',
+  equipment_change: {
+    care_event_id: 20,
+    equipment_id: 5,
+    equipment_label: 'Humidifier',
+    action: 'added',
+  },
+}
+
+describe('TimelineItem', () => {
+  it('shows a relocation move with its linked photo and routes edit to the handler', async () => {
+    const openLog = vi.fn()
+    render(
+      <CareLogContext.Provider value={{ openLog, viewPhoto: vi.fn() }}>
+        <TimelineItem e={relocation} photos={[linkedPhoto]} onDelete={vi.fn()} />
+      </CareLogContext.Provider>
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /Moved/ }))
+
+    expect(screen.getByText('bright window')).toBeInTheDocument()
+    expect(screen.getByAltText('after the move')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /Edit/ }))
+    expect(openLog).toHaveBeenCalledWith('relocation', relocation)
+  })
+
+  it('hides Edit and Delete buttons for read-only equipment events', async () => {
+    render(
+      <CareLogContext.Provider value={{ openLog: vi.fn(), viewPhoto: vi.fn() }}>
+        <TimelineItem e={equipmentEvent} photos={[]} onDelete={vi.fn()} />
+      </CareLogContext.Provider>
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /Equipment/ }))
+
+    expect(screen.getByText('Humidifier')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Edit/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Delete/ })).not.toBeInTheDocument()
+  })
+})
