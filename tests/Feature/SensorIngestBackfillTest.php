@@ -279,7 +279,7 @@ class SensorIngestBackfillTest extends TestCase
     public function test_moisture_readings_flow_through_the_moisture_transformer(): void
     {
         Sensor::create([
-            'mac'         => 'AC:A7:04:AA:00:05',
+            'mac'         => '02:00:5E:AA:00:05',
             'device_name' => 'Gondola-Moisture-01',
             'name'        => 'Monstera probe',
             'color'       => 'var(--series-3)',
@@ -290,7 +290,7 @@ class SensorIngestBackfillTest extends TestCase
 
         Http::fake([
             self::GATEWAY_URL . '/api/v1/readings*' => Http::response([
-                'mac'      => 'AC:A7:04:AA:00:05',
+                'mac'      => '02:00:5E:AA:00:05',
                 'count'    => 1,
                 'has_more' => false,
                 'readings' => [

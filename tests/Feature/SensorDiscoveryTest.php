@@ -39,8 +39,8 @@ class SensorDiscoveryTest extends TestCase
             'https://gateway.test/*' => Http::response([
                 'sensors' => [
                     [
-                        'mac'          => 'A4:C1:38:AA:00:01',
-                        'device_name'  => 'GVH5075_0001',
+                        'mac'          => '02:00:5E:AA:00:01',
+                        'device_name'  => 'SENSOR_0001',
                         'sensor_type'  => 'govee_h5075',
                         'last_reading' => [
                             'measurements' => ['temperature' => 22.5, 'humidity' => 45.5],
@@ -55,7 +55,7 @@ class SensorDiscoveryTest extends TestCase
 
         $this->getJson('/api/sensors/discover')
             ->assertOk()
-            ->assertJsonPath('data.0.mac', 'A4:C1:38:AA:00:01')
+            ->assertJsonPath('data.0.mac', '02:00:5E:AA:00:01')
             ->assertJsonPath('data.0.sensor_type', 'govee_h5075')
             ->assertJsonPath('data.0.suggested_type', 'hygrometer')
             ->assertJsonPath('data.0.last_reading.temperature', 22.5)
@@ -72,8 +72,8 @@ class SensorDiscoveryTest extends TestCase
             'https://gateway.test/*' => Http::response([
                 'sensors' => [
                     [
-                        'mac'          => 'A4:C1:38:AA:00:01',
-                        'device_name'  => 'GVH5075_0001',
+                        'mac'          => '02:00:5E:AA:00:01',
+                        'device_name'  => 'SENSOR_0001',
                         'last_reading' => [
                             'temperature' => 22.5,
                             'humidity'    => 45.5,
@@ -99,7 +99,7 @@ class SensorDiscoveryTest extends TestCase
     {
         $this->postJson('/api/sensors', [
             'mac'           => '11:22:33:44:55:66',
-            'device_name'   => 'GVH5075_5566',
+            'device_name'   => 'SENSOR_5566',
             'hardware_type' => 'govee_h5075',
             'name'          => 'Office sensor',
             'type'          => 'hygrometer',
@@ -117,7 +117,7 @@ class SensorDiscoveryTest extends TestCase
             'https://gateway.test/*' => Http::response([
                 'sensors' => [
                     [
-                        'mac'          => 'AC:A7:04:AA:00:05',
+                        'mac'          => '02:00:5E:AA:00:05',
                         'device_name'  => 'Gondola-Moisture-01',
                         'sensor_type'  => 'gondola_moisture',
                         'last_reading' => [
@@ -142,7 +142,7 @@ class SensorDiscoveryTest extends TestCase
     public function test_registration_accepts_the_moisture_type(): void
     {
         $this->postJson('/api/sensors', [
-            'mac'           => 'AC:A7:04:AA:00:05',
+            'mac'           => '02:00:5E:AA:00:05',
             'device_name'   => 'Gondola-Moisture-01',
             'hardware_type' => 'gondola_moisture',
             'name'          => 'Monstera probe',
@@ -156,7 +156,7 @@ class SensorDiscoveryTest extends TestCase
     public function test_registration_rejects_unknown_types(): void
     {
         $this->postJson('/api/sensors', [
-            'mac'  => 'AC:A7:04:AA:00:05',
+            'mac'  => '02:00:5E:AA:00:05',
             'name' => 'Mystery sensor',
             'type' => 'seismometer',
         ])

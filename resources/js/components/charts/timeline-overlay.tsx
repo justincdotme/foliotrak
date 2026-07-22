@@ -11,7 +11,7 @@ import {
   ReferenceArea,
 } from 'recharts'
 import { HealthBadge } from '@/components/app/health-badge'
-import { fmtDate, fmtDateY } from '@/lib/format'
+import { parseDate, fmtDate, fmtDateY } from '@/lib/format'
 import { ChartShell, TipBox } from './chart-shell'
 import { axis } from './chart-utils'
 import { CARE_META } from '@/lib/domain'
@@ -52,7 +52,7 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
   if (health.length === 0) return null
 
   const d = health.map(p => ({
-    x: new Date(p.date).getTime(),
+    x: parseDate(p.date).getTime(),
     label: fmtDate(p.date),
     value: p.value,
   }))
