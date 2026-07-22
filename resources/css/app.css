@@ -208,6 +208,19 @@
     transition-duration: 0s !important;
   }
 
+  .plant-silhouette-thumb {
+    background: url('/images/plant-silhouette-thumb.png') center / contain no-repeat;
+  }
+  .dark .plant-silhouette-thumb {
+    background-image: url('/images/plant-silhouette-thumb-dark.png');
+  }
+  .plant-silhouette-hero {
+    background: url('/images/plant-silhouette-hero.png') center / contain no-repeat;
+  }
+  .dark .plant-silhouette-hero {
+    background-image: url('/images/plant-silhouette-hero-dark.png');
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

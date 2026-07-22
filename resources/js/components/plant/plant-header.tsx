@@ -5,7 +5,6 @@ import { ConditionChip } from '@/components/app/condition-chip'
 import { IconButton } from '@/components/app/icon-button'
 import { StatusPill } from '@/components/app/status-pill'
 import { fmtDateY, formatSensorLabel } from '@/lib/format'
-import { cn } from '@/lib/utils'
 import { photoUrl } from '@/lib/photos'
 
 interface PlantHeaderProps {
@@ -20,16 +19,16 @@ export function PlantHeader({ plant, onEdit, onChangeCover, onDelete }: PlantHea
     <div className="flex gap-4 items-start">
       <div className="relative shrink-0">
         <div className="w-[120px] h-[180px] rounded-[10px] border border-border overflow-hidden bg-surface-raised">
-          <img
-            src={
-              plant.cover_photo
-                ? photoUrl(plant.cover_photo.path)
-                : '/images/plant-silhouette-hero.png'
-            }
-            alt=""
-            dusk="cover-hero"
-            className={cn('h-full w-full object-cover', !plant.cover_photo && 'opacity-20')}
-          />
+          {plant.cover_photo ? (
+            <img
+              src={photoUrl(plant.cover_photo.path)}
+              alt=""
+              dusk="cover-hero"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div dusk="cover-hero" className="h-full w-full plant-silhouette-hero" />
+          )}
         </div>
         <button
           onClick={onChangeCover}
