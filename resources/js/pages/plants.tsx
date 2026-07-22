@@ -12,7 +12,6 @@ import { WaterDrop } from '@/components/app/water-drop'
 import { waterLabel } from '@/lib/care-labels'
 import type { CareStatus, PlantWithTags } from '@/api/types'
 import { photoUrl } from '@/lib/photos'
-import { cn } from '@/lib/utils'
 import { usePlants } from '@/hooks/usePlants'
 import { useTags } from '@/hooks/useTags'
 
@@ -41,19 +40,16 @@ function PlantCard({ p, onClick }: PlantCardProps) {
       className="group flex flex-col text-left bg-surface border border-border rounded-[10px] overflow-hidden hover:border-border-strong transition-colors p-3"
     >
       <div className="aspect-[4/3] relative overflow-hidden rounded-lg bg-surface-raised">
-        <img
-          src={
-            p.cover_photo
-              ? photoUrl(p.cover_photo.thumb_path ?? p.cover_photo.path)
-              : '/images/plant-silhouette-thumb.png'
-          }
-          alt=""
-          loading="lazy"
-          className={cn(
-            'absolute inset-0 h-full w-full object-cover',
-            !p.cover_photo && 'opacity-20'
-          )}
-        />
+        {p.cover_photo ? (
+          <img
+            src={photoUrl(p.cover_photo.thumb_path ?? p.cover_photo.path)}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 h-full w-full plant-silhouette-thumb" />
+        )}
         {p.status !== 'active' && (
           <div className="absolute top-2 right-2">
             <StatusPill status={p.status} />

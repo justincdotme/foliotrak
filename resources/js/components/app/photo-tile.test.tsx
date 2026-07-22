@@ -13,10 +13,11 @@ describe('PhotoTile', () => {
   })
 
   it('renders the silhouette placeholder when there is no path', () => {
-    render(<PhotoTile photo={{ caption: null }} />)
+    const { container } = render(<PhotoTile photo={{ caption: null }} />)
 
-    const img = screen.getByRole('img')
-    expect(img).toHaveAttribute('src', '/images/plant-silhouette-thumb.png')
-    expect(img.className).toContain('opacity-20')
+    expect(screen.queryByRole('img')).toBeNull()
+    const placeholder = container.querySelector('.plant-silhouette-thumb')
+    expect(placeholder).toBeTruthy()
+    expect(placeholder?.className).toContain('plant-silhouette-thumb')
   })
 })
