@@ -7,8 +7,11 @@ namespace Tests\Feature;
 use App\Models\Sensor;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 class SensorDiscoveryTest extends TestCase
@@ -30,6 +33,19 @@ class SensorDiscoveryTest extends TestCase
             'sensors.base_url' => 'https://gateway.test',
             'sensors.api_key'  => 'test-key-not-real',
         ]);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidMacProvider(): array
+    {
+        return [
+            'no separators'      => ['AABBCCDDEEFF'],
+            'dash separators'    => ['AA-BB-CC-DD-EE-FF'],
+            'too few octets'     => ['AA:BB:CC:DD:EE'],
+            'non-hex characters' => ['GG:HH:II:JJ:KK:LL'],
+        ];
     }
 
     /** @return void */
@@ -162,5 +178,63 @@ class SensorDiscoveryTest extends TestCase
         ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('type');
+    }
+
+    /** @return void */
+    public function test_discover_returns_generic_error_on_unexpected_failure(): void
+    {
+        Http::fake([
+            'https://gateway.test/*' => fn () => throw new RuntimeException(
+                'cURL error 7: Failed to connect to 10.1.20.50 port 8080',
+            ),
+        ]);
+
+        $response = $this->getJson('/api/sensors/discover');
+
+        $response->assertOk()
+            ->assertJsonPath('error', 'Unable to reach sensor gateway');
+
+        $this->assertStringNotContainsString(
+            '10.1.20.50',
+            json_encode($response->json()),
+        );
+    }
+
+    /** @return void */
+    public function test_test_connection_returns_generic_error_when_gateway_unreachable(): void
+    {
+        Http::fake([
+            'https://gateway.test/api/v1/health' => fn () => throw new ConnectionException(
+                'cURL error 7: Failed to connect to 10.1.20.50 port 8080',
+            ),
+        ]);
+
+        $response = $this->postJson('/api/sensors/test-connection');
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'unreachable')
+            ->assertJsonPath('data.error', 'Unable to reach sensor gateway');
+
+        $this->assertStringNotContainsString(
+            '10.1.20.50',
+            json_encode($response->json()),
+        );
+    }
+
+    /**
+     * @param string $mac
+     *
+     * @return void
+     */
+    #[DataProvider('invalidMacProvider')]
+    public function test_registration_rejects_invalid_mac_format(string $mac): void
+    {
+        $this->postJson('/api/sensors', [
+            'mac'  => $mac,
+            'name' => 'Test sensor',
+            'type' => 'hygrometer',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('mac');
     }
 }

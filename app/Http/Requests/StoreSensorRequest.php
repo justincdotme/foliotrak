@@ -24,7 +24,7 @@ class StoreSensorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'mac'           => ['required', 'string', Rule::unique('sensors', 'mac')],
+            'mac'           => ['required', 'string', 'regex:/^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/', Rule::unique('sensors', 'mac')],
             'device_name'   => ['nullable', 'string'],
             'hardware_type' => ['nullable', 'string', 'max:255'],
             'name'          => ['required', 'string', 'max:255'],

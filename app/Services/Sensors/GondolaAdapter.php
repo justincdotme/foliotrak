@@ -14,6 +14,7 @@ use Generator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 final class GondolaAdapter implements SensorReadingSource
 {
@@ -135,12 +136,14 @@ final class GondolaAdapter implements SensorReadingSource
             $healthResponse = Http::withOptions(['verify' => config('sensors.verify')])
                 ->get($this->url('/api/v1/health'));
         } catch (ConnectionException $e) {
+            Log::error('Gondola health check failed', ['exception' => $e]);
+
             return new SensorGatewayStatus(
                 status: 'unreachable',
                 collectorRunning: null,
                 sensorsSeen: null,
                 uptimeSeconds: null,
-                error: $e->getMessage(),
+                error: 'Unable to reach sensor gateway',
             );
         }
 
@@ -157,12 +160,14 @@ final class GondolaAdapter implements SensorReadingSource
         try {
             $sensorsResponse = $this->client('GET', '/api/v1/sensors')->get($this->url('/api/v1/sensors'));
         } catch (ConnectionException $e) {
+            Log::error('Gondola sensor list failed', ['exception' => $e]);
+
             return new SensorGatewayStatus(
                 status: 'unreachable',
                 collectorRunning: null,
                 sensorsSeen: null,
                 uptimeSeconds: null,
-                error: $e->getMessage(),
+                error: 'Unable to reach sensor gateway',
             );
         }
 
