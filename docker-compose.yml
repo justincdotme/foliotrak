@@ -1,6 +1,7 @@
 services:
   mysql:
     image: mysql:8.0
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-foliotrak}
       MYSQL_USER: ${DB_USERNAME:-foliotrak}
@@ -21,6 +22,7 @@ services:
 
   meilisearch:
     image: getmeili/meilisearch:v1.16
+    restart: unless-stopped
     environment:
       MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-foliotrak_local_meili_master_key}
       MEILI_ENV: ${MEILI_ENV:-production}
@@ -47,6 +49,7 @@ services:
       args:
         FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
         FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
+    restart: unless-stopped
     working_dir: /var/www/html
     user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
     volumes:
@@ -66,6 +69,7 @@ services:
       args:
         FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
         FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
+    restart: unless-stopped
     working_dir: /var/www/html
     user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
     volumes:
@@ -88,6 +92,7 @@ services:
       args:
         FOLIOTRAK_UID: ${FOLIOTRAK_UID:-1000}
         FOLIOTRAK_GID: ${FOLIOTRAK_GID:-1000}
+    restart: unless-stopped
     working_dir: /var/www/html
     user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
     volumes:
@@ -107,6 +112,7 @@ services:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
     environment:
       SERVER_NAME: ${NGINX_SERVER_NAME:-_}
     ports:
