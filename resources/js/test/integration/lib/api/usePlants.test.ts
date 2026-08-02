@@ -20,7 +20,10 @@ describe('usePlants', () => {
     const { result } = renderHook(() => usePlants(), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.data).toHaveLength(plantsListFixture.data.length)
-    expect(result.current.data?.[0]?.common_name).toBe(plantsListFixture.data[0]?.common_name)
+    // The MSW handler applies the default sort (last_watered desc) even absent
+    // explicit params, so the first entry is the most recently watered plant
+    // rather than the fixture's raw first entry.
+    expect(result.current.data?.[0]?.common_name).toBe('baby rubberplant')
   })
 
   it('surfaces an error when the API fails', async () => {

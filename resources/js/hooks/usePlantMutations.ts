@@ -56,7 +56,7 @@ export function useUpdatePlant(plantId: number) {
   return useMutation({
     mutationFn: (payload: PlantPayload) => updatePlant(plantId, payload),
     onSuccess: updatedPlant => {
-      queryClient.setQueryData<PlantWithTags[]>(['plants'], old =>
+      queryClient.setQueriesData<PlantWithTags[]>({ queryKey: ['plants'] }, old =>
         old?.map(p => (p.id === updatedPlant.id ? updatedPlant : p))
       )
       plantInvalidationKeys(plantId).forEach(queryKey =>

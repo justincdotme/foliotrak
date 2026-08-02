@@ -1389,7 +1389,7 @@ parameters:
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
-			count: 7
+			count: 8
 			path: tests/Browser/PlantsListTest.php
 
 		-

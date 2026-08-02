@@ -64,13 +64,40 @@ describe('PlantsPage', () => {
       [living, office]
     )
 
-    render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    const { container } = render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
     expect(screen.getByText('ZZ plant')).toBeInTheDocument()
 
-    await userEvent.selectOptions(screen.getByRole('combobox'), '2')
+    const tagFilter = container.querySelector('[dusk="plants-tag-filter"]') as HTMLSelectElement
+    await userEvent.selectOptions(tagFilter, '2')
 
     expect(screen.getByText('Pothos')).toBeInTheDocument()
     expect(screen.queryByText('ZZ plant')).toBeNull()
+  })
+
+  it('renders the sort control with the default selection', () => {
+    setPlants([makePlant({ id: 1 })])
+
+    const { container } = render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+
+    const sortSelect = container.querySelector('[dusk="plants-sort"]') as HTMLSelectElement
+    expect(sortSelect.value).toBe('last_watered:desc')
+    expect(Array.from(sortSelect.options).map(o => o.value)).toEqual([
+      'last_watered:desc',
+      'last_watered:asc',
+      'name:asc',
+      'name:desc',
+    ])
+  })
+
+  it('calls usePlants with sort params when sort changes', async () => {
+    setPlants([makePlant({ id: 1 })])
+
+    const { container } = render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+
+    const sortSelect = container.querySelector('[dusk="plants-sort"]') as HTMLSelectElement
+    await userEvent.selectOptions(sortSelect, 'name:asc')
+
+    expect(usePlants).toHaveBeenLastCalledWith({ sort: 'name', direction: 'asc' })
   })
 
   it('searches case-insensitively across common and scientific names', async () => {
