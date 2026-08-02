@@ -260,6 +260,211 @@ class PlantApiTest extends TestCase
     }
 
     /** @return void */
+    public function test_sorts_plants_by_name_asc(): void
+    {
+        $this->actAsHousehold();
+        Plant::factory()->create(['common_name' => 'Basil']);
+        Plant::factory()->create(['common_name' => 'Aloe']);
+        Plant::factory()->create(['common_name' => 'Cactus']);
+
+        $this->getJson('/api/plants?sort=name&direction=asc')
+            ->assertOk()
+            ->assertJsonPath('data.0.common_name', 'Aloe')
+            ->assertJsonPath('data.1.common_name', 'Basil')
+            ->assertJsonPath('data.2.common_name', 'Cactus');
+    }
+
+    /** @return void */
+    public function test_sorts_plants_by_name_desc(): void
+    {
+        $this->actAsHousehold();
+        Plant::factory()->create(['common_name' => 'Basil']);
+        Plant::factory()->create(['common_name' => 'Aloe']);
+        Plant::factory()->create(['common_name' => 'Cactus']);
+
+        $this->getJson('/api/plants?sort=name&direction=desc')
+            ->assertOk()
+            ->assertJsonPath('data.0.common_name', 'Cactus')
+            ->assertJsonPath('data.1.common_name', 'Basil')
+            ->assertJsonPath('data.2.common_name', 'Aloe');
+    }
+
+    /** @return void */
+    public function test_sorts_plants_by_last_watered_asc(): void
+    {
+        $this->actAsHousehold();
+        $wateringType = CareEventType::where('key', 'watering')->first();
+
+        // Ids intentionally don't correlate with occurred_at, so this only passes
+        // if the last_watered sort is doing the ordering rather than the id tiebreaker.
+        $middle   = Plant::factory()->create(['common_name' => 'Middle']);
+        $latest   = Plant::factory()->create(['common_name' => 'Latest']);
+        $earliest = Plant::factory()->create(['common_name' => 'Earliest']);
+
+        CareEvent::factory()->create([
+            'plant_id'           => $earliest->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-01',
+        ]);
+        CareEvent::factory()->create([
+            'plant_id'           => $middle->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-15',
+        ]);
+        CareEvent::factory()->create([
+            'plant_id'           => $latest->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-30',
+        ]);
+
+        $this->getJson('/api/plants?sort=last_watered&direction=asc')
+            ->assertOk()
+            ->assertJsonPath('data.0.common_name', 'Earliest')
+            ->assertJsonPath('data.1.common_name', 'Middle')
+            ->assertJsonPath('data.2.common_name', 'Latest');
+    }
+
+    /** @return void */
+    public function test_sorts_plants_by_last_watered_desc(): void
+    {
+        $this->actAsHousehold();
+        $wateringType = CareEventType::where('key', 'watering')->first();
+
+        // Ids intentionally don't correlate with occurred_at, so this only passes
+        // if the last_watered sort is doing the ordering rather than the id tiebreaker.
+        $middle   = Plant::factory()->create(['common_name' => 'Middle']);
+        $latest   = Plant::factory()->create(['common_name' => 'Latest']);
+        $earliest = Plant::factory()->create(['common_name' => 'Earliest']);
+
+        CareEvent::factory()->create([
+            'plant_id'           => $earliest->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-01',
+        ]);
+        CareEvent::factory()->create([
+            'plant_id'           => $middle->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-15',
+        ]);
+        CareEvent::factory()->create([
+            'plant_id'           => $latest->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-30',
+        ]);
+
+        $this->getJson('/api/plants?sort=last_watered&direction=desc')
+            ->assertOk()
+            ->assertJsonPath('data.0.common_name', 'Latest')
+            ->assertJsonPath('data.1.common_name', 'Middle')
+            ->assertJsonPath('data.2.common_name', 'Earliest');
+    }
+
+    /** @return void */
+    public function test_default_sort_is_last_watered_desc(): void
+    {
+        $this->actAsHousehold();
+        $wateringType = CareEventType::where('key', 'watering')->first();
+
+        // Ids intentionally don't correlate with occurred_at, so this only passes
+        // if the last_watered sort is doing the ordering rather than the id tiebreaker.
+        $middle   = Plant::factory()->create(['common_name' => 'Middle']);
+        $latest   = Plant::factory()->create(['common_name' => 'Latest']);
+        $earliest = Plant::factory()->create(['common_name' => 'Earliest']);
+
+        CareEvent::factory()->create([
+            'plant_id'           => $earliest->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-01',
+        ]);
+        CareEvent::factory()->create([
+            'plant_id'           => $middle->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-15',
+        ]);
+        CareEvent::factory()->create([
+            'plant_id'           => $latest->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-30',
+        ]);
+
+        $this->getJson('/api/plants')
+            ->assertOk()
+            ->assertJsonPath('data.0.common_name', 'Latest')
+            ->assertJsonPath('data.1.common_name', 'Middle')
+            ->assertJsonPath('data.2.common_name', 'Earliest');
+    }
+
+    /** @return void */
+    public function test_never_watered_plants_sort_last_in_last_watered_desc(): void
+    {
+        $this->actAsHousehold();
+        $wateringType = CareEventType::where('key', 'watering')->first();
+
+        $watered1 = Plant::factory()->create(['common_name' => 'Watered One']);
+        $watered2 = Plant::factory()->create(['common_name' => 'Watered Two']);
+        Plant::factory()->create(['common_name' => 'Never Watered']);
+
+        CareEvent::factory()->create([
+            'plant_id'           => $watered1->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-01',
+        ]);
+        CareEvent::factory()->create([
+            'plant_id'           => $watered2->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-15',
+        ]);
+
+        $this->getJson('/api/plants?sort=last_watered&direction=desc')
+            ->assertOk()
+            ->assertJsonPath('data.2.common_name', 'Never Watered');
+    }
+
+    /** @return void */
+    public function test_never_watered_plants_sort_first_in_last_watered_asc(): void
+    {
+        $this->actAsHousehold();
+        $wateringType = CareEventType::where('key', 'watering')->first();
+
+        $watered1 = Plant::factory()->create(['common_name' => 'Watered One']);
+        $watered2 = Plant::factory()->create(['common_name' => 'Watered Two']);
+        Plant::factory()->create(['common_name' => 'Never Watered']);
+
+        CareEvent::factory()->create([
+            'plant_id'           => $watered1->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-01',
+        ]);
+        CareEvent::factory()->create([
+            'plant_id'           => $watered2->id,
+            'care_event_type_id' => $wateringType->id,
+            'occurred_at'        => '2024-06-15',
+        ]);
+
+        $this->getJson('/api/plants?sort=last_watered&direction=asc')
+            ->assertOk()
+            ->assertJsonPath('data.0.common_name', 'Never Watered');
+    }
+
+    /** @return void */
+    public function test_rejects_invalid_sort_value(): void
+    {
+        $this->actAsHousehold();
+
+        $this->getJson('/api/plants?sort=invalid')
+            ->assertStatus(422);
+    }
+
+    /** @return void */
+    public function test_rejects_invalid_direction_value(): void
+    {
+        $this->actAsHousehold();
+
+        $this->getJson('/api/plants?direction=invalid')
+            ->assertStatus(422);
+    }
+
+    /** @return void */
     public function test_sets_an_existing_photo_as_cover_via_patch(): void
     {
         $this->actAsHousehold();

@@ -39,4 +39,25 @@ describe('PlantsPage', () => {
     expect(screen.getByText('ZZ Plant')).toBeInTheDocument()
     expect(screen.queryByText('Polkadot-plant')).toBeNull()
   })
+
+  it('re-fetches plants when sort selection changes', async () => {
+    const { container } = render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />, {
+      wrapper: makeWrapper(),
+    })
+
+    expect(await screen.findByText('Polkadot-plant')).toBeInTheDocument()
+
+    // Under the default last_watered:desc sort, baby rubberplant leads both
+    // orderings, so the second card is what actually proves sorting happened.
+    const cards = container.querySelectorAll('[dusk="plant-card"]')
+    expect(cards[1]).toHaveTextContent("golden hunter's-robe")
+
+    const sortSelect = container.querySelector('[dusk="plants-sort"]') as HTMLSelectElement
+    await userEvent.selectOptions(sortSelect, 'name:asc')
+
+    expect(await screen.findByText('Barbados aloe')).toBeInTheDocument()
+    const resortedCards = container.querySelectorAll('[dusk="plant-card"]')
+    expect(resortedCards[0]).toHaveTextContent('baby rubberplant')
+    expect(resortedCards[1]).toHaveTextContent('Barbados aloe')
+  })
 })

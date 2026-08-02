@@ -42,7 +42,29 @@ import sensorCalibration from '../fixtures/sensors/calibration.json'
 export const handlers = [
   http.get('/sanctum/csrf-cookie', () => new HttpResponse(null, { status: 204 })),
   http.get('/api/user', () => HttpResponse.json(userFixture)),
-  http.get('/api/plants', () => HttpResponse.json(plantsList)),
+  http.get('/api/plants', ({ request }) => {
+    const url = new URL(request.url)
+    const sort = url.searchParams.get('sort') ?? 'last_watered'
+    const dir = url.searchParams.get('direction') ?? 'desc'
+    const plants = [...(plantsList as { data: Record<string, unknown>[] }).data]
+
+    plants.sort((a, b) => {
+      let cmp: number
+      if (sort === 'name') {
+        const an = (a.common_name as string | null) ?? ''
+        const bn = (b.common_name as string | null) ?? ''
+        cmp = an.localeCompare(bn)
+      } else {
+        const aw = (a.last_watered_at as string | null) ?? ''
+        const bw = (b.last_watered_at as string | null) ?? ''
+        cmp = aw.localeCompare(bw)
+      }
+      if (cmp === 0) cmp = (a.id as number) - (b.id as number)
+      return dir === 'desc' ? -cmp : cmp
+    })
+
+    return HttpResponse.json({ data: plants })
+  }),
   http.get('/api/plants/:id', () => HttpResponse.json(plantDetail)),
   http.get('/api/plants/:id/timeline', () => HttpResponse.json(plantTimeline)),
   http.get('/api/plants/:id/recommendations', () => HttpResponse.json(plantRecommendations)),

@@ -23,6 +23,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SensorController extends Controller
@@ -135,9 +136,11 @@ class SensorController extends Controller
         try {
             $devices = $source->discoverSensors();
         } catch (Throwable $e) {
+            Log::error('Sensor discovery failed', ['exception' => $e]);
+
             return response()->json([
                 'data'  => [],
-                'error' => $e->getMessage(),
+                'error' => 'Unable to reach sensor gateway',
             ]);
         }
 
