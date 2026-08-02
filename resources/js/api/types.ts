@@ -5,6 +5,8 @@ export type FertilizerForm = 'liquid' | 'powdered' | 'granular' | 'organic' | 'f
 export type GrowthRate = 'none' | 'slow' | 'moderate' | 'fast'
 export type CareStatus = 'ok' | 'due-soon' | 'overdue'
 export type SoilMoistureLevel = 'dry' | 'moist' | 'wet'
+export type PlantSort = 'name' | 'last_watered'
+export type SortDirection = 'asc' | 'desc'
 
 export interface User {
   id: number

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEquipmentChange;
 use App\Actions\RecordRelocation;
+use App\Http\Requests\PlantIndexRequest;
 use App\Http\Requests\StorePlantRequest;
 use App\Http\Requests\UpdatePlantRequest;
 use App\Http\Resources\PlantResource;
@@ -40,13 +41,16 @@ class PlantController extends Controller
     ];
 
     /**
-     * @param Request $request
+     * @param PlantIndexRequest $request
      *
      * @return AnonymousResourceCollection
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(PlantIndexRequest $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Plant::class);
+
+        $sort      = $request->input('sort', 'last_watered');
+        $direction = $request->input('direction', 'desc');
 
         $plants = Plant::query()
             ->with(self::RELATIONS)
@@ -54,7 +58,12 @@ class PlantController extends Controller
                 'tags',
                 fn ($tags) => $tags->whereKey($request->integer('tag')),
             ))
-            ->latest()
+            ->when($sort === 'last_watered', fn ($query) => $query
+                ->withMax('wateringEvents', 'occurred_at')
+                ->orderBy('watering_events_max_occurred_at', $direction))
+            ->when($sort === 'name', fn ($query) => $query
+                ->orderByRaw('common_name IS NULL, common_name ' . $direction))
+            ->orderBy('id', $direction)
             ->get();
 
         return PlantResource::collection(

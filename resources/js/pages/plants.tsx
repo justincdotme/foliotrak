@@ -10,7 +10,7 @@ import { Spinner } from '@/components/app/spinner'
 import { StatusPill } from '@/components/app/status-pill'
 import { WaterDrop } from '@/components/app/water-drop'
 import { waterLabel } from '@/lib/care-labels'
-import type { CareStatus, PlantWithTags } from '@/api/types'
+import type { CareStatus, PlantSort, PlantWithTags, SortDirection } from '@/api/types'
 import { photoUrl } from '@/lib/photos'
 import { usePlants } from '@/hooks/usePlants'
 import { useTags } from '@/hooks/useTags'
@@ -87,7 +87,9 @@ function PlantCard({ p, onClick }: PlantCardProps) {
 }
 
 export function PlantsPage({ go, onAdd }: PlantsPageProps) {
-  const { data: plants, loading } = usePlants()
+  const [sortKey, setSortKey] = useState('last_watered:desc')
+  const [sort, direction] = sortKey.split(':') as [PlantSort, SortDirection]
+  const { data: plants, loading } = usePlants({ sort, direction })
   const { data: tags } = useTags()
   const [q, setQ] = useState('')
   const [tagF, setTagF] = useState<number | null>(null)
@@ -143,6 +145,17 @@ export function PlantsPage({ go, onAdd }: PlantsPageProps) {
               {t.name}
             </option>
           ))}
+        </select>
+        <select
+          dusk="plants-sort"
+          value={sortKey}
+          onChange={e => setSortKey(e.target.value)}
+          className="w-auto min-w-[140px] h-11 px-3 rounded-md bg-surface-raised border border-border-strong text-text placeholder:text-text-subtle focus:border-primary outline-none transition-colors"
+        >
+          <option value="last_watered:desc">Last watered (newest)</option>
+          <option value="last_watered:asc">Last watered (oldest)</option>
+          <option value="name:asc">Name (A-Z)</option>
+          <option value="name:desc">Name (Z-A)</option>
         </select>
       </div>
       <div className="flex flex-wrap gap-1.5">

@@ -14,6 +14,7 @@ import type {
   NutrientOption,
   Photo,
   PlantRecommendations,
+  PlantSort,
   PlantStatus,
   PlantTimeline,
   PlantWithTags,
@@ -24,6 +25,7 @@ import type {
   SensorSnapshot,
   SensorTypeOption,
   Settings,
+  SortDirection,
   SpeciesSuggestion,
   Symptom,
   Tag,
@@ -52,8 +54,16 @@ export interface PlantPayload {
   sensor_ids?: number[]
 }
 
-export const listPlants = async (): Promise<PlantWithTags[]> =>
-  unwrap(await api.get<{ data: PlantWithTags[] }>('/api/plants'))
+export const listPlants = async (params?: {
+  sort?: PlantSort
+  direction?: SortDirection
+}): Promise<PlantWithTags[]> => {
+  const query = new URLSearchParams()
+  if (params?.sort) query.set('sort', params.sort)
+  if (params?.direction) query.set('direction', params.direction)
+  const qs = query.toString()
+  return unwrap(await api.get<{ data: PlantWithTags[] }>(`/api/plants${qs ? `?${qs}` : ''}`))
+}
 
 export const getPlant = async (id: number): Promise<PlantWithTags> =>
   unwrap(await api.get<{ data: PlantWithTags }>(`/api/plants/${id}`))

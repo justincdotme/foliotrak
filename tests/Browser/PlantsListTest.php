@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Models\CareEvent;
+use App\Models\CareEventType;
 use App\Models\Location;
 use App\Models\Plant;
 use App\Models\Tag;
@@ -169,5 +171,61 @@ it('navigates to plant detail on card click', function (): void {
             ->click('@plant-card')
             ->waitForLocation('/plants/' . $plant->id)
             ->assertPathIs('/plants/' . $plant->id);
+    });
+});
+
+it('sorts the plant list by the selected option', function (): void {
+    $user         = User::factory()->create();
+    $wateringType = CareEventType::where('key', 'watering')->first();
+
+    $plantA = Plant::factory()->create(['common_name' => 'Zebra plant']);
+    $plantB = Plant::factory()->create(['common_name' => 'Aloe vera']);
+    $plantC = Plant::factory()->create(['common_name' => 'Monstera']);
+
+    // Give plants different watering dates (A=oldest, C=newest)
+    CareEvent::factory()->create([
+        'plant_id'           => $plantA->id,
+        'care_event_type_id' => $wateringType->id,
+        'occurred_at'        => '2024-06-01',
+    ]);
+    CareEvent::factory()->create([
+        'plant_id'           => $plantB->id,
+        'care_event_type_id' => $wateringType->id,
+        'occurred_at'        => '2024-06-15',
+    ]);
+    CareEvent::factory()->create([
+        'plant_id'           => $plantC->id,
+        'care_event_type_id' => $wateringType->id,
+        'occurred_at'        => '2024-06-30',
+    ]);
+
+    $this->browse(function (Browser $browser) use ($user): void {
+        $browser->loginAs($user)
+            ->visit('/plants')
+            ->waitFor('@app-shell')
+            ->waitForTextIn('@plants-count', '3');
+
+        // Default sort is last_watered desc: Monstera (newest) first
+        $browser->assertScript(
+            "document.querySelector('[dusk=\"plants-grid\"]').querySelector('[dusk=\"plant-card\"]').textContent.includes('Monstera')",
+        );
+
+        // Switch to Name (A-Z)
+        $browser->select('@plants-sort', 'name:asc')
+            ->pause(500);
+
+        // Now Aloe vera should be first
+        $browser->assertScript(
+            "document.querySelector('[dusk=\"plants-grid\"]').querySelector('[dusk=\"plant-card\"]').textContent.includes('Aloe vera')",
+        );
+
+        // Switch to Name (Z-A)
+        $browser->select('@plants-sort', 'name:desc')
+            ->pause(500);
+
+        // Now Zebra plant should be first
+        $browser->assertScript(
+            "document.querySelector('[dusk=\"plants-grid\"]').querySelector('[dusk=\"plant-card\"]').textContent.includes('Zebra plant')",
+        );
     });
 });
