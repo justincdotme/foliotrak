@@ -6,23 +6,26 @@ import { LogWateringForm } from './log-watering-form'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 vi.mock('@/hooks/useCareEventMutations', () => ({ useCareEventMutations: vi.fn() }))
+vi.mock('@/api/client', () => ({ fetchSensorSnapshot: vi.fn().mockResolvedValue(null) }))
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'
 
 const renderWithProvider = (ui: React.ReactElement) =>
   render(<TooltipProvider>{ui}</TooltipProvider>)
 
 const createWatering = { mutateAsync: vi.fn() }
+const createObservation = { mutateAsync: vi.fn() }
 const updateEvent = { mutateAsync: vi.fn() }
 
 beforeEach(() => {
   vi.clearAllMocks()
   createWatering.mutateAsync.mockResolvedValue({ id: 1 })
+  createObservation.mutateAsync.mockResolvedValue({ id: 2 })
   updateEvent.mutateAsync.mockResolvedValue({ id: 1 })
   vi.mocked(useCareEventMutations).mockReturnValue({
     createWatering,
     createFertilizing: { mutateAsync: vi.fn() },
     createRepotting: { mutateAsync: vi.fn() },
-    createObservation: { mutateAsync: vi.fn() },
+    createObservation,
     updateEvent,
     deleteEvent: { mutateAsync: vi.fn() },
     uploadEventPhoto: { mutateAsync: vi.fn() },
@@ -87,5 +90,41 @@ describe('LogWateringForm', () => {
 
     const when = screen.getByLabelText(/when/i) as HTMLInputElement
     expect(when.value).toBe('2026-07-02T14:37')
+  })
+
+  it('creates a companion observation when moisture is selected', async () => {
+    const onDone = vi.fn()
+    renderWithProvider(<LogWateringForm plantId={1} onDone={onDone} />)
+
+    await userEvent.type(screen.getByPlaceholderText('200'), '250')
+    await userEvent.click(screen.getByRole('radio', { name: 'Moist' }))
+    await userEvent.click(screen.getByRole('button', { name: /Log watering/ }))
+
+    await waitFor(() =>
+      expect(createWatering.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ amount_ml: 250 })
+      )
+    )
+    await waitFor(() =>
+      expect(createObservation.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          soil_moisture_relative: 'moist',
+          soil_moisture_precise: null,
+        })
+      )
+    )
+    expect(onDone).toHaveBeenCalled()
+  })
+
+  it('does not create an observation when moisture is untouched', async () => {
+    const onDone = vi.fn()
+    renderWithProvider(<LogWateringForm plantId={1} onDone={onDone} />)
+
+    await userEvent.type(screen.getByPlaceholderText('200'), '150')
+    await userEvent.click(screen.getByRole('button', { name: /Log watering/ }))
+
+    await waitFor(() => expect(createWatering.mutateAsync).toHaveBeenCalled())
+    expect(createObservation.mutateAsync).not.toHaveBeenCalled()
+    expect(onDone).toHaveBeenCalled()
   })
 })
