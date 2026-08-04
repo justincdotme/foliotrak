@@ -74,4 +74,43 @@ class AuthTest extends TestCase
             ->postJson('/logout')
             ->assertOk();
     }
+
+    /** @return void */
+    public function test_login_with_remember_sets_remember_cookie(): void
+    {
+        User::factory()->create([
+            'email'          => 'household@foliotrak.test',
+            'password'       => 'correct-horse',
+            'remember_token' => null,
+        ]);
+
+        $response = $this->postJson('/login', [
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+            'remember' => true,
+        ]);
+
+        $response->assertOk();
+
+        $user = User::where('email', 'household@foliotrak.test')->first();
+        $this->assertNotNull($user->remember_token);
+    }
+
+    /** @return void */
+    public function test_login_without_remember_does_not_set_remember_token(): void
+    {
+        User::factory()->create([
+            'email'          => 'household@foliotrak.test',
+            'password'       => 'correct-horse',
+            'remember_token' => null,
+        ]);
+
+        $this->postJson('/login', [
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+        ])->assertOk();
+
+        $user = User::where('email', 'household@foliotrak.test')->first();
+        $this->assertNull($user->remember_token);
+    }
 }

@@ -20,9 +20,13 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email'    => 'required|email',
             'password' => 'required',
+            'remember' => 'boolean',
         ]);
 
-        if (Auth::guard('web')->attempt($credentials)) {
+        $remember = $credentials['remember'] ?? false;
+        unset($credentials['remember']);
+
+        if (Auth::guard('web')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
             return response()->json(['message' => 'Login successful']);
