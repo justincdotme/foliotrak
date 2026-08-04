@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { http } from 'msw'
+import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { AppRoot } from '@/app-root'
@@ -10,6 +10,7 @@ import { AuthGate } from '@/components/shell/auth-gate'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { server } from '../../handlers'
 import { jsonMessage } from '../../handlers/_helpers'
+import loginSuccess from '../../fixtures/auth/login-200.json'
 
 const renderLoginRoutes = () =>
   render(
@@ -56,6 +57,26 @@ describe('LoginPage', () => {
     expect(await screen.findByText('Enter a valid email')).toBeInTheDocument()
     expect(screen.getByText('Enter your password')).toBeInTheDocument()
     window.history.pushState({}, '', '/')
+  })
+
+  it('sends remember flag when the toggle is checked', async () => {
+    let capturedBody: Record<string, unknown> | null = null
+    server.use(
+      http.post('/login', async ({ request }) => {
+        capturedBody = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(loginSuccess, { status: 200 })
+      })
+    )
+
+    renderLoginRoutes()
+
+    await userEvent.type(screen.getByLabelText(/email/i), 'plants@example.com')
+    await userEvent.type(screen.getByLabelText(/password/i), 'correct-horse')
+    await userEvent.click(screen.getByLabelText(/remember me/i))
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    await screen.findByText('Home')
+    expect(capturedBody).toMatchObject({ remember: true })
   })
 })
 

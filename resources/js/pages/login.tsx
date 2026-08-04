@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { isAxiosError } from 'axios'
@@ -10,10 +10,13 @@ import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Field } from '@/components/app/field'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),
   password: z.string().min(1, 'Enter your password'),
+  remember: z.boolean().default(false),
 })
 
 type LoginValues = z.infer<typeof loginSchema>
@@ -25,8 +28,12 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
-  } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) })
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { remember: false },
+  })
 
   const onSubmit = async (values: LoginValues) => {
     setAuthError('')
@@ -62,6 +69,23 @@ export function LoginPage() {
             <Field label="Password" error={errors.password?.message}>
               <Input type="password" autoComplete="current-password" {...register('password')} />
             </Field>
+            <div className="flex items-center gap-2">
+              <Controller
+                name="remember"
+                control={control}
+                render={({ field }) => (
+                  <Switch
+                    id="remember"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-label="Remember me"
+                  />
+                )}
+              />
+              <Label htmlFor="remember" className="text-[13px]">
+                Remember me
+              </Label>
+            </div>
             {authError && (
               <div dusk="auth-error" className="flex items-center gap-1.5 text-[13px] text-overdue">
                 <AlertTriangle size={14} />
