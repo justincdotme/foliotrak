@@ -69,10 +69,7 @@ export function Shell() {
           <div className={mobile ? '' : 'mx-auto max-w-[1200px]'}>
             <Routes>
               <Route index element={<DashboardPage go={go} />} />
-              <Route
-                path="plants"
-                element={<PlantsPage go={go} onAdd={() => setAddOpen(true)} />}
-              />
+              <Route path="plants" element={<PlantsPage onAdd={() => setAddOpen(true)} />} />
               <Route path="plants/:id" element={<PlantDetailRoute go={go} />} />
               <Route path="insights" element={<InsightsPage />} />
               <Route

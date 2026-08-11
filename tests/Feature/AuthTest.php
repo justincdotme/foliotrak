@@ -113,4 +113,76 @@ class AuthTest extends TestCase
         $user = User::where('email', 'household@foliotrak.test')->first();
         $this->assertNull($user->remember_token);
     }
+
+    /** @return void */
+    public function test_login_with_remember_emits_recaller_cookie_with_five_day_expiry(): void
+    {
+        User::factory()->create([
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+        ]);
+
+        $response = $this->postJson('/login', [
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+            'remember' => true,
+        ]);
+
+        $response->assertOk();
+
+        $recallerCookie = collect($response->headers->getCookies())
+            ->first(fn ($c) => str_starts_with($c->getName(), 'remember_web_'));
+
+        $this->assertNotNull($recallerCookie, 'Login response must include a remember_web_* cookie');
+
+        $fiveDaysFromNow = time() + (7200 * 60);
+        $this->assertEqualsWithDelta(
+            $fiveDaysFromNow,
+            $recallerCookie->getExpiresTime(),
+            60,
+            'Recaller cookie expiry should be ~5 days from now',
+        );
+    }
+
+    /** @return void */
+    public function test_login_without_remember_does_not_emit_recaller_cookie(): void
+    {
+        User::factory()->create([
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+        ]);
+
+        $response = $this->postJson('/login', [
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+        ]);
+
+        $response->assertOk();
+
+        $recallerCookie = collect($response->headers->getCookies())
+            ->first(fn ($c) => str_starts_with($c->getName(), 'remember_web_'));
+
+        $this->assertNull($recallerCookie, 'Login without remember must not set a recaller cookie');
+    }
+
+    /** @return void */
+    public function test_recaller_cookie_reauthenticates_after_session_destroyed(): void
+    {
+        User::factory()->create([
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+        ]);
+
+        $this->postJson('/login', [
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+            'remember' => true,
+        ])->assertOk();
+
+        $this->app['session.store']->flush();
+
+        $this->getJson('/api/user')
+            ->assertOk()
+            ->assertJsonFragment(['email' => 'household@foliotrak.test']);
+    }
 }
