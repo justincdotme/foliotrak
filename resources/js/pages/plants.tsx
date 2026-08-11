@@ -1,5 +1,6 @@
 import { Check, MapPin, Plus, Search, Sprout } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -16,7 +17,6 @@ import { usePlants } from '@/hooks/usePlants'
 import { useTags } from '@/hooks/useTags'
 
 interface PlantsPageProps {
-  go: (to: string) => void
   onAdd: () => void
 }
 
@@ -24,20 +24,20 @@ type WaterNeed = { status: CareStatus; daysLeft: number; interval: number } | nu
 
 interface PlantCardProps {
   p: PlantWithTags
-  onClick: () => void
+  to: string
 }
 
-function PlantCard({ p, onClick }: PlantCardProps) {
+function PlantCard({ p, to }: PlantCardProps) {
   const w = p.due_for_care?.find(d => d.type === 'watering')
   const due: WaterNeed = w ? { status: w.status, daysLeft: w.daysLeft, interval: w.interval } : null
   const cond = p.condition
   const wl = waterLabel(due, p.last_watered_at)
 
   return (
-    <button
+    <Link
       dusk="plant-card"
-      onClick={onClick}
-      className="group flex flex-col text-left bg-surface border border-border rounded-[10px] overflow-hidden hover:border-border-strong transition-colors p-3"
+      to={to}
+      className="group flex flex-col text-left bg-surface border border-border rounded-[10px] overflow-hidden hover:border-border-strong transition-colors p-3 no-underline text-inherit"
     >
       <div className="aspect-[4/3] relative overflow-hidden rounded-lg bg-surface-raised">
         {p.cover_photo ? (
@@ -82,11 +82,11 @@ function PlantCard({ p, onClick }: PlantCardProps) {
           </div>
         )}
       </div>
-    </button>
+    </Link>
   )
 }
 
-export function PlantsPage({ go, onAdd }: PlantsPageProps) {
+export function PlantsPage({ onAdd }: PlantsPageProps) {
   const [sortKey, setSortKey] = useState('last_watered:desc')
   const [sort, direction] = sortKey.split(':') as [PlantSort, SortDirection]
   const { data: plants, loading } = usePlants({ sort, direction })
@@ -184,7 +184,7 @@ export function PlantsPage({ go, onAdd }: PlantsPageProps) {
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}
         >
           {filtered.map(p => (
-            <PlantCard key={p.id} p={p} onClick={() => go('/plants/' + p.id)} />
+            <PlantCard key={p.id} p={p} to={`/plants/${p.id}`} />
           ))}
         </div>
       )}
