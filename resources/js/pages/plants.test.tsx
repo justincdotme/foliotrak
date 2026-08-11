@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import type { Photo, PlantWithTags, Tag } from '@/api/types'
 import { PlantsPage } from './plants'
@@ -45,12 +46,28 @@ describe('PlantsPage', () => {
   it('renders the cover thumbnail and the derived condition from live data', () => {
     setPlants([makePlant({ cover_photo: { path: 'cover.jpg' } as Photo })])
 
-    const { container } = render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    const { container } = render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
 
     // The cover thumbnail is decorative (the name sits beside it), so it carries
     // an empty alt and is queried directly rather than by the img role.
     expect(container.querySelector('img')).toHaveAttribute('src', '/uploads/cover.jpg')
     expect(screen.getByText('No reading')).toBeInTheDocument()
+  })
+
+  it('links each plant card to its detail route', () => {
+    setPlants([makePlant({ id: 7 })])
+
+    const { container } = render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
+
+    expect(container.querySelector('[dusk="plant-card"]')).toHaveAttribute('href', '/plants/7')
   })
 
   it('filters the list by the selected tag', async () => {
@@ -64,7 +81,11 @@ describe('PlantsPage', () => {
       [living, office]
     )
 
-    const { container } = render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    const { container } = render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
     expect(screen.getByText('ZZ plant')).toBeInTheDocument()
 
     const tagFilter = container.querySelector('[dusk="plants-tag-filter"]') as HTMLSelectElement
@@ -77,7 +98,11 @@ describe('PlantsPage', () => {
   it('renders the sort control with the default selection', () => {
     setPlants([makePlant({ id: 1 })])
 
-    const { container } = render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    const { container } = render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
 
     const sortSelect = container.querySelector('[dusk="plants-sort"]') as HTMLSelectElement
     expect(sortSelect.value).toBe('last_watered:desc')
@@ -92,7 +117,11 @@ describe('PlantsPage', () => {
   it('calls usePlants with sort params when sort changes', async () => {
     setPlants([makePlant({ id: 1 })])
 
-    const { container } = render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    const { container } = render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
 
     const sortSelect = container.querySelector('[dusk="plants-sort"]') as HTMLSelectElement
     await userEvent.selectOptions(sortSelect, 'name:asc')
@@ -106,7 +135,11 @@ describe('PlantsPage', () => {
       makePlant({ id: 2, common_name: 'Snake plant', scientific_name: 'Dracaena trifasciata' }),
     ])
 
-    render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
     await userEvent.type(screen.getByPlaceholderText(/search name/i), 'DRACAENA')
 
     expect(screen.getByText('Snake plant')).toBeInTheDocument()
@@ -128,7 +161,11 @@ describe('PlantsPage', () => {
       }),
     ])
 
-    render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
 
     expect(screen.getByText('Water in 5d')).toBeInTheDocument()
     expect(screen.queryByText('No watering logged')).toBeNull()
@@ -144,7 +181,11 @@ describe('PlantsPage', () => {
       }),
     ])
 
-    render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
 
     expect(screen.queryByText('No watering logged')).toBeNull()
     expect(screen.getByText('Watered 2d ago')).toBeInTheDocument()
@@ -157,7 +198,11 @@ describe('PlantsPage', () => {
       makePlant({ id: 2, common_name: 'Gone one', status: 'dead' }),
     ])
 
-    render(<PlantsPage go={vi.fn()} onAdd={vi.fn()} />)
+    render(
+      <MemoryRouter>
+        <PlantsPage onAdd={vi.fn()} />
+      </MemoryRouter>
+    )
     expect(screen.queryByText('Gone one')).toBeNull()
 
     await userEvent.click(screen.getByRole('button', { name: /^dead$/i }))
