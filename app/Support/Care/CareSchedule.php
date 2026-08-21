@@ -115,15 +115,52 @@ final readonly class CareSchedule
 
     /**
      * The state of this schedule against today, in midnight-normalized
-     * calendar days so a clock time never shifts the day count.
+     * calendar days so a clock time never shifts the day count. Watering
+     * defers to the soil projection whenever the plant has a usable reading
+     * (FOL-158); everything else counts from the anchor as before.
+     *
+     * @param Plant|null $plant Required for the watering projection.
      *
      * @return CareDue
      */
-    public function due(): CareDue
+    public function due(?Plant $plant = null): CareDue
     {
-        $dueDate  = $this->anchor->copy()->addDays($this->intervalDays)->startOfDay();
+        $moisture = $plant === null ? null : $this->projection($plant);
+        $dueDate  = $moisture !== null
+            ? $moisture->dueDate
+            : $this->anchor->copy()->addDays($this->intervalDays)->startOfDay();
         $daysLeft = (int) Carbon::today()->diffInDays($dueDate, false);
 
-        return new CareDue($this->type, $this->intervalDays, $dueDate, $daysLeft, DueStatus::fromDaysLeft($daysLeft));
+        return new CareDue($this->type, $this->intervalDays, $dueDate, $daysLeft, DueStatus::fromDaysLeft($daysLeft), $moisture);
+    }
+
+    /**
+     * @param Plant $plant
+     *
+     * @return MoistureProjection|null
+     */
+    private function projection(Plant $plant): ?MoistureProjection
+    {
+        if ($this->type !== ScheduledCareType::Watering) {
+            return null;
+        }
+
+        $now    = Carbon::now();
+        $anchor = SoilHistory::anchor($plant, $now);
+
+        if ($anchor === null) {
+            return null;
+        }
+
+        $conditions = SoilHistory::currentConditions($plant, $now);
+
+        $rate = DryingRateEstimator::estimate(
+            DryingRateEstimator::runs(SoilHistory::daily($plant, $now), SoilHistory::wateringTimes($plant)),
+            $conditions['humidity'],
+            $conditions['temp'],
+            $this->intervalDays,
+        );
+
+        return MoistureProjection::from($anchor, $rate, $this->anchor, $this->intervalDays);
     }
 }

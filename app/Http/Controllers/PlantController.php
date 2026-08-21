@@ -32,12 +32,14 @@ class PlantController extends Controller
     private const RELATIONS = [
         'tags',
         'equipment',
-        'sensors',
         'coverPhoto',
         'location',
         'latestObservationEvent.observation.symptoms',
         'wateringEvents',
         'fertilizingEvents',
+        'observationEvents.observation',
+        'sensors.readings',
+        'sensors.calibrationPoints',
     ];
 
     /**

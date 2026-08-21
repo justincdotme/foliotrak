@@ -295,12 +295,22 @@ export interface SpeciesSuggestion {
   family: string | null
 }
 
+export interface MoistureBasis {
+  reading: number
+  source: 'observation' | 'sensor'
+  read_at: string
+  basis: 'conditioned' | 'humidity_banded' | 'plant_median' | 'cadence_baseline'
+  sample_size: number
+  rationale: string
+}
+
 export interface DueEntry {
   status: CareStatus
   due_date: string
   type: 'watering' | 'fertilizing'
   daysLeft: number
   interval: number
+  moisture: MoistureBasis | null
 }
 
 export interface DueForCare extends DueEntry {

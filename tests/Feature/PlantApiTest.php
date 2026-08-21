@@ -14,6 +14,7 @@ use App\Models\Sensor;
 use App\Models\Tag;
 use App\Models\User;
 use Database\Seeders\CareLookupSeeder;
+use DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -630,6 +631,89 @@ class PlantApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.0.last_watered_at', null);
+    }
+
+    /**
+     * @return void
+     */
+    public function test_the_due_entry_carries_the_moisture_basis_when_one_applies(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create(['watering_interval_days_override' => 6]);
+        $this->logCareEvent($plant, 'watering', now()->subDays(6));
+        $this->logCareEvent($plant, 'observation', now())
+            ->observation()->create(['soil_moisture_precise' => 8]);
+
+        $this->getJson("/api/plants/{$plant->id}")
+            ->assertOk()
+            ->assertJsonPath('data.due_for_care.0.moisture.reading', 8)
+            ->assertJsonPath('data.due_for_care.0.moisture.source', 'observation')
+            ->assertJsonPath('data.due_for_care.0.moisture.sample_size', 0)
+            ->assertJsonPath('data.due_for_care.0.moisture.basis', 'cadence_baseline');
+    }
+
+    /**
+     * @return void
+     */
+    public function test_the_due_entry_omits_the_moisture_basis_without_a_reading(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create(['watering_interval_days_override' => 6]);
+        $this->logCareEvent($plant, 'watering', now()->subDays(6));
+
+        $this->getJson("/api/plants/{$plant->id}")
+            ->assertOk()
+            ->assertJsonPath('data.due_for_care.0.moisture', null);
+    }
+
+    /**
+     * The projection reads moisture history per plant, so the list endpoint
+     * must eager load it or the query count grows with the collection.
+     *
+     * @return void
+     */
+    public function test_the_plants_list_does_not_fan_out_per_plant(): void
+    {
+        $this->actAsHousehold();
+
+        $countFor = function (int $plants): int {
+            Plant::query()->forceDelete();
+
+            for ($i = 0; $i < $plants; $i++) {
+                $plant = Plant::factory()->create(['watering_interval_days_override' => 6]);
+                $this->logCareEvent($plant, 'watering', now()->subDays(6));
+                $this->logCareEvent($plant, 'observation', now())
+                    ->observation()->create(['soil_moisture_precise' => 8]);
+            }
+
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $this->getJson('/api/plants')->assertOk();
+            $queries = count(DB::getQueryLog());
+            DB::disableQueryLog();
+
+            return $queries;
+        };
+
+        $this->assertSame($countFor(2), $countFor(8));
+    }
+
+    /**
+     * @param Plant                      $plant
+     * @param string                     $key
+     * @param \Illuminate\Support\Carbon $at
+     *
+     * @return CareEvent
+     */
+    private function logCareEvent(Plant $plant, string $key, \Illuminate\Support\Carbon $at): CareEvent
+    {
+        return CareEvent::create([
+            'plant_id'           => $plant->id,
+            'care_event_type_id' => CareEventType::where('key', $key)->value('id'),
+            'occurred_at'        => $at,
+        ]);
     }
 
     /**

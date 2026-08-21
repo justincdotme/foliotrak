@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Plant, PlantRecommendations, WateringRecommendation } from '@/api/types'
+import type {
+  MoistureBasis,
+  Plant,
+  PlantRecommendations,
+  WateringRecommendation,
+} from '@/api/types'
 import { ScheduleSection } from './schedule-section'
+import type { NextDue } from './my-schedule-tab'
 
 vi.mock('@/hooks/usePlantMutations', () => ({ useUpdatePlant: vi.fn() }))
 import { useUpdatePlant } from '@/hooks/usePlantMutations'
@@ -260,5 +266,55 @@ describe('ScheduleSection Recommended', () => {
     await openRecommended()
 
     expect(screen.queryByText(/could not load/i)).not.toBeInTheDocument()
+  })
+})
+
+describe('ScheduleSection moisture basis', () => {
+  const moisture = (over: Partial<MoistureBasis> = {}): MoistureBasis => ({
+    reading: 8,
+    source: 'observation',
+    read_at: '2026-08-20',
+    basis: 'plant_median',
+    sample_size: 12,
+    rationale:
+      "Soil read 8 of 10 on Aug 20. At this plant's observed pace, about 1 point a day from 12 readings, that reaches watering level around Aug 25.",
+    ...over,
+  })
+
+  const due = (over: Partial<NonNullable<NextDue>> = {}): NextDue => ({
+    due_date: '2026-08-25',
+    daysLeft: 5,
+    status: 'ok',
+    type: 'watering',
+    interval: 6,
+    last_watered: '2026-08-25',
+    moisture: moisture(),
+    ...over,
+  })
+
+  it('shows the moisture reason and its sample size when a reading moved the date', () => {
+    render(<ScheduleSection plant={plant()} recommendations={null} due={due()} />)
+
+    expect(screen.getByText(/Soil read 8 of 10 on Aug 20/)).toBeInTheDocument()
+    expect(screen.getByText(/12 readings/)).toBeInTheDocument()
+  })
+
+  it('shows no moisture reason when the plain cadence set the date', () => {
+    render(<ScheduleSection plant={plant()} recommendations={null} due={due({ moisture: null })} />)
+
+    expect(screen.queryByText(/Soil read/)).not.toBeInTheDocument()
+  })
+
+  it('renders the reason on an overdue card too', () => {
+    render(
+      <ScheduleSection
+        plant={plant()}
+        recommendations={null}
+        due={due({ status: 'overdue', daysLeft: -2, moisture: moisture({ reading: 2 }) })}
+      />
+    )
+
+    expect(screen.getByText(/Overdue by 2 days/)).toBeInTheDocument()
+    expect(screen.getByText(/Soil read/)).toBeInTheDocument()
   })
 })

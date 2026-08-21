@@ -15,7 +15,15 @@
         "due_date": "2026-07-05",
         "type": "watering",
         "daysLeft": 5,
-        "interval": 7
+        "interval": 7,
+        "moisture": {
+          "reading": 8,
+          "source": "observation",
+          "read_at": "2026-07-03",
+          "basis": "cadence_baseline",
+          "sample_size": 0,
+          "rationale": "Soil read 8 of 10 on Jul 3. There is not enough paired moisture history yet to measure how fast this plant dries, so this uses your logged cadence, about 0.6 points a day, that reaches watering level around Jul 5."
+        }
       }
     ],
     "recent_activity": [

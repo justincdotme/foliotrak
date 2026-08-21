@@ -156,6 +156,7 @@ describe('PlantsPage', () => {
             type: 'watering',
             daysLeft: 5,
             interval: 7,
+            moisture: null,
           },
         ],
       }),

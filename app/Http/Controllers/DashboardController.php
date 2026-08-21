@@ -28,6 +28,9 @@ class DashboardController extends Controller
         'wateringEvents',
         'fertilizingEvents',
         'latestObservationEvent.observation.symptoms',
+        'observationEvents.observation',
+        'sensors.readings',
+        'sensors.calibrationPoints',
     ];
 
     /**

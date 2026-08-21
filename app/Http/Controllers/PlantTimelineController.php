@@ -32,6 +32,8 @@ class PlantTimelineController extends Controller
             'wateringEvents',
             'fertilizingEvents',
             'observationEvents.observation',
+            'sensors.readings',
+            'sensors.calibrationPoints',
             'photos'     => fn ($query) => $query->orderByDesc('taken_on'),
             'careEvents' => fn ($query) => $query->orderByDesc('occurred_at')->orderBy('id'),
             'careEvents.careEventType',

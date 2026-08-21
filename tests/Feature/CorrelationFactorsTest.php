@@ -8,6 +8,10 @@ use App\Enums\SoilMoistureLevel;
 use App\Models\CareEvent;
 use App\Models\Observation;
 use App\Models\Plant;
+use App\Support\Care\SoilHistory;
+use App\Support\Correlation\AmbientTemperatureFactor;
+use App\Support\Correlation\DryingRateHumidityFactor;
+use App\Support\Correlation\DryingRateTemperatureFactor;
 use App\Support\Correlation\HumidityFactor;
 use App\Support\Correlation\LightLevelFactor;
 use App\Support\Correlation\SoilMoistureFactor;
@@ -286,5 +290,110 @@ class CorrelationFactorsTest extends TestCase
         $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
 
         $this->assertSame([], CorrelationEngine::forPlants(collect([$loaded]), [new $factorClass]));
+    }
+
+    /** @return void */
+    public function test_ambient_temperature_pairs_with_health(): void
+    {
+        $plant = Plant::factory()->create();
+
+        foreach ([[21.5, 4], [27.0, 2]] as $i => [$temp, $health]) {
+            $event = CareEvent::factory()->ofType('observation')->for($plant)->create([
+                'occurred_at' => now()->subDays(10 - $i),
+            ]);
+            Observation::factory()->create([
+                'care_event_id'  => $event->id,
+                'overall_health' => $health,
+                'ambient_temp_c' => $temp,
+            ]);
+        }
+
+        $loaded = Plant::with(['observationEvents.observation'])->findOrFail($plant->id);
+
+        $this->assertSame(
+            [['x' => 21.5, 'y' => 4.0], ['x' => 27.0, 'y' => 2.0]],
+            (new AmbientTemperatureFactor)->pairs(collect([$loaded])),
+        );
+    }
+
+    /** @return void */
+    public function test_the_drying_rate_humidity_factor_pairs_observed_runs_with_humidity(): void
+    {
+        $plant = Plant::factory()->create();
+        $this->moistureAt($plant, now()->subDays(4), 9, humidity: 40, tempC: 22.0);
+        $this->moistureAt($plant, now()->subDays(2), 5, humidity: 40, tempC: 22.0);
+
+        $loaded = Plant::with(SoilHistory::RELATIONS)->findOrFail($plant->id);
+        $pairs  = (new DryingRateHumidityFactor)->pairs(collect([$loaded]));
+
+        $this->assertCount(1, $pairs);
+        $this->assertSame(40.0, $pairs[0]['x']);
+        $this->assertEqualsWithDelta(2.0, $pairs[0]['y'], 0.0001);
+    }
+
+    /** @return void */
+    public function test_the_drying_rate_temperature_factor_pairs_observed_runs_with_temperature(): void
+    {
+        $plant = Plant::factory()->create();
+        $this->moistureAt($plant, now()->subDays(4), 9, humidity: 40, tempC: 22.0);
+        $this->moistureAt($plant, now()->subDays(2), 5, humidity: 40, tempC: 22.0);
+
+        $loaded = Plant::with(SoilHistory::RELATIONS)->findOrFail($plant->id);
+        $pairs  = (new DryingRateTemperatureFactor)->pairs(collect([$loaded]));
+
+        $this->assertCount(1, $pairs);
+        $this->assertSame(22.0, $pairs[0]['x']);
+        $this->assertEqualsWithDelta(2.0, $pairs[0]['y'], 0.0001);
+    }
+
+    /** @return void */
+    public function test_the_drying_rate_factors_skip_runs_without_ambient_data(): void
+    {
+        $plant = Plant::factory()->create();
+        $this->moistureAt($plant, now()->subDays(4), 9);
+        $this->moistureAt($plant, now()->subDays(2), 5);
+
+        $loaded = Plant::with(SoilHistory::RELATIONS)->findOrFail($plant->id);
+
+        $this->assertSame([], (new DryingRateHumidityFactor)->pairs(collect([$loaded])));
+        $this->assertSame([], (new DryingRateTemperatureFactor)->pairs(collect([$loaded])));
+    }
+
+    /** @return void */
+    public function test_a_watering_between_readings_yields_no_drying_pair(): void
+    {
+        $plant = Plant::factory()->create();
+        $this->moistureAt($plant, now()->subDays(4), 9, humidity: 40, tempC: 22.0);
+        CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(3)]);
+        $this->moistureAt($plant, now()->subDays(2), 5, humidity: 40, tempC: 22.0);
+
+        $loaded = Plant::with(SoilHistory::RELATIONS)->findOrFail($plant->id);
+
+        $this->assertSame([], (new DryingRateHumidityFactor)->pairs(collect([$loaded])));
+    }
+
+    /**
+     * @param Plant                      $plant
+     * @param \Illuminate\Support\Carbon $at
+     * @param integer                    $precise
+     * @param integer|null               $humidity
+     * @param float|null                 $tempC
+     *
+     * @return void
+     */
+    private function moistureAt(
+        Plant $plant,
+        \Illuminate\Support\Carbon $at,
+        int $precise,
+        ?int $humidity = null,
+        ?float $tempC = null,
+    ): void {
+        $event = CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => $at]);
+        Observation::factory()->create([
+            'care_event_id'         => $event->id,
+            'soil_moisture_precise' => $precise,
+            'ambient_humidity_pct'  => $humidity,
+            'ambient_temp_c'        => $tempC,
+        ]);
     }
 }

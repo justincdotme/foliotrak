@@ -8,18 +8,21 @@ use App\Models\Plant;
 use Illuminate\Support\Carbon;
 
 /**
- * The due state of one care schedule: what is due, when, and how urgently.
+ * The due state of one care schedule: what is due, when and how urgently.
  * Carries no plant identity; the serialization edge attaches that where a
  * cross-plant list needs it.
  */
 final readonly class CareDue
 {
     /**
-     * @param ScheduledCareType $type
-     * @param integer           $intervalDays
-     * @param Carbon            $dueDate
-     * @param integer           $daysLeft
-     * @param DueStatus         $status
+     * @param ScheduledCareType       $type
+     * @param integer                 $intervalDays
+     * @param Carbon                  $dueDate
+     * @param integer                 $daysLeft
+     * @param DueStatus               $status
+     * @param MoistureProjection|null $moisture     When set, the due date is the projected
+     *                                              soil threshold crossing rather than the
+     *                                              plain cadence countdown.
      */
     public function __construct(
         public ScheduledCareType $type,
@@ -27,6 +30,7 @@ final readonly class CareDue
         public Carbon $dueDate,
         public int $daysLeft,
         public DueStatus $status,
+        public ?MoistureProjection $moisture = null,
     ) {}
 
     /**
@@ -37,7 +41,7 @@ final readonly class CareDue
      */
     public static function for(Plant $plant, ScheduledCareType $type): ?self
     {
-        return CareSchedule::for($plant, $type)?->due();
+        return CareSchedule::for($plant, $type)?->due($plant);
     }
 
     /**

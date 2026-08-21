@@ -1,6 +1,6 @@
 import { Bell, Check, Droplets, FlaskConical } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { Plant } from '@/api/types'
+import type { MoistureBasis, Plant } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Field } from '@/components/app/field'
@@ -18,11 +18,31 @@ export type NextDue = {
   type: 'watering'
   interval: number
   last_watered: string
+  moisture: MoistureBasis | null
 } | null
 
 const today = (): string => new Date().toISOString().slice(0, 10)
 
+function MoistureNote({ due }: { due: NonNullable<NextDue> }) {
+  if (!due.moisture) return null
+  return (
+    <div className="mt-2 text-[12px] text-text-subtle flex items-start gap-1.5">
+      <Droplets size={13} className="mt-[2px] shrink-0" />
+      <span>{due.moisture.rationale}</span>
+    </div>
+  )
+}
+
 function NextDueRow({ due, lastWateredAt }: { due: NextDue; lastWateredAt?: string | null }) {
+  return (
+    <>
+      <NextDueCard due={due} lastWateredAt={lastWateredAt} />
+      {due && <MoistureNote due={due} />}
+    </>
+  )
+}
+
+function NextDueCard({ due, lastWateredAt }: { due: NextDue; lastWateredAt?: string | null }) {
   if (!due) {
     if (lastWateredAt) {
       return (

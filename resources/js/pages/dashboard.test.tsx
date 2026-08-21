@@ -18,6 +18,7 @@ const data: DashboardData = {
       type: 'watering',
       daysLeft: -3,
       interval: 7,
+      moisture: null,
     },
     {
       plant_id: 2,
@@ -28,6 +29,7 @@ const data: DashboardData = {
       type: 'watering',
       daysLeft: 5,
       interval: 9,
+      moisture: null,
     },
   ],
   recent_activity: [
@@ -71,6 +73,7 @@ describe('DashboardPage', () => {
       scientific_name: 'Epipremnum',
       due_date: '2026-06-20',
       interval: 7,
+      moisture: null,
     }
     const both: DashboardData = {
       ...data,
