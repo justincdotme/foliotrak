@@ -40,7 +40,7 @@ class SoilHistoryTest extends TestCase
         $this->observe($plant, $this->now->copy()->subDays(3), precise: 5);
         $this->observe($plant, $this->now->copy()->subDay(), precise: 8);
 
-        $anchor = SoilHistory::anchor($this->loaded($plant), $this->now);
+        $anchor = SoilHistory::for($this->loaded($plant), $this->now)->anchor();
 
         $this->assertNotNull($anchor);
         $this->assertSame(8.0, $anchor->value);
@@ -55,7 +55,7 @@ class SoilHistoryTest extends TestCase
         $plant = Plant::factory()->create();
         $this->observe($plant, $this->now->copy()->subDay(), relative: 'wet');
 
-        $anchor = SoilHistory::anchor($this->loaded($plant), $this->now);
+        $anchor = SoilHistory::for($this->loaded($plant), $this->now)->anchor();
 
         $this->assertNotNull($anchor);
         $this->assertSame(8.0, $anchor->value);
@@ -74,7 +74,7 @@ class SoilHistoryTest extends TestCase
         $this->water($plant, $at);
         $this->observe($plant, $at, precise: 2);
 
-        $this->assertNull(SoilHistory::anchor($this->loaded($plant), $this->now));
+        $this->assertNull(SoilHistory::for($this->loaded($plant), $this->now)->anchor());
     }
 
     /**
@@ -86,7 +86,7 @@ class SoilHistoryTest extends TestCase
         $this->observe($plant, $this->now->copy()->subDays(5), precise: 2);
         $this->water($plant, $this->now->copy()->subDays(2));
 
-        $this->assertNull(SoilHistory::anchor($this->loaded($plant), $this->now));
+        $this->assertNull(SoilHistory::for($this->loaded($plant), $this->now)->anchor());
     }
 
     /**
@@ -99,7 +99,7 @@ class SoilHistoryTest extends TestCase
         $this->observe($plant, $this->now->copy()->subDays(2)->setTime(20, 0), precise: 7);
         $this->observe($plant, $this->now->copy()->subDay(), precise: 5);
 
-        $daily = SoilHistory::daily($this->loaded($plant), $this->now);
+        $daily = SoilHistory::for($this->loaded($plant), $this->now)->daily();
 
         $this->assertCount(2, $daily);
         $this->assertSame(8.0, $daily[0]->value);
@@ -114,7 +114,7 @@ class SoilHistoryTest extends TestCase
         $plant = Plant::factory()->create();
         $this->observe($plant, $this->now->copy()->subDay(), precise: 6, humidity: 44, tempC: 22.5);
 
-        $conditions = SoilHistory::currentConditions($this->loaded($plant), $this->now);
+        $conditions = SoilHistory::for($this->loaded($plant), $this->now)->currentConditions();
 
         $this->assertSame(44.0, $conditions['humidity']);
         $this->assertSame(22.5, $conditions['temp']);
@@ -128,8 +128,8 @@ class SoilHistoryTest extends TestCase
         $plant = Plant::factory()->create();
         $this->observe($plant, $this->now->copy()->subDays(120), precise: 9);
 
-        $this->assertNull(SoilHistory::anchor($this->loaded($plant), $this->now));
-        $this->assertSame([], SoilHistory::daily($this->loaded($plant), $this->now));
+        $this->assertNull(SoilHistory::for($this->loaded($plant), $this->now)->anchor());
+        $this->assertSame([], SoilHistory::for($this->loaded($plant), $this->now)->daily());
     }
 
     /**
@@ -140,7 +140,7 @@ class SoilHistoryTest extends TestCase
         $plant = Plant::factory()->create();
         $this->observe($plant, $this->now->copy()->subDay(), humidity: 50);
 
-        $this->assertNull(SoilHistory::anchor($this->loaded($plant), $this->now));
+        $this->assertNull(SoilHistory::for($this->loaded($plant), $this->now)->anchor());
     }
 
     /**

@@ -1,7 +1,7 @@
 # ADR-0027: Watering due dates projected from soil moisture and an inferred drying rate
 
 ## Status
-Accepted
+Superseded by ADR-0028
 
 ## Date
 2026-08-20

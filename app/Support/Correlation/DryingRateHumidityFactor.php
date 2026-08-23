@@ -11,9 +11,8 @@ use Illuminate\Support\Collection;
 
 /**
  * Ambient humidity against how fast the soil actually dried, one pair per observed
- * drying run: the relationship the due-date projection learns from, surfaced so its
- * sample size and uncertainty are visible. Observation history only, since a pooled
- * correlation does not justify loading every plant's sensor readings.
+ * drying run, shown with its sample size and uncertainty. Observation history only,
+ * since a pooled correlation does not justify loading every plant's sensor readings.
  */
 final class DryingRateHumidityFactor implements Factor
 {
@@ -52,10 +51,8 @@ final class DryingRateHumidityFactor implements Factor
         $now   = Carbon::now();
 
         foreach ($plants as $plant) {
-            $runs = DryingRateEstimator::runs(
-                SoilHistory::daily($plant, $now),
-                SoilHistory::wateringTimes($plant),
-            );
+            $history = SoilHistory::for($plant, $now);
+            $runs    = DryingRateEstimator::runs($history->daily(), $history->wateringTimes());
 
             foreach ($runs as $run) {
                 if ($run->humidityPct === null) {

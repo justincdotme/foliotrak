@@ -4,39 +4,38 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
-use App\Support\Care\MoistureProjection;
+use App\Support\Care\CareDue;
+use App\Support\Care\DueRationale;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * A plant's own due entry. Identity-free: the plant is already known wherever
- * this renders (FOL-72).
+ * One due entry for a plant that already carries its own identity.
  *
  * @mixin CareDue
  */
 class CareDueResource extends JsonResource
 {
     /**
-     * Null whenever the due date is the plain cadence countdown, so the shape
-     * says plainly that no reading informed it.
+     * Always present, so no surface has to guess why a date says what it does.
+     * The reading fields are null when nothing has been logged since the last
+     * watering and the date is the interval countdown alone.
      *
-     * @param MoistureProjection|null $projection
+     * @param CareDue $due
      *
-     * @return array<string, mixed>|null
+     * @return array<string, mixed>
      */
-    public static function moisture(?MoistureProjection $projection): ?array
+    public static function basis(CareDue $due): array
     {
-        if ($projection === null) {
-            return null;
-        }
-
         return [
-            'reading'     => round($projection->anchor->value, 1),
-            'source'      => $projection->anchor->source,
-            'read_at'     => $projection->anchor->at->format('Y-m-d'),
-            'basis'       => $projection->rate->basis,
-            'sample_size' => $projection->rate->sampleSize,
-            'rationale'   => $projection->rationale,
+            'key'          => $due->interval->basis,
+            'sample_size'  => $due->interval->sampleSize,
+            'cadence_days' => $due->interval->cadenceDays,
+            'learned_days' => $due->interval->learnedDays,
+            'rationale'    => DueRationale::for($due->interval, $due->moisture),
+            'reading'      => $due->moisture === null ? null : round($due->moisture->anchor->value, 1),
+            'read_at'      => $due->moisture?->anchor->at->format('Y-m-d'),
+            'source'       => $due->moisture?->anchor->source,
         ];
     }
 
@@ -53,7 +52,7 @@ class CareDueResource extends JsonResource
             'type'     => $this->type->value,
             'daysLeft' => $this->daysLeft,
             'interval' => $this->intervalDays,
-            'moisture' => self::moisture($this->moisture),
+            'basis'    => self::basis($this->resource),
         ];
     }
 }

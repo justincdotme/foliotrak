@@ -1,12 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type {
-  MoistureBasis,
-  Plant,
-  PlantRecommendations,
-  WateringRecommendation,
-} from '@/api/types'
+import type { DueBasis, Plant, PlantRecommendations, WateringRecommendation } from '@/api/types'
 import { ScheduleSection } from './schedule-section'
 import type { NextDue } from './my-schedule-tab'
 
@@ -269,40 +264,76 @@ describe('ScheduleSection Recommended', () => {
   })
 })
 
-describe('ScheduleSection moisture basis', () => {
-  const moisture = (over: Partial<MoistureBasis> = {}): MoistureBasis => ({
-    reading: 8,
-    source: 'observation',
-    read_at: '2026-08-20',
-    basis: 'plant_median',
-    sample_size: 12,
+describe('ScheduleSection due basis', () => {
+  const basis = (over: Partial<DueBasis> = {}): DueBasis => ({
+    key: 'plant_soil',
+    sample_size: 3,
+    cadence_days: 11,
+    learned_days: 31,
     rationale:
-      "Soil read 8 of 10 on Aug 20. At this plant's observed pace, about 1 point a day from 12 readings, that reaches watering level around Aug 25.",
+      "Your logged rhythm is about 11 days. 3 readings of this plant's soil suggest closer to 31 days, so this proposes 17 days.",
+    reading: null,
+    read_at: null,
+    source: null,
     ...over,
   })
 
   const due = (over: Partial<NonNullable<NextDue>> = {}): NextDue => ({
-    due_date: '2026-08-25',
-    daysLeft: 5,
+    due_date: '2026-09-06',
+    daysLeft: 15,
     status: 'ok',
     type: 'watering',
-    interval: 6,
-    last_watered: '2026-08-25',
-    moisture: moisture(),
+    interval: 17,
+    last_watered: '2026-08-20',
+    basis: basis(),
     ...over,
   })
 
-  it('shows the moisture reason and its sample size when a reading moved the date', () => {
+  it('states what the interval rests on and how many readings are behind it', () => {
     render(<ScheduleSection plant={plant()} recommendations={null} due={due()} />)
 
-    expect(screen.getByText(/Soil read 8 of 10 on Aug 20/)).toBeInTheDocument()
-    expect(screen.getByText(/12 readings/)).toBeInTheDocument()
+    expect(screen.getByText(/logged rhythm is about 11 days/)).toBeInTheDocument()
+    expect(screen.getByText(/3 readings/)).toBeInTheDocument()
   })
 
-  it('shows no moisture reason when the plain cadence set the date', () => {
-    render(<ScheduleSection plant={plant()} recommendations={null} due={due({ moisture: null })} />)
+  it('still states a basis for a plant with no soil readings at all', () => {
+    render(
+      <ScheduleSection
+        plant={plant()}
+        recommendations={null}
+        due={due({
+          basis: basis({
+            key: 'cadence',
+            sample_size: 0,
+            learned_days: null,
+            rationale:
+              'Your logged rhythm is about 11 days. No soil reading has landed on a day that would test it yet, so this follows the rhythm alone.',
+          }),
+        })}
+      />
+    )
 
-    expect(screen.queryByText(/Soil read/)).not.toBeInTheDocument()
+    expect(screen.getByText(/follows the rhythm alone/)).toBeInTheDocument()
+  })
+
+  it('names the reading that moved the date when there is one', () => {
+    render(
+      <ScheduleSection
+        plant={plant()}
+        recommendations={null}
+        due={due({
+          basis: basis({
+            reading: 8,
+            read_at: '2026-08-20',
+            source: 'observation',
+            rationale:
+              'Your logged rhythm is about 11 days. Soil read 8 of 10 on Aug 20, which carries the next watering to Sep 2.',
+          }),
+        })}
+      />
+    )
+
+    expect(screen.getByText(/Soil read 8 of 10 on Aug 20/)).toBeInTheDocument()
   })
 
   it('renders the reason on an overdue card too', () => {
@@ -310,11 +341,11 @@ describe('ScheduleSection moisture basis', () => {
       <ScheduleSection
         plant={plant()}
         recommendations={null}
-        due={due({ status: 'overdue', daysLeft: -2, moisture: moisture({ reading: 2 }) })}
+        due={due({ status: 'overdue', daysLeft: -2 })}
       />
     )
 
     expect(screen.getByText(/Overdue by 2 days/)).toBeInTheDocument()
-    expect(screen.getByText(/Soil read/)).toBeInTheDocument()
+    expect(screen.getByText(/logged rhythm/)).toBeInTheDocument()
   })
 })

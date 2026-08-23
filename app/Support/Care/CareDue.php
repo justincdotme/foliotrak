@@ -16,16 +16,17 @@ final readonly class CareDue
 {
     /**
      * @param ScheduledCareType       $type
-     * @param integer                 $intervalDays
+     * @param CareInterval            $interval     What the proposed interval rests on.
+     * @param integer                 $intervalDays Mirrors $interval->days for readers that only need the number.
      * @param Carbon                  $dueDate
      * @param integer                 $daysLeft
      * @param DueStatus               $status
-     * @param MoistureProjection|null $moisture     When set, the due date is the projected
-     *                                              soil threshold crossing rather than the
-     *                                              plain cadence countdown.
+     * @param MoistureProjection|null $moisture     When set, a reading logged since the last
+     *                                              watering moved this cycle's date.
      */
     public function __construct(
         public ScheduledCareType $type,
+        public CareInterval $interval,
         public int $intervalDays,
         public Carbon $dueDate,
         public int $daysLeft,
@@ -41,7 +42,7 @@ final readonly class CareDue
      */
     public static function for(Plant $plant, ScheduledCareType $type): ?self
     {
-        return CareSchedule::for($plant, $type)?->due($plant);
+        return $plant->careDue($type);
     }
 
     /**

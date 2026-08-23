@@ -79,7 +79,7 @@ class CareScheduleTest extends TestCase
         $schedule = CareSchedule::for($this->plantWateredDaysAgo(null, 28, 21, 14), ScheduledCareType::Watering);
 
         $this->assertNotNull($schedule);
-        $this->assertSame(7, $schedule->intervalDays);
+        $this->assertSame(7, $schedule->interval->days);
     }
 
     /** @return void */
@@ -88,7 +88,7 @@ class CareScheduleTest extends TestCase
         $schedule = CareSchedule::for($this->plantWateredDaysAgo(5, 8), ScheduledCareType::Watering);
 
         $this->assertNotNull($schedule);
-        $this->assertSame(5, $schedule->intervalDays);
+        $this->assertSame(5, $schedule->interval->days);
     }
 
     /** @return void */
@@ -96,7 +96,7 @@ class CareScheduleTest extends TestCase
     {
         $schedule = CareSchedule::for($this->plantWateredDaysAgo(3, 36, 29, 22, 15, 8), ScheduledCareType::Watering);
 
-        $this->assertSame(3, $schedule?->intervalDays);
+        $this->assertSame(3, $schedule?->interval->days);
     }
 
     /** @return void */

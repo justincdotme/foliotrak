@@ -8,6 +8,7 @@ use App\Models\CareEvent;
 use App\Models\CareEventType;
 use App\Models\Plant;
 use App\Support\Care\CareDue;
+use App\Support\Care\DueRationale;
 use App\Support\Care\ScheduledCareType;
 use App\Support\Care\SoilHistory;
 use Database\Seeders\CareLookupSeeder;
@@ -50,15 +51,36 @@ class MoistureDueDateTest extends TestCase
         $this->assertGreaterThan(0, $due->daysLeft);
         $this->assertFalse($due->isDue());
         $this->assertNotNull($due->moisture);
-        $this->assertStringContainsString('8 of 10', $due->moisture->rationale);
+        $this->assertStringContainsString('8 of 10', DueRationale::for($due->interval, $due->moisture));
     }
 
     /**
+     * A dry reading pulls the date forward, but never past half an interval
+     * from the watering: a plant genuinely dry two days after a soak has a
+     * problem the schedule cannot fix.
+     *
      * @return void
      */
-    public function test_a_dry_reading_pulls_a_plant_forward(): void
+    public function test_a_dry_reading_pulls_a_plant_forward_but_not_past_the_floor(): void
     {
         $plant = $this->plantWateredDaysAgo(2);
+        $this->assertSame(4, CareDue::for($this->loaded($plant), ScheduledCareType::Watering)?->daysLeft);
+
+        $this->observe($plant, $this->now, 2);
+        $due = CareDue::for($this->loaded($plant), ScheduledCareType::Watering);
+
+        $this->assertNotNull($due);
+        $this->assertSame(1, $due->daysLeft);
+    }
+
+    /**
+     * The same reading later in the cycle does put the plant over the line.
+     *
+     * @return void
+     */
+    public function test_a_dry_reading_late_in_the_cycle_makes_a_plant_due(): void
+    {
+        $plant = $this->plantWateredDaysAgo(5);
         $this->observe($plant, $this->now, 2);
 
         $due = CareDue::for($this->loaded($plant), ScheduledCareType::Watering);
@@ -121,7 +143,7 @@ class MoistureDueDateTest extends TestCase
     /**
      * @return void
      */
-    public function test_the_projection_reports_its_basis_and_sample_size(): void
+    public function test_the_due_entry_reports_its_basis_and_sample_size(): void
     {
         $plant = $this->plantWateredDaysAgo(6);
         $this->observe($plant, $this->now, 8);
@@ -129,8 +151,8 @@ class MoistureDueDateTest extends TestCase
         $due = CareDue::for($this->loaded($plant), ScheduledCareType::Watering);
 
         $this->assertNotNull($due?->moisture);
-        $this->assertSame('cadence_baseline', $due->moisture->rate->basis);
-        $this->assertSame(0, $due->moisture->rate->sampleSize);
+        $this->assertSame('override', $due->interval->basis);
+        $this->assertSame(0, $due->interval->sampleSize);
         $this->assertSame('observation', $due->moisture->anchor->source);
     }
 

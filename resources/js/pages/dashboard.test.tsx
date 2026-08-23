@@ -18,7 +18,16 @@ const data: DashboardData = {
       type: 'watering',
       daysLeft: -3,
       interval: 7,
-      moisture: null,
+      basis: {
+        key: 'cadence' as const,
+        sample_size: 0,
+        cadence_days: 7,
+        learned_days: null,
+        rationale: 'Your logged rhythm is about 7 days.',
+        reading: null,
+        read_at: null,
+        source: null,
+      },
     },
     {
       plant_id: 2,
@@ -29,7 +38,16 @@ const data: DashboardData = {
       type: 'watering',
       daysLeft: 5,
       interval: 9,
-      moisture: null,
+      basis: {
+        key: 'cadence' as const,
+        sample_size: 0,
+        cadence_days: 7,
+        learned_days: null,
+        rationale: 'Your logged rhythm is about 7 days.',
+        reading: null,
+        read_at: null,
+        source: null,
+      },
     },
   ],
   recent_activity: [
@@ -73,7 +91,16 @@ describe('DashboardPage', () => {
       scientific_name: 'Epipremnum',
       due_date: '2026-06-20',
       interval: 7,
-      moisture: null,
+      basis: {
+        key: 'cadence' as const,
+        sample_size: 0,
+        cadence_days: 7,
+        learned_days: null,
+        rationale: 'Your logged rhythm is about 7 days.',
+        reading: null,
+        read_at: null,
+        source: null,
+      },
     }
     const both: DashboardData = {
       ...data,

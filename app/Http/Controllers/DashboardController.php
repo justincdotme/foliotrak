@@ -20,7 +20,7 @@ class DashboardController extends Controller
     use AuthorizesRequests;
 
     /**
-     * Plant relations for dashboard eager loading
+     * Loaded up front so the due list does not fan out per plant.
      *
      * @var list<string>
      */
@@ -29,12 +29,11 @@ class DashboardController extends Controller
         'fertilizingEvents',
         'latestObservationEvent.observation.symptoms',
         'observationEvents.observation',
-        'sensors.readings',
-        'sensors.calibrationPoints',
+        'sensors',
     ];
 
     /**
-     * Max recent activity items to show
+     * Short enough that the card never scrolls.
      *
      * @var int
      */

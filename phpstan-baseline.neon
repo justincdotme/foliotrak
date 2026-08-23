@@ -31,48 +31,6 @@ parameters:
 			path: app/Http/Requests/UpdateCareEventRequest.php
 
 		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$daysLeft\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$dueDate\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$intervalDays\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$moisture\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\CareDue\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$careEventType\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1015,38 +973,26 @@ parameters:
 			path: app/Support/Correlation/AmbientTemperatureFactor.php
 
 		-
-			message: '#^Parameter \#1 \$plant of static method App\\Support\\Care\\SoilHistory\:\:daily\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Support/Correlation/DryingRateHumidityFactor.php
-
-		-
-			message: '#^Parameter \#1 \$plant of static method App\\Support\\Care\\SoilHistory\:\:wateringTimes\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Support/Correlation/DryingRateHumidityFactor.php
-
-		-
 			message: '#^Parameter \$plants of method App\\Support\\Correlation\\DryingRateHumidityFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
 			identifier: class.notFound
 			count: 1
 			path: app/Support/Correlation/DryingRateHumidityFactor.php
 
 		-
-			message: '#^Parameter \#1 \$plant of static method App\\Support\\Care\\SoilHistory\:\:daily\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
+			message: '#^Parameter \#1 \$plant of static method App\\Support\\Care\\SoilHistory\:\:for\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
 			identifier: argument.type
 			count: 1
-			path: app/Support/Correlation/DryingRateTemperatureFactor.php
-
-		-
-			message: '#^Parameter \#1 \$plant of static method App\\Support\\Care\\SoilHistory\:\:wateringTimes\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Support/Correlation/DryingRateTemperatureFactor.php
+			path: app/Support/Correlation/DryingRateHumidityFactor.php
 
 		-
 			message: '#^Parameter \$plants of method App\\Support\\Correlation\\DryingRateTemperatureFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
 			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/DryingRateTemperatureFactor.php
+
+		-
+			message: '#^Parameter \#1 \$plant of static method App\\Support\\Care\\SoilHistory\:\:for\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Support/Correlation/DryingRateTemperatureFactor.php
 
@@ -1431,7 +1377,7 @@ parameters:
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
-			count: 6
+			count: 7
 			path: tests/Browser/SchedulePanelTest.php
 
 		-

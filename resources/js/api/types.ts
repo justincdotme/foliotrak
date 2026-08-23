@@ -295,13 +295,22 @@ export interface SpeciesSuggestion {
   family: string | null
 }
 
-export interface MoistureBasis {
-  reading: number
-  source: 'observation' | 'sensor'
-  read_at: string
-  basis: 'conditioned' | 'humidity_banded' | 'plant_median' | 'cadence_baseline'
+export type DueBasisKey =
+  'conditioned' | 'humidity_banded' | 'temperature_banded' | 'plant_soil' | 'override' | 'cadence'
+
+/**
+ * Why a due date says what it says. Always present; the reading fields are
+ * null when nothing has been logged since the last watering.
+ */
+export interface DueBasis {
+  key: DueBasisKey
   sample_size: number
+  cadence_days: number
+  learned_days: number | null
   rationale: string
+  reading: number | null
+  read_at: string | null
+  source: 'observation' | 'sensor' | null
 }
 
 export interface DueEntry {
@@ -310,7 +319,7 @@ export interface DueEntry {
   type: 'watering' | 'fertilizing'
   daysLeft: number
   interval: number
-  moisture: MoistureBasis | null
+  basis: DueBasis
 }
 
 export interface DueForCare extends DueEntry {

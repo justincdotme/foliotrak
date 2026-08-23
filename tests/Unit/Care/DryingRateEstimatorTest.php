@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Care;
 
 use App\Support\Care\DryingRateEstimator;
-use App\Support\Care\DryingRun;
 use App\Support\Care\SoilReading;
 use Illuminate\Support\Carbon;
 use PHPUnit\Framework\TestCase;
@@ -13,9 +12,11 @@ use PHPUnit\Framework\TestCase;
 class DryingRateEstimatorTest extends TestCase
 {
     /**
+     * An unbroken fall is one run measured end to end, not a run per pair.
+     *
      * @return void
      */
-    public function test_consecutive_readings_yield_one_run_per_pair(): void
+    public function test_an_unbroken_fall_is_one_run_measured_end_to_end(): void
     {
         $runs = DryingRateEstimator::runs([
             $this->reading(9.0, '2026-08-10'),
@@ -23,13 +24,54 @@ class DryingRateEstimatorTest extends TestCase
             $this->reading(5.0, '2026-08-14'),
         ], []);
 
-        $this->assertCount(2, $runs);
+        $this->assertCount(1, $runs);
         $this->assertSame(1.0, $runs[0]->perDay);
-        $this->assertSame(1.0, $runs[1]->perDay);
     }
 
     /**
-     * A watering resets the soil, so a pair spanning one is not a drying run.
+     * On a scale that moves in whole points, most days are flat. Measuring
+     * each pair and keeping only the days that fell reports the steepest one
+     * as if it were every day.
+     *
+     * @return void
+     */
+    public function test_a_mostly_flat_series_reports_its_true_slope(): void
+    {
+        $readings = [];
+        $value    = 6.0;
+
+        for ($day = 0; $day < 20; $day++) {
+            if ($day === 10) {
+                $value--;
+            }
+
+            $readings[] = $this->reading($value, Carbon::parse('2026-08-01')->addDays($day)->toDateString());
+        }
+
+        $runs = DryingRateEstimator::runs($readings, []);
+
+        $this->assertCount(1, $runs);
+        $this->assertEqualsWithDelta(1 / 19, $runs[0]->perDay, 0.001);
+    }
+
+    /**
+     * A hand-entered reading and a calibrated probe are different instruments.
+     * Pairing them manufactures drying that never happened.
+     *
+     * @return void
+     */
+    public function test_runs_never_span_two_sources(): void
+    {
+        $runs = DryingRateEstimator::runs([
+            new SoilReading(8.0, Carbon::parse('2026-08-13'), 'observation'),
+            new SoilReading(5.0, Carbon::parse('2026-08-14'), 'sensor'),
+        ], []);
+
+        $this->assertSame([], $runs);
+    }
+
+    /**
+     * A watering resets the soil, so a span crossing one is not a drying run.
      *
      * @return void
      */
@@ -44,13 +86,32 @@ class DryingRateEstimatorTest extends TestCase
     }
 
     /**
+     * Soil that rose without a logged watering ends the run it interrupts, so
+     * an unlogged watering never flattens a real stretch of drying.
+     *
      * @return void
      */
-    public function test_rehydration_and_flat_pairs_are_discarded(): void
+    public function test_a_rise_in_moisture_ends_the_run(): void
     {
         $runs = DryingRateEstimator::runs([
-            $this->reading(4.0, '2026-08-10'),
-            $this->reading(8.0, '2026-08-12'),
+            $this->reading(8.0, '2026-08-10'),
+            $this->reading(6.0, '2026-08-12'),
+            $this->reading(9.0, '2026-08-13'),
+            $this->reading(7.0, '2026-08-15'),
+        ], []);
+
+        $this->assertCount(2, $runs);
+        $this->assertSame(1.0, $runs[0]->perDay);
+        $this->assertSame(1.0, $runs[1]->perDay);
+    }
+
+    /**
+     * @return void
+     */
+    public function test_a_flat_run_is_not_a_drying_run(): void
+    {
+        $runs = DryingRateEstimator::runs([
+            $this->reading(8.0, '2026-08-10'),
             $this->reading(8.0, '2026-08-14'),
         ], []);
 
@@ -60,7 +121,7 @@ class DryingRateEstimatorTest extends TestCase
     /**
      * @return void
      */
-    public function test_pairs_closer_together_than_the_minimum_span_are_discarded(): void
+    public function test_readings_closer_together_than_the_minimum_span_are_discarded(): void
     {
         $runs = DryingRateEstimator::runs([
             new SoilReading(8.0, Carbon::parse('2026-08-10 09:00:00'), 'sensor'),
@@ -71,85 +132,21 @@ class DryingRateEstimatorTest extends TestCase
     }
 
     /**
+     * Ambient conditions are averaged across the whole run, so a correlation
+     * pair describes the air the soil actually dried in.
+     *
      * @return void
      */
-    public function test_with_no_runs_it_falls_back_to_the_cadence_baseline(): void
+    public function test_a_run_carries_the_mean_conditions_it_dried_in(): void
     {
-        $rate = DryingRateEstimator::estimate([], null, null, 8);
+        $runs = DryingRateEstimator::runs([
+            new SoilReading(9.0, Carbon::parse('2026-08-10'), 'sensor', 40.0, 20.0),
+            new SoilReading(7.0, Carbon::parse('2026-08-12'), 'sensor', 60.0, 24.0),
+        ], []);
 
-        $this->assertSame('cadence_baseline', $rate->basis);
-        $this->assertSame(0, $rate->sampleSize);
-        $this->assertEqualsWithDelta(0.5, $rate->perDay, 0.0001);
-    }
-
-    /**
-     * @return void
-     */
-    public function test_three_runs_reach_the_plant_median(): void
-    {
-        $runs = [
-            new DryingRun(1.0, 50.0, 21.0),
-            new DryingRun(2.0, 50.0, 21.0),
-            new DryingRun(3.0, 50.0, 21.0),
-        ];
-
-        $rate = DryingRateEstimator::estimate($runs, null, null, 8);
-
-        $this->assertSame('plant_median', $rate->basis);
-        $this->assertSame(3, $rate->sampleSize);
-        $this->assertSame(2.0, $rate->perDay);
-    }
-
-    /**
-     * @return void
-     */
-    public function test_two_runs_are_too_few_and_fall_through_to_the_baseline(): void
-    {
-        $rate = DryingRateEstimator::estimate([new DryingRun(1.0), new DryingRun(3.0)], null, null, 8);
-
-        $this->assertSame('cadence_baseline', $rate->basis);
-    }
-
-    /**
-     * @return void
-     */
-    public function test_five_runs_in_the_matching_humidity_band_reach_humidity_banded(): void
-    {
-        $runs = [
-            ...array_fill(0, 5, new DryingRun(2.0, 30.0, 30.0)),
-            ...array_fill(0, 5, new DryingRun(0.5, 80.0, 15.0)),
-        ];
-
-        $rate = DryingRateEstimator::estimate($runs, 32.0, null, 8);
-
-        $this->assertSame('humidity_banded', $rate->basis);
-        $this->assertSame(5, $rate->sampleSize);
-        $this->assertSame(2.0, $rate->perDay);
-    }
-
-    /**
-     * @return void
-     */
-    public function test_five_runs_matching_both_bands_reach_conditioned(): void
-    {
-        $runs = [
-            ...array_fill(0, 5, new DryingRun(2.5, 30.0, 30.0)),
-            ...array_fill(0, 5, new DryingRun(1.0, 30.0, 15.0)),
-        ];
-
-        $rate = DryingRateEstimator::estimate($runs, 32.0, 28.0, 8);
-
-        $this->assertSame('conditioned', $rate->basis);
-        $this->assertSame(5, $rate->sampleSize);
-        $this->assertSame(2.5, $rate->perDay);
-    }
-
-    /**
-     * @return void
-     */
-    public function test_a_cadence_of_one_day_still_produces_a_positive_rate(): void
-    {
-        $this->assertGreaterThan(0.0, DryingRateEstimator::estimate([], null, null, 1)->perDay);
+        $this->assertCount(1, $runs);
+        $this->assertSame(50.0, $runs[0]->humidityPct);
+        $this->assertSame(22.0, $runs[0]->tempC);
     }
 
     /**
@@ -176,6 +173,6 @@ class DryingRateEstimatorTest extends TestCase
      */
     private function reading(float $value, string $date): SoilReading
     {
-        return new SoilReading($value, Carbon::parse($date . ' 09:00:00'), 'observation', 50.0, 21.0);
+        return new SoilReading($value, Carbon::parse($date), 'sensor');
     }
 }

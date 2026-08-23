@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace App\Support\Care;
 
-use App\Support\Stats;
 use Illuminate\Support\Carbon;
 
 /**
- * Infers how fast a plant's soil dries, in points of the 1-to-10 scale per
- * day, from the plant's own history. The estimate is conditioned on ambient
- * humidity and temperature once enough runs have accumulated in the matching
- * bands, and falls back through progressively broader bases until it reaches
- * the cadence baseline, which is always available. Medians throughout, never a
- * fitted model, at these sample sizes (ADR-0008).
+ * Measures how fast a plant's soil actually dried, in points of the 1-to-10
+ * scale per day, from its own readings. It answers how fast, never how often;
+ * the runs it produces are what the correlation views plot drying against
+ * humidity and temperature.
  */
 final class DryingRateEstimator
 {
@@ -23,17 +20,14 @@ final class DryingRateEstimator
     /** Scale position treated as freshly watered. */
     public const WET = 7.0;
 
-    /** Runs needed before conditioning on ambient bands. */
-    private const BANDED_MIN_SAMPLES = 5;
-
-    /** Runs needed before trusting the plant's own median. */
-    private const PLANT_MIN_SAMPLES = 3;
-
-    /** A pair closer than this cannot separate drying from sensor noise. */
+    /** A stretch shorter than this cannot separate drying from sensor noise. */
     private const MIN_RUN_DAYS = 0.5;
 
     /**
-     * Consecutive reading pairs with no watering between them.
+     * Drying stretches, one per source per span between waterings. The rate is
+     * the whole drop over the whole span. Taking the median of day-to-day
+     * deltas and dropping the flat ones reports the steepest day as if it were
+     * every day, which on a scale that moves in whole points is most of them.
      *
      * @param list<SoilReading> $readings      Chronological.
      * @param list<Carbon>      $wateringTimes
@@ -44,21 +38,16 @@ final class DryingRateEstimator
     {
         $runs = [];
 
-        for ($i = 1; $i < count($readings); $i++) {
-            $earlier = $readings[$i - 1];
-            $later   = $readings[$i];
-
-            if (self::wateredBetween($wateringTimes, $earlier->at, $later->at)) {
-                continue;
-            }
-
-            $days = ($later->at->getTimestamp() - $earlier->at->getTimestamp()) / 86400;
+        foreach (self::segments($readings, $wateringTimes) as $segment) {
+            $first = $segment[0];
+            $last  = $segment[count($segment) - 1];
+            $days  = ($last->at->getTimestamp() - $first->at->getTimestamp()) / 86400;
 
             if ($days < self::MIN_RUN_DAYS) {
                 continue;
             }
 
-            $perDay = ($earlier->value - $later->value) / $days;
+            $perDay = ($first->value - $last->value) / $days;
 
             if ($perDay <= 0.0) {
                 continue;
@@ -66,60 +55,12 @@ final class DryingRateEstimator
 
             $runs[] = new DryingRun(
                 perDay: $perDay,
-                humidityPct: self::mean($earlier->humidityPct, $later->humidityPct),
-                tempC: self::mean($earlier->tempC, $later->tempC),
+                humidityPct: self::meanOver($segment, fn (SoilReading $r): ?float => $r->humidityPct),
+                tempC: self::meanOver($segment, fn (SoilReading $r): ?float => $r->tempC),
             );
         }
 
         return $runs;
-    }
-
-    /**
-     * @param list<DryingRun> $runs
-     * @param float|null      $humidityPct Conditions to estimate against.
-     * @param float|null      $tempC
-     * @param integer         $cadenceDays
-     *
-     * @return DryingRate
-     */
-    public static function estimate(array $runs, ?float $humidityPct, ?float $tempC, int $cadenceDays): DryingRate
-    {
-        if ($humidityPct !== null && $tempC !== null) {
-            $conditioned = self::matching(
-                $runs,
-                fn (DryingRun $run): bool => $run->humidityPct !== null
-                    && $run->tempC !== null
-                    && self::humidityBand($run->humidityPct) === self::humidityBand($humidityPct)
-                    && self::tempBand($run->tempC) === self::tempBand($tempC),
-            );
-
-            if (count($conditioned) >= self::BANDED_MIN_SAMPLES) {
-                return self::medianOf($conditioned, 'conditioned');
-            }
-        }
-
-        if ($humidityPct !== null) {
-            $banded = self::matching(
-                $runs,
-                fn (DryingRun $run): bool => $run->humidityPct !== null
-                    && self::humidityBand($run->humidityPct) === self::humidityBand($humidityPct),
-            );
-
-            if (count($banded) >= self::BANDED_MIN_SAMPLES) {
-                return self::medianOf($banded, 'humidity_banded');
-            }
-        }
-
-        if (count($runs) >= self::PLANT_MIN_SAMPLES) {
-            return self::medianOf($runs, 'plant_median');
-        }
-
-        // One cadence is assumed to span one wet-to-water-at swing.
-        return new DryingRate(
-            perDay: (self::WET - self::WATER_AT) / max(1, $cadenceDays),
-            basis: 'cadence_baseline',
-            sampleSize: 0,
-        );
     }
 
     /**
@@ -151,27 +92,42 @@ final class DryingRateEstimator
     }
 
     /**
-     * @param list<DryingRun>           $runs
-     * @param callable(DryingRun): bool $matches
+     * Unbroken stretches of drying. A hand-entered reading and a calibrated
+     * probe are different instruments, so a segment never spans both, and a
+     * watering or a rise in moisture ends the one it interrupts.
      *
-     * @return list<DryingRun>
-     */
-    private static function matching(array $runs, callable $matches): array
-    {
-        return array_values(array_filter($runs, $matches));
-    }
-
-    /**
-     * @param list<DryingRun> $runs
-     * @param string          $basis
+     * @param list<SoilReading> $readings
+     * @param list<Carbon>      $wateringTimes
      *
-     * @return DryingRate
+     * @return list<list<SoilReading>>
      */
-    private static function medianOf(array $runs, string $basis): DryingRate
+    private static function segments(array $readings, array $wateringTimes): array
     {
-        $median = Stats::median(array_map(fn (DryingRun $run): float => $run->perDay, $runs));
+        $segments = [];
+        $current  = [];
 
-        return new DryingRate($median ?? 0.0, $basis, count($runs));
+        foreach ($readings as $reading) {
+            $previous = $current === [] ? null : $current[count($current) - 1];
+
+            $broken = $previous !== null && (
+                $previous->source !== $reading->source
+                || $reading->value > $previous->value
+                || self::wateredBetween($wateringTimes, $previous->at, $reading->at)
+            );
+
+            if ($broken) {
+                $segments[] = $current;
+                $current    = [];
+            }
+
+            $current[] = $reading;
+        }
+
+        if ($current !== []) {
+            $segments[] = $current;
+        }
+
+        return array_values(array_filter($segments, fn (array $segment): bool => count($segment) > 1));
     }
 
     /**
@@ -193,14 +149,14 @@ final class DryingRateEstimator
     }
 
     /**
-     * @param float|null $first
-     * @param float|null $second
+     * @param list<SoilReading>                   $segment
+     * @param callable(SoilReading): (float|null) $read
      *
      * @return float|null
      */
-    private static function mean(?float $first, ?float $second): ?float
+    private static function meanOver(array $segment, callable $read): ?float
     {
-        $present = array_values(array_filter([$first, $second], fn (?float $v): bool => $v !== null));
+        $present = array_values(array_filter(array_map($read, $segment), fn (?float $v): bool => $v !== null));
 
         return $present === [] ? null : array_sum($present) / count($present);
     }

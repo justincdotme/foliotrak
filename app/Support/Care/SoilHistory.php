@@ -7,38 +7,32 @@ namespace App\Support\Care;
 use App\Enums\SensorType;
 use App\Models\CareEvent;
 use App\Models\Plant;
-use App\Services\Sensors\MoistureCalibration;
-use App\Services\Sensors\Transformers\HygrometerTransformer;
-use App\Services\Sensors\Transformers\MoistureTransformer;
+use App\Models\Sensor;
 use App\Support\Stats;
 use Illuminate\Support\Carbon;
 
 /**
  * A plant's soil moisture history, merged from manual observations and
- * calibrated moisture sensors onto one 1-to-10 scale.
+ * calibrated moisture sensors onto one 1-to-10 scale. One instance per plant:
+ * the readings are assembled once so every read method shares the same pass.
  */
 final class SoilHistory
 {
     /**
-     * Eager-load paths a caller must load before calling anything here.
+     * Eager-load paths a caller must load before building one of these.
+     * Sensor readings are deliberately absent: they are per-sensor rather than
+     * per-plant data, so SensorSeries reads them once for the whole request.
      *
      * @var list<string>
      */
     public const RELATIONS = [
         'wateringEvents',
         'observationEvents.observation',
-        'sensors.readings',
-        'sensors.calibrationPoints',
+        'sensors',
     ];
 
     /** Days of observation history considered. */
     private const OBSERVATION_DAYS = 90;
-
-    /**
-     * Sensors store a reading every 15 to 30 minutes, so a shorter window
-     * still yields far more samples than observations do over 90 days.
-     */
-    private const SENSOR_DAYS = 30;
 
     /**
      * The watering modal writes its companion observation at the identical
@@ -47,112 +41,35 @@ final class SoilHistory
     private const WATERING_TOLERANCE_MINUTES = 5;
 
     /**
-     * The newest reading that postdates the last watering, or null when the
-     * plant has no usable moisture evidence and the projection must be skipped.
-     *
-     * @param Plant  $plant
-     * @param Carbon $now
-     *
-     * @return SoilReading|null
+     * @param Plant             $plant
+     * @param list<SoilReading> $readings Chronological, both sources merged.
      */
-    public static function anchor(Plant $plant, Carbon $now): ?SoilReading
-    {
-        $cutoff = self::lastWateringCutoff($plant);
-
-        $candidates = array_values(array_filter(
-            self::raw($plant, $now),
-            fn (SoilReading $reading): bool => $cutoff === null || $reading->at->greaterThan($cutoff),
-        ));
-
-        return $candidates === [] ? null : $candidates[count($candidates) - 1];
-    }
+    private function __construct(
+        private readonly Plant $plant,
+        private readonly array $readings,
+    ) {}
 
     /**
-     * Chronological readings collapsed to one median value per calendar day
-     * per source. Raw sensor readings are minutes apart, which would fall
-     * under the estimator's minimum run length and yield no runs at all.
+     * @param Plant             $plant
+     * @param Carbon            $now
+     * @param SensorSeries|null $series
      *
-     * @param Plant  $plant
-     * @param Carbon $now
-     *
-     * @return list<SoilReading>
+     * @return self
      */
-    public static function daily(Plant $plant, Carbon $now): array
+    public static function for(Plant $plant, Carbon $now, ?SensorSeries $series = null): self
     {
-        $byDay = [];
+        $series   = $series ?? app(SensorSeries::class);
+        $readings = [
+            ...self::fromObservations($plant, $now),
+            ...self::fromSensors($plant, $series),
+        ];
 
-        foreach (self::raw($plant, $now) as $reading) {
-            $byDay[$reading->source . '|' . $reading->at->format('Y-m-d')][] = $reading;
-        }
+        usort(
+            $readings,
+            fn (SoilReading $a, SoilReading $b): int => $a->at->getTimestamp() <=> $b->at->getTimestamp(),
+        );
 
-        $daily = [];
-
-        foreach ($byDay as $group) {
-            $daily[] = new SoilReading(
-                value: Stats::median(array_map(fn (SoilReading $r): float => $r->value, $group)) ?? 0.0,
-                at: $group[count($group) - 1]->at->copy()->startOfDay(),
-                source: $group[0]->source,
-                humidityPct: self::meanOf(array_map(fn (SoilReading $r): ?float => $r->humidityPct, $group)),
-                tempC: self::meanOf(array_map(fn (SoilReading $r): ?float => $r->tempC, $group)),
-            );
-        }
-
-        usort($daily, fn (SoilReading $a, SoilReading $b): int => $a->at <=> $b->at);
-
-        return $daily;
-    }
-
-    /**
-     * Ambient conditions to estimate against right now: the newest reading
-     * that carries each of them.
-     *
-     * @param Plant  $plant
-     * @param Carbon $now
-     *
-     * @return array{humidity: float|null, temp: float|null}
-     */
-    public static function currentConditions(Plant $plant, Carbon $now): array
-    {
-        $conditions = ['humidity' => null, 'temp' => null];
-
-        foreach (self::raw($plant, $now) as $reading) {
-            $conditions['humidity'] = $reading->humidityPct ?? $conditions['humidity'];
-            $conditions['temp']     = $reading->tempC ?? $conditions['temp'];
-        }
-
-        return $conditions;
-    }
-
-    /**
-     * Timestamps of the plant's logged waterings, oldest first.
-     *
-     * @param Plant $plant
-     *
-     * @return list<Carbon>
-     */
-    public static function wateringTimes(Plant $plant): array
-    {
-        return $plant->wateringEvents
-            ->map(fn (CareEvent $event): Carbon => $event->occurred_at)
-            ->values()
-            ->all();
-    }
-
-    /**
-     * Every reading from both sources, chronological and unaggregated.
-     *
-     * @param Plant  $plant
-     * @param Carbon $now
-     *
-     * @return list<SoilReading>
-     */
-    private static function raw(Plant $plant, Carbon $now): array
-    {
-        $readings = [...self::fromObservations($plant, $now), ...self::fromSensors($plant, $now)];
-
-        usort($readings, fn (SoilReading $a, SoilReading $b): int => $a->at <=> $b->at);
-
-        return $readings;
+        return new self($plant, $readings);
     }
 
     /**
@@ -194,49 +111,37 @@ final class SoilHistory
     }
 
     /**
-     * @param Plant  $plant
-     * @param Carbon $now
+     * @param Plant        $plant
+     * @param SensorSeries $series
      *
      * @return list<SoilReading>
      */
-    private static function fromSensors(Plant $plant, Carbon $now): array
+    private static function fromSensors(Plant $plant, SensorSeries $series): array
     {
         if (! $plant->relationLoaded('sensors')) {
             return [];
         }
 
-        $since   = $now->copy()->subDays(self::SENSOR_DAYS);
-        $ambient = self::ambientByDay($plant, $since);
+        $probes = $plant->sensors->filter(
+            fn (Sensor $sensor): bool => $sensor->type === SensorType::Moisture,
+        );
 
+        // Without a probe there can be no sensor reading, so the ambient
+        // assembly below would be built and then discarded.
+        if ($probes->isEmpty()) {
+            return [];
+        }
+
+        $ambient  = self::ambientByDay($plant, $series);
         $readings = [];
 
-        foreach ($plant->sensors as $sensor) {
-            if ($sensor->type !== SensorType::Moisture) {
-                continue;
-            }
-
-            $points      = MoistureCalibration::pointsFrom($sensor->calibrationPoints);
-            $transformer = new MoistureTransformer;
-
-            foreach ($sensor->readings as $reading) {
-                if ($reading->recorded_at->lessThan($since)) {
-                    continue;
-                }
-
-                $position = MoistureCalibration::scale(
-                    (float) $transformer->hydrate($reading->data)->moisture,
-                    $points,
-                );
-
-                if ($position === null) {
-                    continue;
-                }
-
-                $day = $reading->recorded_at->format('Y-m-d');
+        foreach ($probes as $probe) {
+            foreach ($series->moistureReadings($probe->id) as $reading) {
+                $day = $reading->at->format('Y-m-d');
 
                 $readings[] = new SoilReading(
-                    value: (float) $position,
-                    at: $reading->recorded_at,
+                    value: $reading->value,
+                    at: $reading->at,
                     source: 'sensor',
                     humidityPct: $ambient[$day]['humidity'] ?? null,
                     tempC: $ambient[$day]['temp'] ?? null,
@@ -248,15 +153,15 @@ final class SoilHistory
     }
 
     /**
-     * Daily mean hygrometer conditions, so a sensor soil reading can be
-     * attributed to the air it dried in.
+     * Daily mean hygrometer conditions across every hygrometer on the plant,
+     * so a sensor soil reading can be attributed to the air it dried in.
      *
-     * @param Plant  $plant
-     * @param Carbon $since
+     * @param Plant        $plant
+     * @param SensorSeries $series
      *
      * @return array<string, array{humidity: float|null, temp: float|null}>
      */
-    private static function ambientByDay(Plant $plant, Carbon $since): array
+    private static function ambientByDay(Plant $plant, SensorSeries $series): array
     {
         $humidity = [];
         $temp     = [];
@@ -266,17 +171,9 @@ final class SoilHistory
                 continue;
             }
 
-            $transformer = new HygrometerTransformer;
-
-            foreach ($sensor->readings as $reading) {
-                if ($reading->recorded_at->lessThan($since)) {
-                    continue;
-                }
-
-                $day              = $reading->recorded_at->format('Y-m-d');
-                $value            = $transformer->hydrate($reading->data);
-                $humidity[$day][] = (float) $value->humidity;
-                $temp[$day][]     = (float) $value->temperature;
+            foreach ($series->ambientByDay($sensor->id) as $day => $conditions) {
+                $humidity[$day][] = $conditions['humidity'];
+                $temp[$day][]     = $conditions['temp'];
             }
         }
 
@@ -293,24 +190,6 @@ final class SoilHistory
     }
 
     /**
-     * The most recent watering plus the pre-watering tolerance.
-     *
-     * @param Plant $plant
-     *
-     * @return Carbon|null
-     */
-    private static function lastWateringCutoff(Plant $plant): ?Carbon
-    {
-        $times = self::wateringTimes($plant);
-
-        if ($times === []) {
-            return null;
-        }
-
-        return $times[count($times) - 1]->copy()->addMinutes(self::WATERING_TOLERANCE_MINUTES);
-    }
-
-    /**
      * @param list<float|null> $values
      *
      * @return float|null
@@ -320,5 +199,159 @@ final class SoilHistory
         $present = array_values(array_filter($values, fn (?float $value): bool => $value !== null));
 
         return $present === [] ? null : array_sum($present) / count($present);
+    }
+
+    /**
+     * The newest watering strictly before a reading, allowing for the
+     * companion reading stamped at the same second as the watering.
+     *
+     * @param list<Carbon> $waterings Oldest first.
+     * @param Carbon       $at
+     *
+     * @return Carbon|null
+     */
+    private static function wateringBefore(array $waterings, Carbon $at): ?Carbon
+    {
+        $cutoff = $at->copy()->subMinutes(self::WATERING_TOLERANCE_MINUTES);
+        $found  = null;
+
+        foreach ($waterings as $time) {
+            if ($time->lessThanOrEqualTo($cutoff)) {
+                $found = $time;
+            }
+        }
+
+        return $found;
+    }
+
+    /**
+     * The newest reading that postdates the last watering, or null when the
+     * plant has no usable moisture evidence since it was last watered.
+     *
+     * @return SoilReading|null
+     */
+    public function anchor(): ?SoilReading
+    {
+        $cutoff = $this->lastWateringCutoff();
+
+        $candidates = array_values(array_filter(
+            $this->readings,
+            fn (SoilReading $reading): bool => $cutoff === null || $reading->at->greaterThan($cutoff),
+        ));
+
+        return $candidates === [] ? null : $candidates[count($candidates) - 1];
+    }
+
+    /**
+     * Chronological readings collapsed to one median value per calendar day
+     * per source. Raw sensor readings are minutes apart, which would fall
+     * under the estimator's minimum run length and yield no runs at all.
+     *
+     * @return list<SoilReading>
+     */
+    public function daily(): array
+    {
+        $byDay = [];
+
+        foreach ($this->readings as $reading) {
+            $byDay[$reading->source . '|' . $reading->at->format('Y-m-d')][] = $reading;
+        }
+
+        $daily = [];
+
+        foreach ($byDay as $group) {
+            $daily[] = new SoilReading(
+                value: Stats::median(array_map(fn (SoilReading $r): float => $r->value, $group)) ?? 0.0,
+                at: $group[count($group) - 1]->at->copy()->startOfDay(),
+                source: $group[0]->source,
+                humidityPct: self::meanOf(array_map(fn (SoilReading $r): ?float => $r->humidityPct, $group)),
+                tempC: self::meanOf(array_map(fn (SoilReading $r): ?float => $r->tempC, $group)),
+            );
+        }
+
+        usort($daily, fn (SoilReading $a, SoilReading $b): int => $a->at->getTimestamp() <=> $b->at->getTimestamp());
+
+        return $daily;
+    }
+
+    /**
+     * Ambient conditions to estimate against right now: the newest reading
+     * that carries each of them.
+     *
+     * @return array{humidity: float|null, temp: float|null}
+     */
+    public function currentConditions(): array
+    {
+        $conditions = ['humidity' => null, 'temp' => null];
+
+        foreach ($this->readings as $reading) {
+            $conditions['humidity'] = $reading->humidityPct ?? $conditions['humidity'];
+            $conditions['temp']     = $reading->tempC ?? $conditions['temp'];
+        }
+
+        return $conditions;
+    }
+
+    /**
+     * Every soil reading paired with the watering it followed, so the interval
+     * estimator can ask whether that stretch turned out to be right. The
+     * reading the watering modal stamps at the moment of watering is the
+     * verdict on the stretch that just ended, so it counts against the
+     * watering before it rather than being discarded.
+     *
+     * @return list<SoilEvidence>
+     */
+    public function evidence(): array
+    {
+        $waterings = $this->wateringTimes();
+        $evidence  = [];
+
+        foreach ($this->readings as $reading) {
+            $previous = self::wateringBefore($waterings, $reading->at);
+
+            if ($previous === null) {
+                continue;
+            }
+
+            $evidence[] = new SoilEvidence(
+                daysSinceWatering: ($reading->at->getTimestamp() - $previous->getTimestamp()) / 86400,
+                value: $reading->value,
+                at: $reading->at,
+                source: $reading->source,
+                humidityPct: $reading->humidityPct,
+                tempC: $reading->tempC,
+            );
+        }
+
+        return $evidence;
+    }
+
+    /**
+     * Timestamps of the plant's logged waterings, oldest first.
+     *
+     * @return list<Carbon>
+     */
+    public function wateringTimes(): array
+    {
+        return $this->plant->wateringEvents
+            ->map(fn (CareEvent $event): Carbon => $event->occurred_at)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * The most recent watering plus the pre-watering tolerance.
+     *
+     * @return Carbon|null
+     */
+    private function lastWateringCutoff(): ?Carbon
+    {
+        $times = $this->wateringTimes();
+
+        if ($times === []) {
+            return null;
+        }
+
+        return $times[count($times) - 1]->copy()->addMinutes(self::WATERING_TOLERANCE_MINUTES);
     }
 }
