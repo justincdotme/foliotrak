@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\PlantStatus;
 use App\Support\Care\CareDue;
+use App\Support\Care\CareSchedule;
 use App\Support\Care\ScheduledCareType;
 use App\Support\PlantConditionResolver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -61,6 +62,9 @@ class Plant extends Model
     protected $attributes = [
         'status' => PlantStatus::Active->value,
     ];
+
+    /** @var array<string, CareDue|null> */
+    private array $careDueByType = [];
 
     /**
      * @return BelongsTo<Location, $this>
@@ -162,6 +166,24 @@ class Plant extends Model
     }
 
     /**
+     * The plant's due state for one care type, computed at most once per
+     * instance: the condition chip and the due list both ask for watering, and
+     * deriving that answer costs a full soil history.
+     *
+     * @param ScheduledCareType $type
+     *
+     * @return CareDue|null
+     */
+    public function careDue(ScheduledCareType $type): ?CareDue
+    {
+        if (! array_key_exists($type->value, $this->careDueByType)) {
+            $this->careDueByType[$type->value] = CareSchedule::for($this, $type)?->due();
+        }
+
+        return $this->careDueByType[$type->value];
+    }
+
+    /**
      * At-a-glance condition, resolved from the latest observation and the
      * watering-due signal.
      *
@@ -218,7 +240,7 @@ class Plant extends Model
      */
     private function isLikelyDry(): bool
     {
-        $due = CareDue::for($this, ScheduledCareType::Watering);
+        $due = $this->careDue(ScheduledCareType::Watering);
 
         return $due !== null && $due->daysOverdue() > max(2, $due->intervalDays * 0.4);
     }

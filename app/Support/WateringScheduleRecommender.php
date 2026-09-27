@@ -23,16 +23,15 @@ final class WateringScheduleRecommender
     private const STABLE_TOLERANCE_FRACTION = 0.3;
 
     /**
-     * @param list<Carbon>                                                     $waterings          Occurred_at timestamps, any order.
-     * @param list<array{date: Carbon, health: int}>                           $healthObservations
-     * @param list<int>                                                        $amounts            Non-null logged amounts in ml.
-     * @param Carbon                                                           $earliest
-     * @param Carbon                                                           $now
-     * @param list<array{precise: int|null, relative: SoilMoistureLevel|null}> $soilReadings       Newest first, up to 3.
+     * @param list<Carbon>                           $waterings          Occurred_at timestamps, any order.
+     * @param list<array{date: Carbon, health: int}> $healthObservations
+     * @param list<int>                              $amounts            Non-null logged amounts in ml.
+     * @param Carbon                                 $earliest
+     * @param Carbon                                 $now
      *
      * @return array{interval_days: int, amount_ml: int|null, sample_size: int, health_sample_size: int, basis: string, baseline_interval_days: int|null, recent_interval_days: int|null, rationale: string}|null
      */
-    public static function recommend(array $waterings, array $healthObservations, array $amounts, Carbon $earliest, Carbon $now, array $soilReadings = []): ?array
+    public static function recommend(array $waterings, array $healthObservations, array $amounts, Carbon $earliest, Carbon $now): ?array
     {
         $overall = CareSchedule::medianGapDays($waterings);
 
@@ -72,7 +71,7 @@ final class WateringScheduleRecommender
 
                 if (abs($recentCadence - $baselineCadence) > $tolerance) {
                     if ($recentHealth < $baselineHealth) {
-                        return self::withSoilAdjustment(self::result(
+                        return self::result(
                             $baselineCadence,
                             $amountMedian,
                             $sampleSize,
@@ -90,10 +89,10 @@ final class WateringScheduleRecommender
                                 count($recentHealths),
                                 $baselineCadence,
                             ),
-                        ), $soilReadings);
+                        );
                     }
 
-                    return self::withSoilAdjustment(self::result(
+                    return self::result(
                         $recentCadence,
                         $amountMedian,
                         $sampleSize,
@@ -107,10 +106,10 @@ final class WateringScheduleRecommender
                             count($recentHealths),
                             $recentCadence,
                         ),
-                    ), $soilReadings);
+                    );
                 }
 
-                return self::withSoilAdjustment(self::result(
+                return self::result(
                     $overall,
                     $amountMedian,
                     $sampleSize,
@@ -119,11 +118,11 @@ final class WateringScheduleRecommender
                     $baselineCadence,
                     $recentCadence,
                     self::steadyRationale($overall, $sampleSize, $healthObservations),
-                ), $soilReadings);
+                );
             }
         }
 
-        return self::withSoilAdjustment(self::result(
+        return self::result(
             $overall,
             $amountMedian,
             $sampleSize,
@@ -132,7 +131,7 @@ final class WateringScheduleRecommender
             $baselineCadence,
             $recentCadence,
             self::medianOnlyRationale($overall, $sampleSize),
-        ), $soilReadings);
+        );
     }
 
     /**
@@ -216,76 +215,6 @@ final class WateringScheduleRecommender
     }
 
     /**
-     * Apply soil moisture adjustment to the interval.
-     *
-     * @param array{interval_days: int, amount_ml: int|null, sample_size: int, health_sample_size: int, basis: string, baseline_interval_days: int|null, recent_interval_days: int|null, rationale: string} $result
-     * @param list<array{precise: int|null, relative: SoilMoistureLevel|null}>                                                                                                                              $soilReadings
-     *
-     * @return array{interval_days: int, amount_ml: int|null, sample_size: int, health_sample_size: int, basis: string, baseline_interval_days: int|null, recent_interval_days: int|null, rationale: string}
-     */
-    private static function withSoilAdjustment(array $result, array $soilReadings): array
-    {
-        $readings = array_slice($soilReadings, 0, 3);
-        $numerics = [];
-
-        foreach ($readings as $reading) {
-            $value = self::soilNumeric($reading);
-
-            if ($value !== null) {
-                $numerics[] = $value;
-            }
-        }
-
-        if ($numerics === []) {
-            return $result;
-        }
-
-        $avg      = array_sum($numerics) / count($numerics);
-        $interval = $result['interval_days'];
-        $count    = count($numerics);
-
-        if ($avg <= 3.0) {
-            $fraction                = min(0.20, (3.0 - $avg) / 10.0);
-            $adjusted                = max(1, (int) round($interval * (1.0 - $fraction)));
-            $result['interval_days'] = $adjusted;
-            $result['rationale'] .= sprintf(
-                ' Recent soil readings suggest the plant dries out faster than the base cadence (based on %d soil reading%s).',
-                $count,
-                $count === 1 ? '' : 's',
-            );
-        } elseif ($avg >= 7.0) {
-            $fraction                = min(0.20, ($avg - 7.0) / 10.0);
-            $adjusted                = (int) round($interval * (1.0 + $fraction));
-            $result['interval_days'] = $adjusted;
-            $result['rationale'] .= sprintf(
-                ' Recent soil readings indicate the soil retains moisture well (based on %d soil reading%s).',
-                $count,
-                $count === 1 ? '' : 's',
-            );
-        }
-
-        return $result;
-    }
-
-    /**
-     * Convert a soil reading to a numeric moisture value.
-     *
-     * @param array{precise: int|null, relative: SoilMoistureLevel|null} $reading
-     *
-     * @return float|null
-     */
-    private static function soilNumeric(array $reading): ?float
-    {
-        if ($reading['precise'] !== null) {
-            return (float) $reading['precise'];
-        }
-
-        return $reading['relative']?->numericValue();
-    }
-
-    /**
-     * Format a health value for display.
-     *
      * @param float $value
      *
      * @return string

@@ -36,6 +36,7 @@ function wateringDue(timeline: PlantTimeline | null): NextDue {
     type: 'watering',
     interval: entry.interval,
     last_watered: entry.due_date,
+    basis: entry.basis,
   }
 }
 

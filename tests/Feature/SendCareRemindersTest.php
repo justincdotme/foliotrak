@@ -81,7 +81,7 @@ class SendCareRemindersTest extends TestCase
 
         Notification::assertSentTo([$first, $second], PlantCareReminder::class);
         Notification::assertNotSentTo([$without], PlantCareReminder::class);
-        // One claim covers every recipient for that plant, type, and day.
+        // One claim row per plant, care type and due date covers every recipient.
         $this->assertDatabaseCount('sent_reminders', 1);
     }
 
@@ -346,6 +346,55 @@ class SendCareRemindersTest extends TestCase
 
         $this->assertNotNull($event, 'The care-reminder command is not scheduled.');
         $this->assertSame('0 8 * * *', $event->expression);
+    }
+
+    /**
+     * A fresh wet reading moves the due date, and the reminder follows it.
+     *
+     * @return void
+     */
+    public function test_no_reminder_is_sent_while_a_wet_reading_defers_the_due_date(): void
+    {
+        Notification::fake();
+        $this->userWithKey();
+
+        $plant = Plant::factory()->create(['watering_interval_days_override' => 7]);
+        $this->wateredDaysAgo($plant, 7);
+        $this->moistureObservation($plant, 8);
+
+        $this->artisan('app:send-care-reminders')->assertSuccessful();
+
+        Notification::assertNothingSent();
+    }
+
+    /**
+     * @return void
+     */
+    public function test_a_dry_reading_still_sends_exactly_one_reminder(): void
+    {
+        Notification::fake();
+        $this->userWithKey();
+
+        $plant = Plant::factory()->create(['watering_interval_days_override' => 7]);
+        $this->wateredDaysAgo($plant, 7);
+        $this->moistureObservation($plant, 2);
+
+        $this->artisan('app:send-care-reminders')->assertSuccessful();
+        $this->artisan('app:send-care-reminders')->assertSuccessful();
+
+        Notification::assertSentTimes(PlantCareReminder::class, 1);
+    }
+
+    /**
+     * @param Plant   $plant
+     * @param integer $precise
+     *
+     * @return void
+     */
+    private function moistureObservation(Plant $plant, int $precise): void
+    {
+        CareEvent::factory()->ofType('observation')->for($plant)->create(['occurred_at' => now()])
+            ->observation()->create(['soil_moisture_precise' => $precise]);
     }
 
     /**

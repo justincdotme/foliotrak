@@ -5,6 +5,7 @@ services:
   # HTTPS page. --watch recompiles on change; refresh the page to pick up edits.
   vite:
     image: node:22-alpine
+    restart: unless-stopped
     working_dir: /var/www/html
     user: "${FOLIOTRAK_UID:-1000}:${FOLIOTRAK_GID:-1000}"
     command: sh -c "npm install && npm run build -- --watch"

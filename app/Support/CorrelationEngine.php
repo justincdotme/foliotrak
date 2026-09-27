@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Support\Correlation\AmbientTemperatureFactor;
+use App\Support\Correlation\DryingRateHumidityFactor;
+use App\Support\Correlation\DryingRateTemperatureFactor;
 use App\Support\Correlation\HumidityFactor;
 use App\Support\Correlation\LightLevelFactor;
 use App\Support\Correlation\PestResolutionFactor;
@@ -93,6 +96,9 @@ final class CorrelationEngine
             new LightLevelFactor,
             new SoilMoistureFactor,
             new PestResolutionFactor,
+            new AmbientTemperatureFactor,
+            new DryingRateHumidityFactor,
+            new DryingRateTemperatureFactor,
         ];
     }
 }

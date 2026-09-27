@@ -158,3 +158,63 @@ it('shows empty state on recommended tab when plant has no watering history', fu
             ->assertVisible('@recommended-empty');
     });
 });
+
+it('states what the schedule rests on even with no soil readings at all', function (): void {
+    $user  = User::factory()->create();
+    $plant = Plant::factory()->create([
+        'common_name'                     => 'Unread Plant',
+        'watering_interval_days_override' => 9,
+    ]);
+
+    $watering = CareEvent::factory()->ofType('watering')->create([
+        'plant_id'    => $plant->id,
+        'occurred_at' => now()->subDays(2),
+    ]);
+    WateringDetail::create(['care_event_id' => $watering->id, 'amount_ml' => 200]);
+
+    $this->browse(function (Browser $browser) use ($user, $plant): void {
+        $browser->loginAs($user)
+            ->visit("/plants/{$plant->id}")
+            ->waitFor('@schedule-section')
+            ->scrollTo('@schedule-section')
+            ->assertSeeIn('@schedule-section', 'You set this schedule to 9 days')
+            ->assertDontSeeIn('@schedule-section', 'Soil read');
+    });
+});
+
+it('stops saying due today once a wet soil reading is recorded', function (): void {
+    $user  = User::factory()->create();
+    $plant = Plant::factory()->create([
+        'common_name'                     => 'Thirsty Plant',
+        'watering_interval_days_override' => 6,
+    ]);
+
+    $watering = CareEvent::factory()->ofType('watering')->create([
+        'plant_id'    => $plant->id,
+        'occurred_at' => now()->subDays(6),
+    ]);
+    WateringDetail::create(['care_event_id' => $watering->id, 'amount_ml' => 200]);
+
+    $this->browse(function (Browser $browser) use ($user, $plant): void {
+        $browser->loginAs($user)
+            ->visit("/plants/{$plant->id}")
+            ->waitFor('@schedule-section')
+            ->scrollTo('@schedule-section')
+            ->assertSeeIn('@schedule-section', 'Due today');
+
+        $observation = CareEvent::factory()->ofType('observation')->create([
+            'plant_id'    => $plant->id,
+            'occurred_at' => now(),
+        ]);
+        Observation::create([
+            'care_event_id'         => $observation->id,
+            'soil_moisture_precise' => 8,
+        ]);
+
+        $browser->refresh()
+            ->waitFor('@schedule-section')
+            ->scrollTo('@schedule-section')
+            ->assertDontSeeIn('@schedule-section', 'Due today')
+            ->assertSeeIn('@schedule-section', 'Soil read 8 of 10');
+    });
+});

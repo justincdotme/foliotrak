@@ -81,6 +81,10 @@ export function prettyVar(v: string): string {
         overall_health: 'Health',
         watering_frequency: 'Watering frequency',
         ambient_humidity_pct: 'Ambient humidity',
+        ambient_temp_c: 'Ambient temperature',
+        drying_rate_humidity: 'Ambient humidity',
+        drying_rate_temp: 'Ambient temperature',
+        drying_rate_per_day: 'Soil drying rate',
         light_level: 'Light level',
         soil_moisture: 'Soil moisture',
         fertilizer_npk_n: 'Fertilizer N',
@@ -103,6 +107,12 @@ const FACTOR_LANGUAGE: Record<string, FactorFn> = {
     `Plants in ${pos ? 'brighter' : 'dimmer'} spots tended toward ${pos ? 'higher' : 'lower'} health readings.`,
   soil_moisture: pos =>
     `Plants with ${pos ? 'wetter' : 'drier'} soil tended toward ${pos ? 'higher' : 'lower'} health readings.`,
+  ambient_temp_c: pos =>
+    `Plants in ${pos ? 'warmer' : 'cooler'} conditions tended toward ${pos ? 'higher' : 'lower'} health readings.`,
+  drying_rate_humidity: pos =>
+    `More humid conditions coincided with ${pos ? 'faster' : 'slower'} soil drying.`,
+  drying_rate_temp: pos =>
+    `Warmer conditions coincided with ${pos ? 'faster' : 'slower'} soil drying.`,
 }
 
 // Plain-language read of a correlation pair, kept strictly non-causal. The raw coefficient and

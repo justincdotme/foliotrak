@@ -31,7 +31,7 @@ class SensorController extends Controller
     use AuthorizesRequests;
 
     /**
-     * Number of color palette entries
+     * New sensors cycle through the palette so no two adjacent ones match.
      *
      * @var int
      */
@@ -341,10 +341,18 @@ class SensorController extends Controller
         if ($moistureReadings->isNotEmpty()) {
             $moistureTransformer = new MoistureTransformer;
 
+            // Resolved per sensor, not per reading: effectivePoints() queries.
+            $points = $moistureReadings
+                ->pluck('sensor')
+                ->unique('id')
+                ->mapWithKeys(fn (Sensor $sensor): array => [
+                    $sensor->id => MoistureCalibration::effectivePoints($sensor),
+                ]);
+
             $positions = $moistureReadings
                 ->map(fn (SensorReading $reading): ?int => MoistureCalibration::scale(
                     (float) $moistureTransformer->hydrate($reading->data)->moisture,
-                    MoistureCalibration::effectivePoints($reading->sensor),
+                    $points[$reading->sensor_id],
                 ))
                 ->filter();
 
