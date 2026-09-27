@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\PlantCareReminder;
 use App\Support\Care\CareDue;
 use App\Support\Care\ScheduledCareType;
+use App\Support\Care\SoilHistory;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -49,7 +50,7 @@ class SendCareReminders extends Command
 
         $plants = Plant::query()
             ->where('status', PlantStatus::Active->value)
-            ->with(['wateringEvents', 'fertilizingEvents'])
+            ->with(['fertilizingEvents', ...SoilHistory::RELATIONS])
             ->get();
 
         $dispatched = 0;
@@ -67,7 +68,7 @@ class SendCareReminders extends Command
 
     /**
      * Claims the day's reminder before dispatch, so a missed or repeated run never
-     * sends the same plant, type, and due date twice.
+     * sends the same plant, care type and due date twice.
      *
      * @param Plant                 $plant
      * @param ScheduledCareType     $type

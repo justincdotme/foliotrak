@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\PlantStatus;
+use App\Enums\SensorType;
 use App\Models\CareEvent;
 use App\Models\CareEventType;
 use App\Models\Location;
 use App\Models\Photo;
 use App\Models\Plant;
 use App\Models\Sensor;
+use App\Models\SensorReading;
 use App\Models\Tag;
 use App\Models\User;
 use Database\Seeders\CareLookupSeeder;
+use DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -630,6 +634,194 @@ class PlantApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.0.last_watered_at', null);
+    }
+
+    /**
+     * @return void
+     */
+    public function test_the_due_entry_names_the_reading_that_moved_it(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create(['watering_interval_days_override' => 6]);
+        $this->logCareEvent($plant, 'watering', now()->subDays(6));
+        $this->logCareEvent($plant, 'observation', now())
+            ->observation()->create(['soil_moisture_precise' => 8]);
+
+        $this->getJson("/api/plants/{$plant->id}")
+            ->assertOk()
+            ->assertJsonPath('data.due_for_care.0.basis.reading', 8)
+            ->assertJsonPath('data.due_for_care.0.basis.source', 'observation')
+            ->assertJsonPath('data.due_for_care.0.basis.read_at', now()->format('Y-m-d'))
+            ->assertJsonPath('data.due_for_care.0.basis.key', 'override');
+    }
+
+    /**
+     * Every due entry states what it rests on, including the plants with no
+     * soil reading at all: silence there is what made FOL-158 look absent.
+     *
+     * @return void
+     */
+    public function test_the_due_entry_still_carries_a_basis_without_a_reading(): void
+    {
+        $this->actAsHousehold();
+
+        $plant = Plant::factory()->create(['watering_interval_days_override' => 6]);
+        $this->logCareEvent($plant, 'watering', now()->subDays(6));
+
+        $this->getJson("/api/plants/{$plant->id}")
+            ->assertOk()
+            ->assertJsonPath('data.due_for_care.0.basis.key', 'override')
+            ->assertJsonPath('data.due_for_care.0.basis.sample_size', 0)
+            ->assertJsonPath('data.due_for_care.0.basis.cadence_days', 6)
+            ->assertJsonPath('data.due_for_care.0.basis.learned_days', null)
+            ->assertJsonPath('data.due_for_care.0.basis.reading', null)
+            ->assertJsonPath('data.due_for_care.0.basis.source', null);
+    }
+
+    /**
+     * The schedule reads a soil history per plant, so the query count has to
+     * stay flat as the collection grows.
+     *
+     * @return void
+     */
+    public function test_the_plants_list_does_not_fan_out_per_plant(): void
+    {
+        $this->actAsHousehold();
+
+        $countFor = function (int $plants): int {
+            Plant::query()->forceDelete();
+
+            for ($i = 0; $i < $plants; $i++) {
+                $plant = Plant::factory()->create(['watering_interval_days_override' => 6]);
+                $this->logCareEvent($plant, 'watering', now()->subDays(6));
+                $this->logCareEvent($plant, 'observation', now())
+                    ->observation()->create(['soil_moisture_precise' => 8]);
+            }
+
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $this->getJson('/api/plants')->assertOk();
+            $queries = count(DB::getQueryLog());
+            DB::disableQueryLog();
+
+            return $queries;
+        };
+
+        $this->assertSame($countFor(2), $countFor(8));
+    }
+
+    /**
+     * A plant carrying only a hygrometer can never produce a soil reading,
+     * so the list must not touch the reading table on its behalf (FOL-158).
+     *
+     * @return void
+     */
+    public function test_the_plants_index_does_not_read_sensor_readings_without_a_probe(): void
+    {
+        $this->actAsHousehold();
+        $sensor = $this->sensorWithReadings(SensorType::Hygrometer, '02:00:5E:BB:00:01');
+
+        Plant::factory()->count(5)->create()->each(
+            fn (Plant $plant) => $plant->sensors()->attach($sensor),
+        );
+
+        DB::enableQueryLog();
+        $this->getJson('/api/plants')->assertOk();
+
+        $this->assertSame([], $this->queriesAgainstReadings(), 'sensor_readings was read for hygrometer-only plants');
+    }
+
+    /**
+     * And when a probe is attached, the reads are windowed in SQL rather than
+     * filtered in PHP after the whole table has been hydrated (FOL-158).
+     *
+     * @return void
+     */
+    public function test_the_plants_index_windows_every_sensor_reading_query(): void
+    {
+        $this->actAsHousehold();
+        $probe      = $this->sensorWithReadings(SensorType::Moisture, '02:00:5E:BB:00:02', ['moisture' => 2048]);
+        $hygrometer = $this->sensorWithReadings(SensorType::Hygrometer, '02:00:5E:BB:00:03');
+
+        Plant::factory()->count(5)->create()->each(function (Plant $plant) use ($probe, $hygrometer): void {
+            $plant->sensors()->attach([$probe->id, $hygrometer->id]);
+
+            // A schedule only exists past the 28 day gate, and without one
+            // nothing ever asks for the plant's soil history.
+            foreach ([40, 33, 26, 19, 12, 5] as $daysAgo) {
+                $this->logCareEvent($plant, 'watering', Carbon::now()->subDays($daysAgo));
+            }
+        });
+
+        DB::enableQueryLog();
+        $this->getJson('/api/plants')->assertOk();
+
+        $reads = $this->queriesAgainstReadings();
+
+        $this->assertNotSame([], $reads, 'the probe should have been read at least once');
+        $this->assertLessThanOrEqual(2, count($reads), 'readings must be read once per request, not once per plant');
+
+        foreach ($reads as $query) {
+            $this->assertStringContainsString('"recorded_at" >=', $query);
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function queriesAgainstReadings(): array
+    {
+        return array_values(array_map(
+            fn (array $entry): string => $entry['query'],
+            array_filter(
+                DB::getQueryLog(),
+                fn (array $entry): bool => str_contains($entry['query'], '"sensor_readings"'),
+            ),
+        ));
+    }
+
+    /**
+     * @param SensorType           $type
+     * @param string               $mac
+     * @param array<string, mixed> $data
+     *
+     * @return Sensor
+     */
+    private function sensorWithReadings(SensorType $type, string $mac, array $data = ['humidity' => 50.0, 'temperature' => 20.0]): Sensor
+    {
+        $sensor = Sensor::create([
+            'mac'   => $mac,
+            'name'  => $type->value,
+            'color' => 'var(--series-1)',
+            'type'  => $type,
+        ]);
+
+        for ($i = 0; $i < 200; $i++) {
+            SensorReading::create([
+                'sensor_id'   => $sensor->id,
+                'recorded_at' => Carbon::now()->subMinutes(15 * $i),
+                'data'        => $data,
+            ]);
+        }
+
+        return $sensor;
+    }
+
+    /**
+     * @param Plant  $plant
+     * @param string $key
+     * @param Carbon $at
+     *
+     * @return CareEvent
+     */
+    private function logCareEvent(Plant $plant, string $key, Carbon $at): CareEvent
+    {
+        return CareEvent::create([
+            'plant_id'           => $plant->id,
+            'care_event_type_id' => CareEventType::where('key', $key)->value('id'),
+            'occurred_at'        => $at,
+        ]);
     }
 
     /**

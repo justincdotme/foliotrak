@@ -42,6 +42,7 @@ class DueForCareResource extends JsonResource
             'type'            => $this->type->value,
             'daysLeft'        => $this->daysLeft,
             'interval'        => $this->intervalDays,
+            'basis'           => CareDueResource::basis($this->resource),
         ];
     }
 }

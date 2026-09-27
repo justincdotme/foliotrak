@@ -74,27 +74,34 @@ final class MoistureCalibration
 
     /**
      * Saved anchors win once two exist; otherwise fall back to the hardware
-     * range so auto-fill works before the user has calibrated anything.
+     * range so auto-fill works before the user has calibrated anything. Takes
+     * already-loaded points so a per-plant caller never re-queries.
      *
+     * @param iterable<SensorCalibrationPoint> $saved
+     *
+     * @return list<array{position: int, value: int}>
+     */
+    public static function pointsFrom(iterable $saved): array
+    {
+        $points = collect($saved)
+            ->sortBy('position')
+            ->map(fn (SensorCalibrationPoint $point): array => [
+                'position' => (int) $point->position,
+                'value'    => (int) $point->raw_value,
+            ])
+            ->values()
+            ->all();
+
+        return count($points) >= 2 ? $points : self::suggestedPoints();
+    }
+
+    /**
      * @param Sensor $sensor
      *
      * @return list<array{position: int, value: int}>
      */
     public static function effectivePoints(Sensor $sensor): array
     {
-        $saved = $sensor->calibrationPoints()
-            ->orderBy('position')
-            ->get()
-            ->map(fn (SensorCalibrationPoint $point): array => [
-                'position' => $point->position,
-                'value'    => $point->raw_value,
-            ])
-            ->all();
-
-        if (count($saved) >= 2) {
-            return $saved;
-        }
-
-        return self::suggestedPoints();
+        return self::pointsFrom($sensor->calibrationPoints()->orderBy('position')->get());
     }
 }

@@ -14,7 +14,8 @@ use Illuminate\Support\Carbon;
  * median gap between logged events, and a median only fires once 28 days have
  * passed since the type's first logged event: below that a two-event median
  * asserts a cadence it never observed (FOL-98). The recommendation engine
- * enforces the same four-week rule on its side.
+ * enforces the same four-week rule on its side. Watering then adjusts that
+ * cadence against what the plant's own soil readings said about it.
  */
 final readonly class CareSchedule
 {
@@ -23,13 +24,15 @@ final readonly class CareSchedule
 
     /**
      * @param ScheduledCareType $type
-     * @param integer           $intervalDays
+     * @param CareInterval      $interval
      * @param Carbon            $anchor
+     * @param SoilHistory|null  $history  Present for watering only.
      */
     private function __construct(
         public ScheduledCareType $type,
-        public int $intervalDays,
+        public CareInterval $interval,
         public Carbon $anchor,
+        private ?SoilHistory $history,
     ) {}
 
     /**
@@ -42,10 +45,10 @@ final readonly class CareSchedule
     {
         $events     = $type->events($plant);
         $occurredAt = $events->map(fn (CareEvent $event): Carbon => $event->occurred_at)->all();
+        $override   = $type->override($plant);
+        $cadence    = $override ?? self::gatedMedian($occurredAt);
 
-        $interval = $type->override($plant) ?? self::gatedMedian($occurredAt);
-
-        if ($interval === null) {
+        if ($cadence === null) {
             return null;
         }
 
@@ -55,7 +58,13 @@ final readonly class CareSchedule
             return null;
         }
 
-        return new self($type, $interval, $anchor);
+        // A manual override fixes the interval but does not blind the schedule:
+        // a reading logged since the last watering still moves this cycle.
+        $history = $type === ScheduledCareType::Watering
+            ? SoilHistory::for($plant, Carbon::now())
+            : null;
+
+        return new self($type, self::interval($history, $cadence, $override), $anchor, $history);
     }
 
     /**
@@ -93,6 +102,29 @@ final readonly class CareSchedule
     }
 
     /**
+     * @param SoilHistory|null $history
+     * @param integer          $cadenceDays
+     * @param integer|null     $override
+     *
+     * @return CareInterval
+     */
+    private static function interval(?SoilHistory $history, int $cadenceDays, ?int $override): CareInterval
+    {
+        if ($override !== null || $history === null) {
+            return CareInterval::fromCadence($cadenceDays, $override !== null ? 'override' : 'cadence');
+        }
+
+        $conditions = $history->currentConditions();
+
+        return WateringIntervalEstimator::estimate(
+            $history->evidence(),
+            $cadenceDays,
+            $conditions['humidity'],
+            $conditions['temp'],
+        );
+    }
+
+    /**
      * @param list<Carbon> $occurredAt
      *
      * @return integer|null
@@ -115,15 +147,40 @@ final readonly class CareSchedule
 
     /**
      * The state of this schedule against today, in midnight-normalized
-     * calendar days so a clock time never shifts the day count.
+     * calendar days so a clock time never shifts the day count. A soil reading
+     * logged since the last watering moves this cycle's date directly; the
+     * interval it is measured against is what the readings taught over time.
      *
      * @return CareDue
      */
     public function due(): CareDue
     {
-        $dueDate  = $this->anchor->copy()->addDays($this->intervalDays)->startOfDay();
+        $correction = $this->correction();
+        $dueDate    = $correction !== null
+            ? $correction->dueDate
+            : $this->anchor->copy()->addDays($this->interval->days)->startOfDay();
         $daysLeft = (int) Carbon::today()->diffInDays($dueDate, false);
 
-        return new CareDue($this->type, $this->intervalDays, $dueDate, $daysLeft, DueStatus::fromDaysLeft($daysLeft));
+        return new CareDue(
+            $this->type,
+            $this->interval,
+            $this->interval->days,
+            $dueDate,
+            $daysLeft,
+            DueStatus::fromDaysLeft($daysLeft),
+            $correction,
+        );
+    }
+
+    /**
+     * @return MoistureProjection|null
+     */
+    private function correction(): ?MoistureProjection
+    {
+        $anchor = $this->history?->anchor();
+
+        return $anchor === null
+            ? null
+            : MoistureProjection::from($anchor, $this->interval, $this->anchor);
     }
 }

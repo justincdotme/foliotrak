@@ -38,6 +38,7 @@ class PlantController extends Controller
         'latestObservationEvent.observation.symptoms',
         'wateringEvents',
         'fertilizingEvents',
+        'observationEvents.observation',
     ];
 
     /**

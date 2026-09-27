@@ -31,42 +31,6 @@ parameters:
 			path: app/Http/Requests/UpdateCareEventRequest.php
 
 		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$daysLeft\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$dueDate\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$intervalDays\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\CareDueResource\:\:\$type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
-			message: '#^PHPDoc tag @mixin contains unknown class App\\Http\\Resources\\CareDue\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Http/Resources/CareDueResource.php
-
-		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\CareEventResource\:\:\$careEventType\.$#'
 			identifier: property.notFound
 			count: 1
@@ -997,6 +961,42 @@ parameters:
 			path: app/Support/Care/ScheduledCareType.php
 
 		-
+			message: '#^Access to property \$observationEvents on an unknown class App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/AmbientTemperatureFactor.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\AmbientTemperatureFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/AmbientTemperatureFactor.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\DryingRateHumidityFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/DryingRateHumidityFactor.php
+
+		-
+			message: '#^Parameter \#1 \$plant of static method App\\Support\\Care\\SoilHistory\:\:for\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/Correlation/DryingRateHumidityFactor.php
+
+		-
+			message: '#^Parameter \$plants of method App\\Support\\Correlation\\DryingRateTemperatureFactor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Support/Correlation/DryingRateTemperatureFactor.php
+
+		-
+			message: '#^Parameter \#1 \$plant of static method App\\Support\\Care\\SoilHistory\:\:for\(\) expects App\\Models\\Plant, App\\Support\\Correlation\\Plant given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/Correlation/DryingRateTemperatureFactor.php
+
+		-
 			message: '#^Parameter \$plants of method App\\Support\\Correlation\\Factor\:\:pairs\(\) has invalid type App\\Support\\Correlation\\Plant\.$#'
 			identifier: class.notFound
 			count: 1
@@ -1099,7 +1099,7 @@ parameters:
 			path: app/Support/CorrelationEngine.php
 
 		-
-			message: '#^Method App\\Support\\CorrelationEngine\:\:defaultFactors\(\) should return list\<App\\Support\\Factor\> but returns array\{App\\Support\\Correlation\\WateringIntervalFactor, App\\Support\\Correlation\\HumidityFactor, App\\Support\\Correlation\\LightLevelFactor, App\\Support\\Correlation\\SoilMoistureFactor, App\\Support\\Correlation\\PestResolutionFactor\}\.$#'
+			message: '#^Method App\\Support\\CorrelationEngine\:\:defaultFactors\(\) should return list\<App\\Support\\Factor\> but returns array\{App\\Support\\Correlation\\WateringIntervalFactor, App\\Support\\Correlation\\HumidityFactor, App\\Support\\Correlation\\LightLevelFactor, App\\Support\\Correlation\\SoilMoistureFactor, App\\Support\\Correlation\\PestResolutionFactor, App\\Support\\Correlation\\AmbientTemperatureFactor, App\\Support\\Correlation\\DryingRateHumidityFactor, App\\Support\\Correlation\\DryingRateTemperatureFactor\}\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Support/CorrelationEngine.php
@@ -1115,18 +1115,6 @@ parameters:
 			identifier: class.notFound
 			count: 1
 			path: app/Support/CorrelationEngine.php
-
-		-
-			message: '#^Method App\\Support\\RecommendationEngine\:\:recentSoilReadings\(\) has invalid return type App\\Support\\SoilMoistureLevel\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Support/RecommendationEngine.php
-
-		-
-			message: '#^Method App\\Support\\RecommendationEngine\:\:recentSoilReadings\(\) should return list\<array\{precise\: int\|null, relative\: App\\Support\\SoilMoistureLevel\|null\}\> but returns list\<array\{precise\: int\|null, relative\: App\\Enums\\SoilMoistureLevel\|null\}\>\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Support/RecommendationEngine.php
 
 		-
 			message: '#^Call to method diffInDays\(\) on an unknown class App\\Support\\Carbon\.$#'
@@ -1151,30 +1139,6 @@ parameters:
 			identifier: class.notFound
 			count: 1
 			path: app/Support/SymptomEpisodeResolver.php
-
-		-
-			message: '#^Call to method numericValue\(\) on an unknown class App\\Support\\SoilMoistureLevel\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Support/WateringScheduleRecommender.php
-
-		-
-			message: '#^Parameter \$reading of method App\\Support\\WateringScheduleRecommender\:\:soilNumeric\(\) has invalid type App\\Support\\SoilMoistureLevel\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Support/WateringScheduleRecommender.php
-
-		-
-			message: '#^Parameter \$soilReadings of method App\\Support\\WateringScheduleRecommender\:\:recommend\(\) has invalid type App\\Support\\SoilMoistureLevel\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Support/WateringScheduleRecommender.php
-
-		-
-			message: '#^Parameter \$soilReadings of method App\\Support\\WateringScheduleRecommender\:\:withSoilAdjustment\(\) has invalid type App\\Support\\SoilMoistureLevel\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Support/WateringScheduleRecommender.php
 
 		-
 			message: '#^Using nullsafe method call on non\-nullable type DateTime\. Use \-\> instead\.$#'
@@ -1413,7 +1377,7 @@ parameters:
 		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
-			count: 5
+			count: 7
 			path: tests/Browser/SchedulePanelTest.php
 
 		-
@@ -1505,6 +1469,24 @@ parameters:
 			identifier: larastan.noEnvCallsOutsideOfConfig
 			count: 2
 			path: tests/DuskTestCase.php
+
+		-
+			message: '#^Parameter \#1 \$plants of method App\\Support\\Correlation\\AmbientTemperatureFactor\:\:pairs\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Correlation\\Plant\>, Illuminate\\Support\\Collection\<int, App\\Models\\Plant\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/CorrelationFactorsTest.php
+
+		-
+			message: '#^Parameter \#1 \$plants of method App\\Support\\Correlation\\DryingRateHumidityFactor\:\:pairs\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Correlation\\Plant\>, Illuminate\\Support\\Collection\<int, App\\Models\\Plant\> given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Feature/CorrelationFactorsTest.php
+
+		-
+			message: '#^Parameter \#1 \$plants of method App\\Support\\Correlation\\DryingRateTemperatureFactor\:\:pairs\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Correlation\\Plant\>, Illuminate\\Support\\Collection\<int, App\\Models\\Plant\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Feature/CorrelationFactorsTest.php
 
 		-
 			message: '#^Parameter \#1 \$plants of static method App\\Support\\CorrelationEngine\:\:forPlants\(\) expects Illuminate\\Support\\Collection\<int, App\\Support\\Plant\>, Illuminate\\Support\\Collection\<int, App\\Models\\Plant\> given\.$#'
@@ -1625,15 +1607,3 @@ parameters:
 			identifier: method.childReturnType
 			count: 1
 			path: tests/Unit/CorrelationEngineTest.php
-
-		-
-			message: '#^Parameter \#6 \$soilReadings of static method App\\Support\\WateringScheduleRecommender\:\:recommend\(\) expects list\<array\{precise\: int\|null, relative\: App\\Support\\SoilMoistureLevel\|null\}\>, array\{array\{precise\: 5, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}, array\{precise\: 5, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}, array\{precise\: 5, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/WateringScheduleRecommenderTest.php
-
-		-
-			message: '#^Parameter \#6 \$soilReadings of static method App\\Support\\WateringScheduleRecommender\:\:recommend\(\) expects list\<array\{precise\: int\|null, relative\: App\\Support\\SoilMoistureLevel\|null\}\>, array\{array\{precise\: null, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}, array\{precise\: null, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}, array\{precise\: null, relative\: App\\Enums\\SoilMoistureLevel\:\:Dry\}\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/WateringScheduleRecommenderTest.php

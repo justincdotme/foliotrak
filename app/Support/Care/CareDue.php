@@ -8,25 +8,30 @@ use App\Models\Plant;
 use Illuminate\Support\Carbon;
 
 /**
- * The due state of one care schedule: what is due, when, and how urgently.
+ * The due state of one care schedule: what is due, when and how urgently.
  * Carries no plant identity; the serialization edge attaches that where a
  * cross-plant list needs it.
  */
 final readonly class CareDue
 {
     /**
-     * @param ScheduledCareType $type
-     * @param integer           $intervalDays
-     * @param Carbon            $dueDate
-     * @param integer           $daysLeft
-     * @param DueStatus         $status
+     * @param ScheduledCareType       $type
+     * @param CareInterval            $interval     What the proposed interval rests on.
+     * @param integer                 $intervalDays Mirrors $interval->days for readers that only need the number.
+     * @param Carbon                  $dueDate
+     * @param integer                 $daysLeft
+     * @param DueStatus               $status
+     * @param MoistureProjection|null $moisture     When set, a reading logged since the last
+     *                                              watering moved this cycle's date.
      */
     public function __construct(
         public ScheduledCareType $type,
+        public CareInterval $interval,
         public int $intervalDays,
         public Carbon $dueDate,
         public int $daysLeft,
         public DueStatus $status,
+        public ?MoistureProjection $moisture = null,
     ) {}
 
     /**
@@ -37,7 +42,7 @@ final readonly class CareDue
      */
     public static function for(Plant $plant, ScheduledCareType $type): ?self
     {
-        return CareSchedule::for($plant, $type)?->due();
+        return $plant->careDue($type);
     }
 
     /**

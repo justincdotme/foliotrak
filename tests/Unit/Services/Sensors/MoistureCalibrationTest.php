@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Sensors;
 
+use App\Models\SensorCalibrationPoint;
 use App\Services\Sensors\MoistureCalibration;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -51,5 +52,35 @@ class MoistureCalibrationTest extends TestCase
     public function test_scale_maps_raw_values_onto_the_meter(float $rawValue, array $points, ?int $expected): void
     {
         $this->assertSame($expected, MoistureCalibration::scale($rawValue, $points));
+    }
+
+    /**
+     * @return void
+     */
+    public function test_points_from_returns_saved_anchors_sorted_by_position(): void
+    {
+        $saved = [
+            new SensorCalibrationPoint(['position' => 10, 'raw_value' => 1300]),
+            new SensorCalibrationPoint(['position' => 1, 'raw_value' => 3100]),
+        ];
+
+        $this->assertSame(
+            [
+                ['position' => 1, 'value' => 3100],
+                ['position' => 10, 'value' => 1300],
+            ],
+            MoistureCalibration::pointsFrom($saved),
+        );
+    }
+
+    /**
+     * @return void
+     */
+    public function test_points_from_falls_back_to_the_hardware_envelope_below_two_anchors(): void
+    {
+        $saved = [new SensorCalibrationPoint(['position' => 5, 'raw_value' => 2048])];
+
+        $this->assertSame(MoistureCalibration::suggestedPoints(), MoistureCalibration::pointsFrom($saved));
+        $this->assertSame(MoistureCalibration::suggestedPoints(), MoistureCalibration::pointsFrom([]));
     }
 }

@@ -110,50 +110,13 @@ final class RecommendationEngine
             }
         }
 
-        $soilReadings = self::recentSoilReadings($plant, 3);
-
-        $recommendation = WateringScheduleRecommender::recommend($waterings, $healthObservations, $amounts, $earliest, $now, $soilReadings);
+        $recommendation = WateringScheduleRecommender::recommend($waterings, $healthObservations, $amounts, $earliest, $now);
 
         if ($recommendation === null) {
             return null;
         }
 
         return $recommendation + ['computed_at' => $now->toIso8601String()];
-    }
-
-    /**
-     * @param Plant   $plant
-     * @param integer $limit
-     *
-     * @return list<array{precise: int|null, relative: SoilMoistureLevel|null}>
-     */
-    private static function recentSoilReadings(Plant $plant, int $limit): array
-    {
-        $readings = [];
-        $events   = $plant->observationEvents->sortByDesc('occurred_at')->values();
-
-        foreach ($events as $event) {
-            $obs = $event->observation;
-
-            if ($obs === null) {
-                continue;
-            }
-
-            $precise  = $obs->soil_moisture_precise;
-            $relative = $obs->soil_moisture_relative;
-
-            if ($precise === null && $relative === null) {
-                continue;
-            }
-
-            $readings[] = ['precise' => $precise, 'relative' => $relative];
-
-            if (count($readings) >= $limit) {
-                break;
-            }
-        }
-
-        return $readings;
     }
 
     /**
