@@ -51,7 +51,7 @@ class DashboardApiTest extends TestCase
     }
 
     /** @return void */
-    public function test_due_for_care_lists_plants_with_a_derivable_interval_sorted_by_urgency(): void
+    public function test_due_for_care_lists_due_and_overdue_entries_sorted_by_urgency(): void
     {
         $this->actAsHousehold();
 
@@ -59,7 +59,8 @@ class DashboardApiTest extends TestCase
         $overdue = Plant::factory()->create(['common_name' => 'Thirsty', 'watering_interval_days_override' => 7]);
         CareEvent::factory()->ofType('watering')->for($overdue)->create(['occurred_at' => now()->subDays(9)]);
 
-        // Comfortably ok watering: watered 3 days ago on a 10-day override -> due in 7 days.
+        // Comfortably ok watering: watered 3 days ago on a 10-day override -> due in 7 days,
+        // so it needs no care and stays off the list.
         $ok = Plant::factory()->create(['common_name' => 'Settled', 'watering_interval_days_override' => 10]);
         CareEvent::factory()->ofType('watering')->for($ok)->create(['occurred_at' => now()->subDays(3)]);
 
@@ -80,9 +81,10 @@ class DashboardApiTest extends TestCase
 
         $response = $this->getJson('/api/dashboard')->assertOk();
 
-        $response->assertJsonCount(3, 'data.due_for_care');
+        $response->assertJsonCount(2, 'data.due_for_care');
+        $this->assertNotContains($ok->id, $response->json('data.due_for_care.*.plant_id'));
 
-        // Sorted by daysLeft ascending: overdue (-2), then due-soon (1), then ok (7).
+        // Sorted by daysLeft ascending: overdue (-2), then due-soon (1).
         $response
             ->assertJsonPath('data.due_for_care.0.plant_id', $overdue->id)
             ->assertJsonPath('data.due_for_care.0.type', 'watering')
@@ -94,10 +96,7 @@ class DashboardApiTest extends TestCase
             ->assertJsonPath('data.due_for_care.1.plant_id', $soon->id)
             ->assertJsonPath('data.due_for_care.1.type', 'fertilizing')
             ->assertJsonPath('data.due_for_care.1.status', 'due-soon')
-            ->assertJsonPath('data.due_for_care.1.daysLeft', 1)
-            ->assertJsonPath('data.due_for_care.2.plant_id', $ok->id)
-            ->assertJsonPath('data.due_for_care.2.status', 'ok')
-            ->assertJsonPath('data.due_for_care.2.daysLeft', 7);
+            ->assertJsonPath('data.due_for_care.1.daysLeft', 1);
     }
 
     /** @return void */
@@ -131,7 +130,7 @@ class DashboardApiTest extends TestCase
         $this->actAsHousehold();
 
         // The same 7-day rhythm, but the first watering is only 22 days old:
-        // below the 28-day gate no median is derived, so nothing is due (FOL-98).
+        // below the 28-day gate no median is derived, so nothing is due.
         $plant = Plant::factory()->create(['watering_interval_days_override' => null]);
 
         foreach ([22, 15, 8] as $daysAgo) {
@@ -222,7 +221,7 @@ class DashboardApiTest extends TestCase
     }
 
     /** @return void */
-    public function test_a_plant_with_both_overrides_yields_one_due_entry_per_type(): void
+    public function test_a_plant_due_for_both_care_types_yields_one_entry_per_type(): void
     {
         $this->actAsHousehold();
 
@@ -231,7 +230,7 @@ class DashboardApiTest extends TestCase
             'fertilizing_interval_days_override' => 30,
         ]);
         CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(8)]);
-        CareEvent::factory()->ofType('fertilizing')->for($plant)->create(['occurred_at' => now()->subDays(10)]);
+        CareEvent::factory()->ofType('fertilizing')->for($plant)->create(['occurred_at' => now()->subDays(31)]);
 
         $response = $this->getJson('/api/dashboard')->assertOk();
 
@@ -239,6 +238,30 @@ class DashboardApiTest extends TestCase
         $entries = collect($response->json('data.due_for_care'));
         $this->assertSame(['fertilizing', 'watering'], $entries->pluck('type')->sort()->values()->all());
         $this->assertSame([$plant->id], $entries->pluck('plant_id')->unique()->values()->all());
+    }
+
+    /** @return void */
+    public function test_due_for_care_omits_a_plant_whose_only_due_type_was_just_cared_for(): void
+    {
+        $this->actAsHousehold();
+
+        // Watering is overdue but fertilizing was fed yesterday, so only the watering row shows.
+        $plant = Plant::factory()->create([
+            'watering_interval_days_override'    => 7,
+            'fertilizing_interval_days_override' => 30,
+        ]);
+        CareEvent::factory()->ofType('watering')->for($plant)->create(['occurred_at' => now()->subDays(8)]);
+        CareEvent::factory()->ofType('fertilizing')->for($plant)->create(['occurred_at' => now()->subDay()]);
+
+        // Watered today, so nothing about it is due.
+        $justWatered = Plant::factory()->create(['watering_interval_days_override' => 7]);
+        CareEvent::factory()->ofType('watering')->for($justWatered)->create(['occurred_at' => now()->subHour()]);
+
+        $response = $this->getJson('/api/dashboard')->assertOk();
+
+        $response->assertJsonCount(1, 'data.due_for_care')
+            ->assertJsonPath('data.due_for_care.0.plant_id', $plant->id)
+            ->assertJsonPath('data.due_for_care.0.type', 'watering');
     }
 
     /** @return void */

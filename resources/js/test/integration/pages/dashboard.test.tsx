@@ -18,9 +18,10 @@ describe('DashboardPage', () => {
   it('renders real due-for-care and recent-activity data from the populated fixture', async () => {
     render(<DashboardPage go={vi.fn()} />, { wrapper: makeWrapper() })
 
-    expect(await screen.findByText('in 5d')).toBeInTheDocument()
-    expect(screen.getByText("golden hunter's-robe")).toBeInTheDocument()
-    expect(screen.getByText('0 plants need attention today.')).toBeInTheDocument()
+    expect(await screen.findByText('3d overdue')).toBeInTheDocument()
+    expect(screen.getByText('baby rubberplant')).toBeInTheDocument()
+    expect(screen.getByText('Kalanchoe eriophylla')).toBeInTheDocument()
+    expect(screen.getByText('10 plants need attention today.')).toBeInTheDocument()
   })
 
   it('shows the caught-up empty state when due_for_care is overridden to empty', async () => {

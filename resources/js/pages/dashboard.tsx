@@ -37,16 +37,21 @@ function DueRow({ item, onClick }: { item: DueForCare; onClick: () => void }) {
         <div className="font-medium truncate">{item.common_name}</div>
         <div className="text-[12px] text-text-subtle italic truncate">{item.scientific_name}</div>
       </div>
-      <div
-        className="text-right shrink-0 text-[12px] font-medium flex items-center gap-1.5"
-        style={{ color: wl.color }}
-      >
-        {item.status === 'overdue' && <AlertTriangle size={13} />}
-        {item.daysLeft < 0
-          ? `${Math.abs(item.daysLeft)}d overdue`
-          : item.daysLeft === 0
-            ? 'today'
-            : `in ${item.daysLeft}d`}
+      <div className="text-right shrink-0">
+        <div className="text-[11px] text-text-subtle">{CARE_META[item.type].label}</div>
+        <div
+          className="text-[12px] font-medium flex items-center justify-end gap-1.5"
+          style={{ color: wl.color }}
+        >
+          {item.status === 'overdue' && <AlertTriangle size={13} />}
+          <span>
+            {item.daysLeft < 0
+              ? `${Math.abs(item.daysLeft)}d overdue`
+              : item.daysLeft === 0
+                ? 'today'
+                : `in ${item.daysLeft}d`}
+          </span>
+        </div>
       </div>
     </button>
   )
