@@ -33,10 +33,10 @@ const data: DashboardData = {
       plant_id: 2,
       common_name: 'Monstera',
       scientific_name: 'Monstera deliciosa',
-      status: 'ok',
-      due_date: '2026-07-01',
+      status: 'due-soon',
+      due_date: '2026-06-27',
       type: 'watering',
-      daysLeft: 5,
+      daysLeft: 1,
       interval: 9,
       basis: {
         key: 'cadence' as const,
@@ -77,14 +77,14 @@ describe('DashboardPage', () => {
 
     render(<DashboardPage go={vi.fn()} />)
 
-    expect(screen.getByText('1 plants need attention today.')).toBeInTheDocument()
+    expect(screen.getByText('2 plants need attention today.')).toBeInTheDocument()
     expect(screen.getByText('3d overdue')).toBeInTheDocument()
-    expect(screen.getByText('in 5d')).toBeInTheDocument()
+    expect(screen.getByText('in 1d')).toBeInTheDocument()
     expect(screen.getByText('Root rot reported')).toBeInTheDocument()
     expect(screen.getByText('deep soak')).toBeInTheDocument()
   })
 
-  it('shows the today label and counts a plant due for two care types only once', () => {
+  it('labels each row with its care type and counts a plant due for two care types only once', () => {
     const base = {
       plant_id: 1,
       common_name: 'Pothos',
@@ -113,8 +113,8 @@ describe('DashboardPage', () => {
 
     render(<DashboardPage go={vi.fn()} />)
 
-    expect(screen.getByText('today')).toBeInTheDocument()
-    expect(screen.getByText('2d overdue')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Pothos.*Watering.*2d overdue/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Pothos.*Fertilizing.*today/ })).toBeInTheDocument()
     expect(screen.getByText('1 plants need attention today.')).toBeInTheDocument()
   })
 

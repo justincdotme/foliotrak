@@ -10,6 +10,7 @@ use App\Http\Resources\UserResource;
 use App\Models\CareEvent;
 use App\Models\Plant;
 use App\Support\Care\CareDue;
+use App\Support\Care\DueStatus;
 use App\Support\ProblemFlagger;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -55,6 +56,7 @@ class DashboardController extends Controller
 
         $dueForCare = $plants
             ->flatMap(fn (Plant $plant) => collect(CareDue::forPlant($plant))
+                ->reject(fn (CareDue $due): bool => $due->status === DueStatus::Ok)
                 ->map(fn (CareDue $due): array => ['plant' => $plant, 'due' => $due]))
             ->sortBy(fn (array $entry): int => $entry['due']->daysLeft)
             ->values()

@@ -16,7 +16,10 @@ api.interceptors.response.use(undefined, error => {
     const isAuthRoute = url.startsWith('/login') || url.startsWith('/sanctum/')
 
     if (status === 401 && !isAuthRoute) {
-      window.location.href = '/login'
+      // The login page runs its own session check; reloading it into itself would loop.
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
       // Reject with a sentinel error so the calling code's catch block fires
       // and shows feedback before the redirect completes.
       return Promise.reject(new SessionExpiredError('Unauthenticated'))
