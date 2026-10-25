@@ -165,8 +165,45 @@ class AuthTest extends TestCase
         $this->assertNull($recallerCookie, 'Login without remember must not set a recaller cookie');
     }
 
-    /** @return void */
+    /**
+     * JSON test requests carry no cookies unless withCredentials() is set, and the
+     * guard keeps the user in memory across requests in one process, so both are
+     * reset here; otherwise this passes without the cookie ever being read.
+     *
+     * @return void
+     */
     public function test_recaller_cookie_reauthenticates_after_session_destroyed(): void
+    {
+        User::factory()->create([
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+        ]);
+
+        $login = $this->postJson('/login', [
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+            'remember' => true,
+        ]);
+        $login->assertOk();
+
+        $recaller = collect($login->headers->getCookies())
+            ->first(fn ($c) => str_starts_with($c->getName(), 'remember_web_'));
+        $this->assertNotNull($recaller, 'Login response must include a remember_web_* cookie');
+
+        $this->app['session.store']->flush();
+        $this->app['auth']->forgetGuards();
+        $this->flushSession();
+
+        $this->withCredentials()
+            ->withUnencryptedCookie($recaller->getName(), $recaller->getValue())
+            ->withHeader('Referer', config('app.url') . '/')
+            ->getJson('/api/user')
+            ->assertOk()
+            ->assertJsonFragment(['email' => 'household@foliotrak.test']);
+    }
+
+    /** @return void */
+    public function test_fresh_request_without_recaller_cookie_is_unauthenticated(): void
     {
         User::factory()->create([
             'email'    => 'household@foliotrak.test',
@@ -180,9 +217,79 @@ class AuthTest extends TestCase
         ])->assertOk();
 
         $this->app['session.store']->flush();
+        $this->app['auth']->forgetGuards();
+        $this->flushSession();
 
-        $this->getJson('/api/user')
-            ->assertOk()
-            ->assertJsonFragment(['email' => 'household@foliotrak.test']);
+        $this->withCredentials()
+            ->withHeader('Referer', config('app.url') . '/')
+            ->getJson('/api/user')
+            ->assertUnauthorized();
+    }
+
+    /** @return void */
+    public function test_authenticated_request_with_recaller_cookie_reissues_it_for_five_days(): void
+    {
+        User::factory()->create([
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+        ]);
+
+        $login = $this->postJson('/login', [
+            'email'    => 'household@foliotrak.test',
+            'password' => 'correct-horse',
+            'remember' => true,
+        ]);
+        $login->assertOk();
+
+        $issued = collect($login->headers->getCookies())
+            ->first(fn ($c) => str_starts_with($c->getName(), 'remember_web_'));
+        $this->assertNotNull($issued);
+
+        // The cookie jar is a singleton here, so the login's queued cookie would be
+        // re-attached to this response and pass as a reissue.
+        $this->app['session.store']->flush();
+        $this->app['auth']->forgetGuards();
+        $this->app['cookie']->flushQueuedCookies();
+        $this->flushSession();
+
+        $response = $this->withCredentials()
+            ->withUnencryptedCookie($issued->getName(), $issued->getValue())
+            ->withHeader('Referer', config('app.url') . '/')
+            ->getJson('/api/user');
+        $response->assertOk();
+
+        $reissued = collect($response->headers->getCookies())
+            ->first(fn ($c) => $c->getName() === $issued->getName());
+        $this->assertNotNull($reissued, 'An authenticated request must reissue the remember cookie');
+
+        $this->assertEqualsWithDelta(
+            time() + (7200 * 60),
+            $reissued->getExpiresTime(),
+            60,
+            'Reissued remember cookie should expire five days from this request',
+        );
+
+        $encrypter = $this->app['encrypter'];
+        $this->assertSame(
+            $encrypter->decrypt($issued->getValue(), false),
+            $encrypter->decrypt($reissued->getValue(), false),
+            'Reissuing must keep the same user, token, and password hash',
+        );
+    }
+
+    /** @return void */
+    public function test_authenticated_request_without_recaller_cookie_sets_none(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->withHeader('Referer', config('app.url') . '/')
+            ->getJson('/api/user');
+        $response->assertOk();
+
+        $recallerCookie = collect($response->headers->getCookies())
+            ->first(fn ($c) => str_starts_with($c->getName(), 'remember_web_'));
+
+        $this->assertNull($recallerCookie, 'A session without remember-me must not gain a remember cookie');
     }
 }

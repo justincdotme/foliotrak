@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm, Controller } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { isAxiosError } from 'axios'
 import { AlertTriangle, Leaf } from 'lucide-react'
 import api from '@/lib/api'
+import { getUser } from '@/api/client'
+import { Spinner } from '@/components/app/spinner'
 import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -23,7 +26,13 @@ type LoginValues = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [authError, setAuthError] = useState('')
+
+  // A bookmark, home-screen icon, or address-bar autocomplete lands signed-in
+  // users here too; a form they cannot tell apart from being signed out is not
+  // an answer, so the session is checked first and they are sent on.
+  const session = useQuery({ queryKey: ['auth-user'], queryFn: getUser, retry: false })
 
   const {
     register,
@@ -40,6 +49,8 @@ export function LoginPage() {
     try {
       await api.get('/sanctum/csrf-cookie')
       await api.post('/login', values)
+      // The session check above cached a 401 the gate would act on before refetching.
+      queryClient.removeQueries({ queryKey: ['auth-user'] })
       navigate('/')
     } catch (err) {
       setAuthError(
@@ -48,6 +59,18 @@ export function LoginPage() {
           : 'Something went wrong. Please try again.'
       )
     }
+  }
+
+  if (session.data) {
+    return <Navigate to="/" replace />
+  }
+
+  if (session.isPending) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-bg p-6">
+        <Spinner />
+      </div>
+    )
   }
 
   return (
