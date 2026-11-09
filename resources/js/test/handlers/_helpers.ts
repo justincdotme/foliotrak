@@ -1,4 +1,4 @@
-import { HttpResponse } from 'msw'
+import { HttpResponse } from 'msw/http'
 
 export const jsonMessage = (status: number, message: string) =>
   HttpResponse.json({ message }, { status })

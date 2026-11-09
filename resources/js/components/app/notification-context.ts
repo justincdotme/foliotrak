@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext, use } from 'react'
 
 export interface NotificationContextValue {
   error: string | null
@@ -13,5 +13,5 @@ export const NotificationContext = createContext<NotificationContextValue>({
 })
 
 export function useNotification(): NotificationContextValue {
-  return useContext(NotificationContext)
+  return use(NotificationContext)
 }

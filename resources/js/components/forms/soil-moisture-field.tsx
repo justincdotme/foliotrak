@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Radar } from 'lucide-react'
 import type { SoilMoistureLevel } from '@/api/types'
 import { Field } from '@/components/app/field'
@@ -26,7 +26,11 @@ export function SoilMoistureField({ value, onChange, sensorFilled }: SoilMoistur
 
   // A sensor auto-fill arrives as an external precise value; follow it so the
   // meter tab activates and shows the filled reading.
-  useEffect(() => {
+  const [prevRelative, setPrevRelative] = useState(value.relative)
+  const [prevPrecise, setPrevPrecise] = useState(value.precise)
+  if (value.relative !== prevRelative || value.precise !== prevPrecise) {
+    setPrevRelative(value.relative)
+    setPrevPrecise(value.precise)
     if (value.precise != null) {
       setLastPrecise(value.precise)
       setMode('precise')
@@ -34,7 +38,7 @@ export function SoilMoistureField({ value, onChange, sensorFilled }: SoilMoistur
       setLastRelative(value.relative)
       setMode('relative')
     }
-  }, [value.relative, value.precise])
+  }
 
   const precise = value.precise ?? lastPrecise ?? 5
 

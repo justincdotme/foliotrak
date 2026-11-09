@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Sensor } from '@/api/types'
 import { useSensorCalibration, useUpdateSensorCalibration } from '@/hooks/useSensors'
 import { extractValidationError } from '@/lib/handle-api-error'
@@ -18,7 +18,7 @@ export function SensorCalibrationModal({ sensor, onClose }: SensorCalibrationMod
   const calibration = useSensorCalibration(sensor.id)
   const save = useUpdateSensorCalibration()
 
-  const [anchors, setAnchors] = useState<Map<number, number>>(new Map())
+  const [anchors, setAnchors] = useState<Map<number, number>>(() => new Map())
   const [position, setPosition] = useState(5)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -32,13 +32,26 @@ export function SensorCalibrationModal({ sensor, onClose }: SensorCalibrationMod
   // only local edit is `draft`; a successful save flows back through the
   // query cache and re-seeds both. Seeding pauses while a save is in flight
   // so a response landing mid-edit cannot revert a newer anchor.
-  useEffect(() => {
-    if (!data || save.isPending) return
-    const source = data.points.length > 0 ? data.points : (data.suggested ?? [])
-    const next = new Map(source.map(p => [p.position, p.value]))
-    setAnchors(next)
-    setDraft(next.has(position) ? String(next.get(position)) : '')
-  }, [data, position, save.isPending])
+  const isSaving = save.isPending
+  const [seededFrom, setSeededFrom] = useState<{
+    data: typeof data
+    position: number
+    isSaving: boolean
+  } | null>(null)
+  if (
+    seededFrom === null ||
+    seededFrom.data !== data ||
+    seededFrom.position !== position ||
+    seededFrom.isSaving !== isSaving
+  ) {
+    setSeededFrom({ data, position, isSaving })
+    if (data && !isSaving) {
+      const source = data.points.length > 0 ? data.points : (data.suggested ?? [])
+      const next = new Map(source.map(p => [p.position, p.value]))
+      setAnchors(next)
+      setDraft(next.has(position) ? String(next.get(position)) : '')
+    }
+  }
 
   const storedDraft = anchors.has(position) ? String(anchors.get(position)) : ''
   const dirty = draft !== storedDraft

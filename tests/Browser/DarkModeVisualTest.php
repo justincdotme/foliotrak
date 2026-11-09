@@ -25,10 +25,10 @@ it('renders the plant silhouette visible in dark mode', function (): void {
 
         $browser->waitFor('@plant-card');
 
-        $opacity = $browser->script(
-            "return getComputedStyle(document.querySelector('[dusk=\"plant-card\"] img')).opacity",
+        $background = $browser->script(
+            "return getComputedStyle(document.querySelector('[dusk=\"plant-card\"] .plant-silhouette-thumb')).backgroundImage",
         );
-        expect((float) $opacity[0])->toBeGreaterThan(0);
+        expect($background[0])->toContain('plant-silhouette-thumb-dark.png');
     });
 });
 

@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext, use } from 'react'
 import type { CareEvent, CareType, Photo } from '@/api/types'
 
 export interface LogTarget {
@@ -19,5 +19,5 @@ export const CareLogContext = createContext<CareLogContextValue>({
 })
 
 export function useCareLog(): CareLogContextValue {
-  return useContext(CareLogContext)
+  return use(CareLogContext)
 }

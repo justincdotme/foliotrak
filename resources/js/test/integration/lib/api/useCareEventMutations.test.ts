@@ -1,6 +1,6 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { http, HttpResponse } from 'msw'
+import { http, HttpResponse } from 'msw/http'
 import React from 'react'
 import { describe, expect, it } from 'vitest'
 import { useCareEventMutations } from '@/hooks/useCareEventMutations'

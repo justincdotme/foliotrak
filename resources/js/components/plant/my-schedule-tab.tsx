@@ -1,5 +1,5 @@
 import { Bell, Check, Droplets, FlaskConical } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { DueBasis, Plant } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { TooltipButton } from '@/components/ui/tooltip-button'
@@ -119,18 +119,21 @@ export function MyScheduleTab({ plant, due }: MyScheduleTabProps) {
   const [editing, setEditing] = useState(false)
   const [wInt, setWInt] = useState(plant.watering_interval_days_override ?? '')
   const [fInt, setFInt] = useState(plant.fertilizing_interval_days_override ?? '')
-  const [wStart, setWStart] = useState(plant.watering_schedule_start_date ?? today())
+  const [wStart, setWStart] = useState(() => plant.watering_schedule_start_date ?? today())
 
-  useEffect(() => {
-    setWInt(plant.watering_interval_days_override ?? '')
-    setFInt(plant.fertilizing_interval_days_override ?? '')
-    setWStart(plant.watering_schedule_start_date ?? today())
-  }, [
+  const savedSchedule = [
     plant.id,
     plant.watering_interval_days_override,
     plant.fertilizing_interval_days_override,
     plant.watering_schedule_start_date,
-  ])
+  ].join('|')
+  const [prevSavedSchedule, setPrevSavedSchedule] = useState(savedSchedule)
+  if (savedSchedule !== prevSavedSchedule) {
+    setPrevSavedSchedule(savedSchedule)
+    setWInt(plant.watering_interval_days_override ?? '')
+    setFInt(plant.fertilizing_interval_days_override ?? '')
+    setWStart(plant.watering_schedule_start_date ?? today())
+  }
 
   const hasMine =
     plant.watering_interval_days_override != null ||

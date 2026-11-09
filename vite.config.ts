@@ -17,6 +17,25 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Library releases are rarer than app changes, so these chunks stay cached across deploys.
+        codeSplitting: {
+          groups: [
+            { name: 'recharts', test: /node_modules[\\/]recharts[\\/]/, priority: 20 },
+            { name: 'nivo', test: /node_modules[\\/](@nivo|@react-spring)[\\/]/, priority: 20 },
+            {
+              name: 'react',
+              test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/,
+              priority: 15,
+            },
+            { name: 'vendor', test: /node_modules[\\/]/, priority: 10 },
+          ],
+        },
+      },
+    },
+  },
   server: {
     watch: {
       ignored: ['**/storage/framework/views/**'],

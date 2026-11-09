@@ -129,7 +129,7 @@ class BackboneExtractorTest extends TestCase
         $zip->close();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('DOCTYPE');
+        $this->expectExceptionMessageIsOrContains('DOCTYPE');
         (new BackboneExtractor)->extract($hostile, $this->workdir . '/out.ndjson.gz');
     }
 

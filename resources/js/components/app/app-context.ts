@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext, use } from 'react'
 
 export interface AppContextValue {
   mobile: boolean
@@ -7,5 +7,5 @@ export interface AppContextValue {
 export const AppContext = createContext<AppContextValue>({ mobile: false })
 
 export function useAppContext(): AppContextValue {
-  return useContext(AppContext)
+  return use(AppContext)
 }

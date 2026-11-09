@@ -28,9 +28,9 @@ export function LocationMeanHealthBar({ data }: LocationMeanHealthBarProps) {
             <XAxis type="number" domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} {...axis} />
             <YAxis type="category" dataKey="location_name" width={90} {...axis} />
             <Bar dataKey="mean_health" isAnimationActive={false}>
-              {rows.map((d, i) => (
+              {rows.map(d => (
                 <Cell
-                  key={i}
+                  key={d.location_id}
                   fill={fillFromHealth(d.mean_health ?? 0, 'var(--text-subtle)')}
                   fillOpacity={0.82}
                 />

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -28,6 +28,8 @@ const BAND_FILLS = [
 ]
 
 export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
+  const [now] = useState(() => Date.now())
+
   // Reconstruct location intervals from relocation events so each stint can be
   // shaded as a background band, making it easy to see if a move changed health.
   const locationBands = useMemo(() => {
@@ -42,11 +44,11 @@ export function TimelineOverlay({ health, events }: TimelineOverlayProps) {
       if (!reloc) continue
       const loc = reloc.relocation?.to_location?.name ?? 'Unknown'
       const start = new Date(reloc.occurred_at).getTime()
-      const end = next ? new Date(next.occurred_at).getTime() : Date.now()
+      const end = next ? new Date(next.occurred_at).getTime() : now
       bands.push({ start, end, location: loc })
     }
     return bands
-  }, [events])
+  }, [events, now])
 
   // An empty health series would make the X domain [Infinity, -Infinity].
   if (health.length === 0) return null

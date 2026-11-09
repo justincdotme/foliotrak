@@ -57,9 +57,9 @@ describe('TimelineItem', () => {
   it('shows a relocation move with its linked photo and routes edit to the handler', async () => {
     const openLog = vi.fn()
     render(
-      <CareLogContext.Provider value={{ openLog, viewPhoto: vi.fn() }}>
+      <CareLogContext value={{ openLog, viewPhoto: vi.fn() }}>
         <TimelineItem e={relocation} photos={[linkedPhoto]} onDelete={vi.fn()} />
-      </CareLogContext.Provider>
+      </CareLogContext>
     )
 
     await userEvent.click(screen.getByRole('button', { name: /Moved/ }))
@@ -73,9 +73,9 @@ describe('TimelineItem', () => {
 
   it('hides Edit and Delete buttons for read-only equipment events', async () => {
     render(
-      <CareLogContext.Provider value={{ openLog: vi.fn(), viewPhoto: vi.fn() }}>
+      <CareLogContext value={{ openLog: vi.fn(), viewPhoto: vi.fn() }}>
         <TimelineItem e={equipmentEvent} photos={[]} onDelete={vi.fn()} />
-      </CareLogContext.Provider>
+      </CareLogContext>
     )
 
     await userEvent.click(screen.getByRole('button', { name: /Equipment/ }))

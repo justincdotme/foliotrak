@@ -36,9 +36,14 @@ export function CareLogModals({ logFor, setLogFor }: CareLogModalsProps) {
   const dirtyRef = useRef(false)
   const [confirmingClose, setConfirmingClose] = useState(false)
 
+  const [prevLogFor, setPrevLogFor] = useState(logFor)
+  if (logFor !== prevLogFor) {
+    setPrevLogFor(logFor)
+    setConfirmingClose(false)
+  }
+
   useEffect(() => {
     dirtyRef.current = false
-    setConfirmingClose(false)
   }, [logFor])
 
   const requestClose = () => {

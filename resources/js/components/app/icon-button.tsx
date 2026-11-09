@@ -1,13 +1,14 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 import { cn } from '@/lib/utils'
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string
   children: ReactNode
+  ref?: Ref<HTMLButtonElement>
 }
 
-export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ label, className, children, ...props }, ref) => (
+export function IconButton({ label, className, children, ref, ...props }: IconButtonProps) {
+  return (
     <button
       ref={ref}
       aria-label={label}
@@ -21,5 +22,4 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       {children}
     </button>
   )
-)
-IconButton.displayName = 'IconButton'
+}

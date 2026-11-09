@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AlertTriangle, Bell, Clock } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/app/empty-state'
@@ -59,6 +60,7 @@ function DueRow({ item, onClick }: { item: DueForCare; onClick: () => void }) {
 
 export function DashboardPage({ go }: DashboardPageProps) {
   const { data, loading } = useDashboard()
+  const [now] = useState(() => new Date())
 
   if (loading) return <Spinner />
 
@@ -70,7 +72,7 @@ export function DashboardPage({ go }: DashboardPageProps) {
   // Count plants, not care entries; a plant can be due for both watering and fertilizing.
   const attentionCount = new Set(d.due_for_care.filter(x => x.status !== 'ok').map(x => x.plant_id))
     .size
-  const hour = new Date().getHours()
+  const hour = now.getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   return (
@@ -133,9 +135,9 @@ export function DashboardPage({ go }: DashboardPageProps) {
                   </span>
                   <div className="min-w-0">
                     <div className="font-medium">{f.common_name}</div>
-                    {f.problems.map((p, j) => (
+                    {f.problems.map(p => (
                       <div
-                        key={j}
+                        key={p.problem}
                         className="text-[12px] text-text-muted mt-0.5 flex items-center gap-1.5"
                       >
                         <span

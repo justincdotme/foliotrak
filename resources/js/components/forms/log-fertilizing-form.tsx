@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { FlaskConical, Plus, X } from 'lucide-react'
@@ -33,6 +33,7 @@ const schema = z.object({
 })
 
 interface NutrientRow {
+  key: number
   nutrient_id: string
   note: string
 }
@@ -68,7 +69,7 @@ export function LogFertilizingForm({
     handleSubmit,
     setError,
     setValue,
-    watch,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
@@ -86,8 +87,13 @@ export function LogFertilizingForm({
     },
   })
 
+  const nutrientKeyRef = useRef(detail?.nutrients?.length ?? 0)
   const [nutrients, setNutrients] = useState<NutrientRow[]>(
-    detail?.nutrients?.map(n => ({ nutrient_id: String(n.nutrient_id), note: n.note ?? '' })) ?? []
+    detail?.nutrients?.map((n, i) => ({
+      key: i,
+      nutrient_id: String(n.nutrient_id),
+      note: n.note ?? '',
+    })) ?? []
   )
   const [extraDirty, setExtraDirty] = useState(false)
 
@@ -104,7 +110,7 @@ export function LogFertilizingForm({
     if (dirtyRef) dirtyRef.current = isFormDirty
   }, [isFormDirty, dirtyRef])
 
-  const formValue = watch('fertilizer_form_id')
+  const formValue = useWatch({ control, name: 'fertilizer_form_id' })
 
   // The form vocabulary loads from the live lookup; default a new entry to liquid
   // once it arrives so the required form id is always set.
@@ -119,7 +125,8 @@ export function LogFertilizingForm({
   const addNutrient = () => {
     const first = nutrientOptions[0]
     if (!first) return
-    setNutrients(n => [...n, { nutrient_id: String(first.nutrient_id), note: '' }])
+    const nextKey = nutrientKeyRef.current++
+    setNutrients(n => [...n, { key: nextKey, nutrient_id: String(first.nutrient_id), note: '' }])
     setExtraDirty(true)
   }
   const removeNutrient = (i: number) => {
@@ -254,7 +261,7 @@ export function LogFertilizingForm({
           )}
           <div className="space-y-2">
             {nutrients.map((n, i) => (
-              <div key={i} className="flex gap-2">
+              <div key={n.key} className="flex gap-2">
                 <select
                   value={n.nutrient_id}
                   onChange={e => updateNutrient(i, 'nutrient_id', e.target.value)}

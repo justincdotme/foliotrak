@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { http } from 'msw'
+import { http } from 'msw/http'
 import React from 'react'
 import { describe, expect, it } from 'vitest'
 import { useLocations } from '@/hooks/useLocations'
