@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -67,7 +67,7 @@ export function LogObservationForm({ plantId, onDone, event, dirtyRef }: LogObse
     handleSubmit,
     setError,
     setValue,
-    watch,
+    control,
     formState: { isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
@@ -104,18 +104,18 @@ export function LogObservationForm({ plantId, onDone, event, dirtyRef }: LogObse
   const [extraDirty, setExtraDirty] = useState(false)
   const touchedRef = useRef<Set<string>>(new Set())
   const createdEventIdRef = useRef<number | null>(null)
-  const [sensorFilled, setSensorFilled] = useState<Set<string>>(new Set())
+  const [sensorFilled, setSensorFilled] = useState<Set<string>>(() => new Set())
   const [ambientLux, setAmbientLux] = useState<number | null>(detail?.ambient_lux ?? null)
 
-  const healthStr = watch('overall_health')
-  const lightStr = watch('light_level')
+  const healthStr = useWatch({ control, name: 'overall_health' })
+  const lightStr = useWatch({ control, name: 'light_level' })
   const light = lightStr !== '' ? Number(lightStr) : null
-  const growth = watch('growth_rate')
+  const growth = useWatch({ control, name: 'growth_rate' })
   const health = healthStr ? Number(healthStr) : null
   const grams = weightToGrams(weight)
   const problemCount = symptomData.ids.length + symptomData.customs.length
 
-  const occurredAt = watch('occurred_at')
+  const occurredAt = useWatch({ control, name: 'occurred_at' })
 
   useEffect(() => {
     if (event) return
@@ -162,20 +162,16 @@ export function LogObservationForm({ plantId, onDone, event, dirtyRef }: LogObse
     }
   }, [occurredAt, plantId, event, tempUnit, setValue])
 
-  const withTouch = (name: 'ambient_humidity_pct' | 'ambient_temp') => {
-    const reg = register(name)
-    return {
-      ...reg,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-        touchedRef.current.add(name)
-        setSensorFilled(prev => {
-          const next = new Set(prev)
-          next.delete(name)
-          return next
-        })
-        return reg.onChange(e)
-      },
-    }
+  const humidityField = register('ambient_humidity_pct')
+  const temperatureField = register('ambient_temp')
+
+  const markTouched = (name: 'ambient_humidity_pct' | 'ambient_temp') => {
+    touchedRef.current.add(name)
+    setSensorFilled(prev => {
+      const next = new Set(prev)
+      next.delete(name)
+      return next
+    })
   }
 
   const { submit, formError } = useCareFormSubmit({
@@ -240,7 +236,7 @@ export function LogObservationForm({ plantId, onDone, event, dirtyRef }: LogObse
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={event => void handleSubmit(onSubmit)(event)} className="space-y-4">
       <DateTimeField register={register} name="occurred_at" dusk="observation-date" />
 
       <FormSection title="Vitals" icon={HeartPulse}>
@@ -303,7 +299,11 @@ export function LogObservationForm({ plantId, onDone, event, dirtyRef }: LogObse
                 placeholder="55"
                 className="pl-8"
                 aria-label="Ambient humidity percent"
-                {...withTouch('ambient_humidity_pct')}
+                {...humidityField}
+                onChange={e => {
+                  markTouched('ambient_humidity_pct')
+                  return humidityField.onChange(e)
+                }}
               />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
                 %
@@ -334,7 +334,11 @@ export function LogObservationForm({ plantId, onDone, event, dirtyRef }: LogObse
                 placeholder={tempUnit === 'F' ? '72' : '22'}
                 className="pl-8"
                 aria-label={`Ambient temperature in degrees ${tempUnit === 'F' ? 'Fahrenheit' : 'Celsius'}`}
-                {...withTouch('ambient_temp')}
+                {...temperatureField}
+                onChange={e => {
+                  markTouched('ambient_temp')
+                  return temperatureField.onChange(e)
+                }}
               />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-text-subtle">
                 {`°${tempUnit}`}

@@ -64,7 +64,7 @@ const keySchema = z.object({
     .string()
     .trim()
     .refine(value => value === '' || /^[A-Za-z0-9]{30}$/.test(value), {
-      message: 'Enter your 30-character Pushover key, or leave it blank to clear.',
+      error: 'Enter your 30-character Pushover key, or leave it blank to clear.',
     }),
 })
 
@@ -78,8 +78,8 @@ function PushoverKeyForm({
   onSave: (key: string | null) => Promise<unknown>
 }) {
   const [saved, setSaved] = useState(false)
-  const flash = useRef<ReturnType<typeof setTimeout>>(undefined)
-  useEffect(() => () => clearTimeout(flash.current), [])
+  const flashRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(flashRef.current), [])
 
   const {
     register,
@@ -96,8 +96,8 @@ function PushoverKeyForm({
     try {
       await onSave(key === '' ? null : key)
       setSaved(true)
-      clearTimeout(flash.current)
-      flash.current = setTimeout(() => setSaved(false), 1600)
+      clearTimeout(flashRef.current)
+      flashRef.current = setTimeout(() => setSaved(false), 1600)
     } catch (err) {
       setError('pushover_user_key', {
         message: extractValidationError(
@@ -112,7 +112,7 @@ function PushoverKeyForm({
   const errorMessage = errors.pushover_user_key?.message
 
   return (
-    <form onSubmit={handleSubmit(submit)}>
+    <form onSubmit={event => void handleSubmit(submit)(event)}>
       <label htmlFor="pushover-key" className="mb-1.5 flex items-baseline gap-2">
         <span className="text-[13px] font-medium text-text">Pushover user key</span>
         <span className="text-[12px] text-text-subtle">for care reminders</span>

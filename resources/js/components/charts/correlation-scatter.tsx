@@ -19,6 +19,14 @@ interface CorrelationScatterProps {
 
 export function CorrelationScatter({ pair }: CorrelationScatterProps) {
   const points = pair.points.map(p => ({ x: p.x, y: p.y }))
+  // Factors like light level repeat coordinates, so a point alone is not a unique key.
+  const coordinateCounts = new Map<string, number>()
+  const cells = points.map(p => {
+    const coordinate = `${p.x}:${p.y}`
+    const occurrence = coordinateCounts.get(coordinate) ?? 0
+    coordinateCounts.set(coordinate, occurrence + 1)
+    return <Cell key={`${coordinate}:${occurrence}`} fill={fillFromHealth(p.y)} />
+  })
   const band = `${pair.confidence_band.lower.toFixed(2)} to ${pair.confidence_band.upper.toFixed(2)}`
   const stats = `Correlation ${pair.correlation.toFixed(2)}, 95% range ${band}${pair.significant_after_fdr ? '' : ', not significant after adjusting for the other factors tested'}.`
 
@@ -63,9 +71,7 @@ export function CorrelationScatter({ pair }: CorrelationScatterProps) {
               }}
             />
             <Scatter data={points} fillOpacity={0.75} isAnimationActive={false}>
-              {points.map((p, i) => (
-                <Cell key={i} fill={fillFromHealth(p.y)} />
-              ))}
+              {cells}
             </Scatter>
             {regLine && (
               <Line

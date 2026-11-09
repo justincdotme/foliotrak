@@ -111,11 +111,8 @@ export function InsightsPage() {
                 className="grid gap-4"
                 style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}
               >
-                {data.correlation_pairs.map((pair, i) => (
-                  <CorrelationScatter
-                    key={`${pair.x_variable}-${pair.y_variable}-${i}`}
-                    pair={pair}
-                  />
+                {data.correlation_pairs.map(pair => (
+                  <CorrelationScatter key={`${pair.x_variable}-${pair.y_variable}`} pair={pair} />
                 ))}
               </div>
             </>

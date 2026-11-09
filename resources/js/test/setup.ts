@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom/vitest'
 import { server } from './handlers'
 
 // jsdom lacks ResizeObserver/IntersectionObserver; Recharts/Nivo read them on mount.
@@ -15,7 +15,7 @@ class NoopObserver {
 vi.stubGlobal('ResizeObserver', NoopObserver)
 vi.stubGlobal('IntersectionObserver', NoopObserver)
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
   cleanup()
   server.resetHandlers()

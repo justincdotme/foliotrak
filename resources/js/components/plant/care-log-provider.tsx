@@ -17,9 +17,9 @@ export function CareLogProvider({ plantId, children }: { plantId: number; childr
   )
 
   return (
-    <CareLogContext.Provider value={value}>
+    <CareLogContext value={value}>
       {children}
       <CareLogModals logFor={logFor} setLogFor={setLogFor} />
-    </CareLogContext.Provider>
+    </CareLogContext>
   )
 }

@@ -18,8 +18,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [queryClient])
 
   return (
-    <NotificationContext.Provider value={{ error, showError, clearError }}>
-      {children}
-    </NotificationContext.Provider>
+    <NotificationContext value={{ error, showError, clearError }}>{children}</NotificationContext>
   )
 }

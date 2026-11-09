@@ -1219,12 +1219,6 @@ parameters:
 			path: tests/Browser/CoverPhotoTest.php
 
 		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 2
-			path: tests/Browser/CoverPhotoTest.php
-
-		-
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:browse\(\)\.$#'
 			identifier: method.notFound
 			count: 3
@@ -1324,12 +1318,6 @@ parameters:
 			message: '#^Call to an undefined method Pest\\PendingCalls\\TestCall\:\:seed\(\)\.$#'
 			identifier: method.notFound
 			count: 1
-			path: tests/Browser/PhotoGalleryTest.php
-
-		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 2
 			path: tests/Browser/PhotoGalleryTest.php
 
 		-
