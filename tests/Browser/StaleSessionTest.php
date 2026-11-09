@@ -22,6 +22,8 @@ it('redirects to login when the session cookie is deleted before form submission
             ->click('@log-watering')
             ->waitFor('@log-modal')
             ->type('@watering-amount', '200')
+            // The form's debounced sensor lookup would otherwise 401 and redirect before the click.
+            ->waitUntil("performance.getEntriesByType('resource').some(entry => entry.name.includes('/sensor-snapshot'))")
             ->deleteCookie('foliotrak-session')
             ->click('@care-form-submit')
             ->waitForLocation('/login', 15)

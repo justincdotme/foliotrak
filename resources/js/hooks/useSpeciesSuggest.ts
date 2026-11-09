@@ -14,31 +14,32 @@ const MIN_QUERY_LENGTH = 3
 const DEBOUNCE_MS = 300
 
 export function useSpeciesSuggest(query: string): UseSuggestResult {
+  const q = query.trim()
+  const searchable = q.length >= MIN_QUERY_LENGTH
   const [results, setResults] = useState<SpeciesSuggestion[]>([])
-  const [loading, setLoading] = useState(false)
+  const [settledQuery, setSettledQuery] = useState<string | null>(null)
+
+  if (!searchable && settledQuery !== null) {
+    setResults([])
+    setSettledQuery(null)
+  }
 
   useEffect(() => {
-    const q = query.trim()
-    if (q.length < MIN_QUERY_LENGTH) {
-      setResults([])
-      setLoading(false)
-      return
-    }
+    if (q.length < MIN_QUERY_LENGTH) return
 
     let ignore = false
-    setLoading(true)
     const timer = setTimeout(() => {
       suggestSpecies(q)
         .then(found => {
           if (!ignore) {
             setResults(found)
-            setLoading(false)
+            setSettledQuery(q)
           }
         })
         .catch(() => {
           if (!ignore) {
             setResults([])
-            setLoading(false)
+            setSettledQuery(q)
           }
         })
     }, DEBOUNCE_MS)
@@ -49,7 +50,7 @@ export function useSpeciesSuggest(query: string): UseSuggestResult {
       ignore = true
       clearTimeout(timer)
     }
-  }, [query])
+  }, [q])
 
-  return { results, loading }
+  return { results, loading: searchable && settledQuery !== q }
 }

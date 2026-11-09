@@ -1,6 +1,6 @@
 import { AlertTriangle, Info } from 'lucide-react'
 import { Check } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { PlantSensor, PlantWithTags, Tag } from '@/api/types'
 import { TooltipButton } from '@/components/ui/tooltip-button'
 import { Field } from '@/components/app/field'
@@ -42,7 +42,11 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
   const [formError, setFormError] = useState<string | null>(null)
   const [confirmingClose, setConfirmingClose] = useState(false)
 
-  useEffect(() => {
+  // Reopening the modal or switching plants discards edits from the last session.
+  const editSession = open ? plant.id : null
+  const [prevEditSession, setPrevEditSession] = useState(editSession)
+  if (editSession !== prevEditSession) {
+    setPrevEditSession(editSession)
     if (open) {
       setLocationId(plant.location?.id ?? null)
       setNotes(plant.notes || '')
@@ -53,8 +57,7 @@ export function EditPlantModal({ plant, open, onClose }: EditPlantModalProps) {
       setFormError(null)
       setConfirmingClose(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, plant.id])
+  }
 
   const tagIds = tags
     .map(t => t.id)

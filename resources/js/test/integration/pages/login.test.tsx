@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
-import { http, HttpResponse } from 'msw'
+import { http, HttpResponse } from 'msw/http'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppRoot } from '@/app-root'
@@ -45,15 +45,17 @@ describe('LoginPage', () => {
 
   it('shows the form when there is no session, without the client bouncing the page', async () => {
     // lib/api.ts hard-redirects on 401 by assigning location.href. jsdom cannot
-    // navigate, so a stub stands in for location and records any assignment.
+    // navigate, so a stub stands in for location and records any assignment. It
+    // keeps the real origin because MSW resolves relative handlers against it.
     const original = window.location
-    const location = { href: 'https://foliotrak.test/login', pathname: '/login', reload: vi.fn() }
+    const loginHref = new URL('/login', original.href).href
+    const location = { href: loginHref, pathname: '/login', reload: vi.fn() }
     vi.stubGlobal('location', location)
     expect(window.location).toBe(location)
     renderLoginRoutes()
 
     expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument()
-    expect(location.href).toBe('https://foliotrak.test/login')
+    expect(location.href).toBe(loginHref)
     // Only location goes back; unstubAllGlobals would also drop the setup file's observers.
     vi.stubGlobal('location', original)
   })

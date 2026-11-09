@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { MutableRefObject } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Info, Shovel } from 'lucide-react'
@@ -49,7 +49,7 @@ export function LogRepottingForm({
     handleSubmit,
     setError,
     setValue,
-    watch,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
@@ -64,8 +64,8 @@ export function LogRepottingForm({
     },
   })
 
-  const unit = watch('pot_size_unit')
-  const fertAdded = watch('fertilizer_added')
+  const unit = useWatch({ control, name: 'pot_size_unit' })
+  const fertAdded = useWatch({ control, name: 'fertilizer_added' })
 
   const { submit, formError } = useCareFormSubmit({
     createFn: createRepotting.mutateAsync,

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { AppContext } from '@/components/app/app-context'
 import { ErrorBanner } from '@/components/app/error-banner'
@@ -22,6 +23,7 @@ import { TopBar } from './top-bar'
 export function Shell() {
   const mobile = useIsMobile()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { theme, setTheme } = useTheme()
   const [addOpen, setAddOpen] = useState(false)
   const addDirtyRef = useRef(false)
@@ -35,11 +37,14 @@ export function Shell() {
     setAddOpen(false)
   }
 
+  const [prevAddOpen, setPrevAddOpen] = useState(addOpen)
+  if (addOpen !== prevAddOpen) {
+    setPrevAddOpen(addOpen)
+    if (!addOpen) setAddConfirming(false)
+  }
+
   useEffect(() => {
-    if (!addOpen) {
-      setAddConfirming(false)
-      addDirtyRef.current = false
-    }
+    if (!addOpen) addDirtyRef.current = false
   }, [addOpen])
 
   const go = (to: string) => navigate(to)
@@ -47,12 +52,14 @@ export function Shell() {
     try {
       await api.post('/logout')
     } finally {
+      // The login page trusts this cache and would send a signed-out user straight back.
+      queryClient.removeQueries({ queryKey: ['auth-user'] })
       navigate('/login')
     }
   }
 
   return (
-    <AppContext.Provider value={{ mobile }}>
+    <AppContext value={{ mobile }}>
       <div dusk="app-shell" className="relative flex h-full flex-col bg-bg">
         {mobile ? (
           <MobileHeader onAdd={() => setAddOpen(true)} onLogout={onLogout} />
@@ -108,7 +115,7 @@ export function Shell() {
           <AddPlantForm onDone={() => setAddOpen(false)} dirtyRef={addDirtyRef} />
         </Modal>
       </div>
-    </AppContext.Provider>
+    </AppContext>
   )
 }
 

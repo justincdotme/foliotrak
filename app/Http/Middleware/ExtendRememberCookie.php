@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Auth\SessionGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -28,7 +27,7 @@ class ExtendRememberCookie
     {
         $guard = Auth::guard('web');
 
-        if ($guard instanceof SessionGuard && $request->cookies->get($guard->getRecallerName())) {
+        if ($request->cookies->get($guard->getRecallerName())) {
             $user = $guard->user();
 
             // Rebuilt from the authenticated user rather than echoed from the request,

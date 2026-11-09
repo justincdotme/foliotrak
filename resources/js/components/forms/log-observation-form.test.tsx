@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { http, HttpResponse } from 'msw'
+import { http, HttpResponse } from 'msw/http'
 import type { CareEvent } from '@/api/types'
 import { LogObservationForm } from './log-observation-form'
 import { TooltipProvider } from '@/components/ui/tooltip'

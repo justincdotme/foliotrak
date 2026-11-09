@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Droplets } from 'lucide-react'
@@ -36,7 +36,7 @@ export function LogWateringForm({ plantId, onDone, event, dirtyRef }: LogWaterin
     register,
     handleSubmit,
     setError,
-    watch,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(schema),
@@ -53,9 +53,9 @@ export function LogWateringForm({ plantId, onDone, event, dirtyRef }: LogWaterin
   })
   const [extraDirty, setExtraDirty] = useState(false)
   const touchedRef = useRef<Set<string>>(new Set())
-  const [sensorFilled, setSensorFilled] = useState<Set<string>>(new Set())
+  const [sensorFilled, setSensorFilled] = useState<Set<string>>(() => new Set())
 
-  const occurredAt = watch('occurred_at')
+  const occurredAt = useWatch({ control, name: 'occurred_at' })
 
   useEffect(() => {
     if (event) return
